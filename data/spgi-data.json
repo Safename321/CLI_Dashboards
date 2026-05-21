@@ -1,0 +1,374 @@
+{
+  "_meta": {
+    "description": "SPGI Dashboard Data \u2014 SEC-sourced financials + internal CLI polling data",
+    "lastUpdated": "2026-02-13",
+    "secCIK": "0000064040",
+    "ticker": "SPGI",
+    "updateSchedule": [
+      "March 30",
+      "May 15",
+      "August 15",
+      "November 15"
+    ],
+    "sources": {
+      "financial": "SEC EDGAR XBRL \u2014 data.sec.gov (fetched via cli-proxy /api/sec-data)",
+      "analyst": "Earnings reports, analyst consensus",
+      "internal": "CLI polling instruments \u2014 manually updated"
+    }
+  },
+  "company": {
+    "name": "S&P Global Inc.",
+    "ticker": "SPGI",
+    "exchange": "NYSE",
+    "headquarters": "55 Water Street, New York, NY 10041",
+    "ceo": "Martina Cheung",
+    "cfo": "Eric Aboaf",
+    "sector": "Financial Services",
+    "industry": "Financial Data & Stock Exchanges",
+    "employees": 40000
+  },
+  "divisions": [
+    {
+      "name": "Market Intelligence",
+      "operatingMargin": 19,
+      "adjustedMargin": 33
+    },
+    {
+      "name": "Ratings",
+      "operatingMargin": 59,
+      "adjustedMargin": 60
+    },
+    {
+      "name": "Commodity Insights",
+      "operatingMargin": 37,
+      "adjustedMargin": 45
+    },
+    {
+      "name": "Mobility",
+      "operatingMargin": 16,
+      "adjustedMargin": 35,
+      "status": "Spin-off planned"
+    },
+    {
+      "name": "Indices",
+      "operatingMargin": 66,
+      "adjustedMargin": 68
+    }
+  ],
+  "financials": {
+    "2022": {
+      "revenue": 11.181,
+      "revenueGrowth": 34.8,
+      "netIncome": 3.248,
+      "eps": 10.2,
+      "adjustedEps": 10.2,
+      "operatingMargin": 27.0,
+      "adjustedOperatingMargin": 27.0,
+      "netMargin": 29.0,
+      "roe": 12.5
+    },
+    "2023": {
+      "revenue": 12.497,
+      "revenueGrowth": 11.77,
+      "netIncome": 2.584,
+      "eps": 8.23,
+      "adjustedEps": 12.54,
+      "operatingMargin": 32.4,
+      "adjustedOperatingMargin": 40.8,
+      "netMargin": 20.7,
+      "roe": 10.2
+    },
+    "2024": {
+      "revenue": 14.208,
+      "revenueGrowth": 13.69,
+      "netIncome": 3.854,
+      "eps": 12.35,
+      "adjustedEps": 15.7,
+      "operatingMargin": 38.6,
+      "adjustedOperatingMargin": 46.7,
+      "netMargin": 27.1,
+      "roe": 15.9
+    },
+    "2025": {
+      "revenue": 15.336,
+      "revenueGrowth": 7.94,
+      "netIncome": 4.471,
+      "eps": 14.66,
+      "adjustedEps": 17.83,
+      "operatingMargin": 42.2,
+      "adjustedOperatingMargin": 50.4,
+      "netMargin": 29.2,
+      "roe": 18.4
+    }
+  },
+  "guidance2026": {
+    "revenueRange": {
+      "low": 16.3,
+      "high": 16.7
+    },
+    "epsRange": {
+      "low": 19.4,
+      "high": 19.65
+    },
+    "consensusEps": 19.9,
+    "dividendPerShare": 0.97
+  },
+  "analystEstimates": {
+    "consensusRating": "Strong Buy",
+    "totalAnalysts": 28,
+    "strongBuy": 20,
+    "buy": 3,
+    "hold": 3,
+    "sell": 0,
+    "priceTargetMean": 611.25,
+    "priceTargetHigh": 698,
+    "priceTargetLow": 530,
+    "currentPrice": 413.3,
+    "upside": 47.9
+  },
+  "acquisitions": [
+    {
+      "year": 2025,
+      "target": "With Intelligence",
+      "value": 1.8,
+      "segment": "Market Intelligence"
+    },
+    {
+      "year": 2022,
+      "target": "IHS Markit",
+      "value": 44.0,
+      "segment": "All Divisions"
+    },
+    {
+      "year": 2020,
+      "target": "Kensho Technologies",
+      "value": 0.55,
+      "segment": "AI/ML"
+    },
+    {
+      "year": 2016,
+      "target": "SNL Financial",
+      "value": 2.225,
+      "segment": "Market Intelligence"
+    }
+  ],
+  "divestitures": [
+    {
+      "year": 2025,
+      "asset": "OSTTRA Group",
+      "buyer": "KKR",
+      "value": 3.1
+    },
+    {
+      "year": 2025,
+      "asset": "Mobility Division",
+      "status": "Spin-off Announced"
+    },
+    {
+      "year": 2024,
+      "asset": "Engineering Solutions",
+      "status": "Completed"
+    },
+    {
+      "year": 2024,
+      "asset": "Fincentric",
+      "status": "Completed"
+    }
+  ],
+  "sentiment": {
+    "overallSentiment": "Moderately Positive",
+    "sentimentScore": 62,
+    "positive": 12,
+    "neutral": 4,
+    "negative": 4,
+    "keyThemes": [
+      "Strong fundamentals despite stock pressure",
+      "AI investment acceleration",
+      "Portfolio simplification",
+      "53 consecutive dividend increases"
+    ]
+  },
+  "yearlyKPIs": {
+    "_note": "Internal CLI polling data \u2014 update manually each quarter",
+    "2022": {
+      "cashMultiple": 1.15,
+      "cacPayback": 10,
+      "churnRate": 2.1,
+      "salesCycle": 68,
+      "leadConversion": 5.8,
+      "daysReceivables": 42,
+      "daysPayables": 35,
+      "nps": 52,
+      "ces": 5.4,
+      "csat": 8.1,
+      "discretionaryEffort": 78,
+      "psychSafety": 7.2,
+      "jobHappiness": 7.5,
+      "teamHappiness": 7.8,
+      "companyHappiness": 7.2,
+      "lifeHappiness": 7.4,
+      "flightRisk": 3.8,
+      "withholding": 0.9,
+      "realignment": 6.5,
+      "improveWork": 68,
+      "improveTeam": 21,
+      "customerProduct": 7.8,
+      "customerTeam": 8.0,
+      "customerCompany": 7.5,
+      "customerCompetitor": 3.8,
+      "customerRelationship": 8.2,
+      "teamDifficulties": 22,
+      "missingResources": 18,
+      "productQuality": 12,
+      "teamCooperation": 10,
+      "growthMindset": 67,
+      "turnover": 8.5,
+      "achievingStyles": {
+        "vicarious": 4.2,
+        "contributory": 4.5,
+        "collaborative": 5.5,
+        "intrinsic": 7.2,
+        "competitive": 7.8,
+        "power": 6.1,
+        "entrusting": 4.8,
+        "social": 5.2,
+        "personal": 6.5
+      }
+    },
+    "2023": {
+      "cashMultiple": 0.95,
+      "cacPayback": 11,
+      "churnRate": 2.8,
+      "salesCycle": 72,
+      "leadConversion": 5.2,
+      "daysReceivables": 45,
+      "daysPayables": 36,
+      "nps": 48,
+      "ces": 4.9,
+      "csat": 7.6,
+      "discretionaryEffort": 74,
+      "psychSafety": 6.8,
+      "jobHappiness": 7.1,
+      "teamHappiness": 7.4,
+      "companyHappiness": 6.2,
+      "lifeHappiness": 7.0,
+      "flightRisk": 5.2,
+      "withholding": 1.4,
+      "realignment": 9.8,
+      "improveWork": 62,
+      "improveTeam": 26,
+      "customerProduct": 7.4,
+      "customerTeam": 7.6,
+      "customerCompany": 7.0,
+      "customerCompetitor": 4.2,
+      "customerRelationship": 7.6,
+      "teamDifficulties": 28,
+      "missingResources": 24,
+      "productQuality": 16,
+      "teamCooperation": 13,
+      "growthMindset": 62,
+      "turnover": 10.2,
+      "achievingStyles": {
+        "vicarious": 3.8,
+        "contributory": 4.0,
+        "collaborative": 5.0,
+        "intrinsic": 7.0,
+        "competitive": 8.0,
+        "power": 6.5,
+        "entrusting": 4.2,
+        "social": 4.8,
+        "personal": 6.0
+      }
+    },
+    "2024": {
+      "cashMultiple": 1.08,
+      "cacPayback": 12,
+      "churnRate": 2.4,
+      "salesCycle": 70,
+      "leadConversion": 5.0,
+      "daysReceivables": 48,
+      "daysPayables": 37,
+      "nps": 45,
+      "ces": 4.6,
+      "csat": 7.4,
+      "discretionaryEffort": 72,
+      "psychSafety": 6.5,
+      "jobHappiness": 6.9,
+      "teamHappiness": 7.2,
+      "companyHappiness": 5.8,
+      "lifeHappiness": 6.9,
+      "flightRisk": 6.5,
+      "withholding": 1.8,
+      "realignment": 11.2,
+      "improveWork": 59,
+      "improveTeam": 28,
+      "customerProduct": 7.2,
+      "customerTeam": 7.4,
+      "customerCompany": 6.8,
+      "customerCompetitor": 4.6,
+      "customerRelationship": 7.3,
+      "teamDifficulties": 32,
+      "missingResources": 28,
+      "productQuality": 18,
+      "teamCooperation": 15,
+      "growthMindset": 59,
+      "turnover": 9.8,
+      "achievingStyles": {
+        "vicarious": 3.5,
+        "contributory": 3.8,
+        "collaborative": 5.2,
+        "intrinsic": 7.2,
+        "competitive": 8.2,
+        "power": 6.8,
+        "entrusting": 4.5,
+        "social": 4.5,
+        "personal": 5.8
+      }
+    },
+    "2025": {
+      "cashMultiple": 1.12,
+      "cacPayback": 11,
+      "churnRate": 2.2,
+      "salesCycle": 68,
+      "leadConversion": 5.4,
+      "daysReceivables": 46,
+      "daysPayables": 38,
+      "nps": 47,
+      "ces": 4.8,
+      "csat": 7.6,
+      "discretionaryEffort": 75,
+      "psychSafety": 6.8,
+      "jobHappiness": 7.2,
+      "teamHappiness": 7.5,
+      "companyHappiness": 6.4,
+      "lifeHappiness": 7.1,
+      "flightRisk": 5.8,
+      "withholding": 1.5,
+      "realignment": 10.5,
+      "improveWork": 61,
+      "improveTeam": 27,
+      "customerProduct": 7.4,
+      "customerTeam": 7.6,
+      "customerCompany": 7.0,
+      "customerCompetitor": 4.4,
+      "customerRelationship": 7.5,
+      "teamDifficulties": 29,
+      "missingResources": 25,
+      "productQuality": 15,
+      "teamCooperation": 12,
+      "growthMindset": 63,
+      "turnover": 9.2,
+      "achievingStyles": {
+        "vicarious": 4.0,
+        "contributory": 4.2,
+        "collaborative": 5.5,
+        "intrinsic": 7.5,
+        "competitive": 8.0,
+        "power": 6.5,
+        "entrusting": 4.8,
+        "social": 5.0,
+        "personal": 6.2
+      }
+    }
+  }
+}
