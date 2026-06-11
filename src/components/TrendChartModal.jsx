@@ -8,10 +8,13 @@ import { useData } from '../data/DataContext.jsx';
 export default function TrendChartModal({ metric, label, onClose }) {
   const { data } = useData();
   const chartData = useMemo(() => {
+    // A metric may live in financials (revenue, eps…) or yearlyKPIs
+    // (jobHappiness, flightRisk…) — check both per year.
     const fin = data?.financials || {};
-    return Object.keys(fin)
-      .sort()
-      .map((year) => ({ year, value: fin[year]?.[metric] }))
+    const kpis = data?.yearlyKPIs || {};
+    const years = [...new Set([...Object.keys(fin), ...Object.keys(kpis)])].sort();
+    return years
+      .map((year) => ({ year, value: fin[year]?.[metric] ?? kpis[year]?.[metric] }))
       .filter((d) => typeof d.value === 'number');
   }, [data, metric]);
 
