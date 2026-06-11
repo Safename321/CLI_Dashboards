@@ -24,4 +24,12 @@ Running log per REWRITE_BRIEF.md §"OPERATING MODE". Newest entries appended at 
   - **§3.7** `chat.js`: `Access-Control-Allow-Origin: '*'` wildcard on the chat endpoint — must be allow-listed.
   - **§3.8** No rate limiting anywhere.
 - Wrote ARCHITECTURE.md (target module layout + shared-component set) and this log.
-- **Next:** scaffold the new Vite project (package.json, configs, entrypoint), then build shared primitives + data layer + connector base/registry toward the 25% milestone.
+- Scaffolded the new Vite project: package.json (v2.0.0, server+security deps), vite/tailwind/postcss configs, single `index.html` + entrypoint to come, `src/index.css` design tokens, `src/config/{version,tenants}.js`, `.env.example` (server-only env, no VITE_ secrets). Removed old `assets/` bundle; relocated data + image to `public/`. Committed (`12f4305`).
+
+### 2026-06-11 — Step 1: Connector layer
+- Reimplemented the full connector layer clean under `src/connectors/`:
+  - `BaseConnector.js` — config, retry-with-backoff, stale-payload fallback, schema-versioned localStorage cache, **injectable clock** (deterministic unit tests per §6), no silent failures (§4.5).
+  - `ConnectorRegistry.js` — runAll fan-out, getLatestForDomain (real-over-mock), derivePrCrisis.
+  - 9 domain files (financial, news, social-sentiment, macro, markets, innovation, owned-social, culture, hris, customer-health) — real connectors route through the proxy (so §5 RSS/USPTO/BLS fixes live server-side) + deterministic mock connectors for the demo.
+  - `index.js` import surface + `buildRegistry.js` (mock-by-default per tenant).
+- **Next:** data layer (DataContext), auth (AuthContext + LoginScreen, server-backed), shared primitives, nav config, App shell + main.jsx → app boots = 25% milestone.
