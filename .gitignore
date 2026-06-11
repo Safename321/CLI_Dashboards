@@ -1,0 +1,4 @@
+_v1.24L_source/
+node_modules/
+.env
+dist/
