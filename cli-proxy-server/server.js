@@ -3,6 +3,9 @@
 // any Node host; the same route handlers deploy as Vercel functions.
 import 'dotenv/config';
 import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { corsMiddleware, ALLOWED_ORIGINS } from './middleware/cors.js';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
@@ -17,6 +20,15 @@ app.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api', dataRoutes);
+
+// Serve the built client when dist/ exists, so one origin hosts app + API in
+// every §8 serving context (localhost or public IP, HTTP or HTTPS). Same-origin
+// /api calls need no CORS entry; the allow-list governs cross-origin callers.
+const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir));
+  app.get(/^\/(?!api\/).*/, (req, res) => res.sendFile(path.join(distDir, 'index.html')));
+}
 
 // CORS rejections surface as a clean 403, not a stack trace.
 app.use((err, req, res, next) => {
