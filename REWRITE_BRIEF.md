@@ -22,6 +22,30 @@ This engagement runs **unattended** in a `tmux` session; the operator is logged 
 
 ---
 
+## 📲 MILESTONE NOTIFICATIONS — required
+
+The operator is away. At each progress milestone below, run the notify helper so they get a phone push. Fire-and-forget; never let a failed notification block work.
+
+```
+/root/cli-notify.sh "<title>" "<message>" <priority> "<tags>"
+```
+
+Send a notification when each of these is reached (once each, in order):
+- **25%** — shared component primitives (§4.1) + data layer + connector base/registry are built and the app boots.
+  `/root/cli-notify.sh "CLI Dashboards — 25%" "Primitives + data + connector layer done; app boots." default "one"`
+- **50%** — roughly half of the ~23 dashboards reimplemented with parity, tests green.
+  `/root/cli-notify.sh "CLI Dashboards — 50%" "~half of 23 dashboards rebuilt with parity, tests green." default "two"`
+- **75%** — all dashboards + AI mentor + proxy + server auth + rate limiting wired.
+  `/root/cli-notify.sh "CLI Dashboards — 75%" "All dashboards + mentor + proxy + server auth done." default "three"`
+- **100%** — all §8 acceptance criteria met, tests green, committed and pushed.
+  `/root/cli-notify.sh "CLI Dashboards — 100% ✅" "Done: all acceptance criteria met, pushed to origin/AllRepo." high "white_check_mark,tada"`
+- **BLOCKED** — if you write a `NEEDS-INPUT.md` and cannot make further progress:
+  `/root/cli-notify.sh "CLI Dashboards — BLOCKED" "Need operator input — see NEEDS-INPUT.md" urgent "warning"`
+
+Also append each milestone to `PROGRESS.md` with a timestamp.
+
+---
+
 ## 0. Model directive — read first
 
 Use the most capable model available to you for this entire engagement.
