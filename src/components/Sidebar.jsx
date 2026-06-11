@@ -2,7 +2,9 @@
 import { NAV_GROUPS } from '../config/nav.js';
 import { APP_VERSION_LABEL } from '../config/version.js';
 
-export default function Sidebar({ active, onNav, tenant, email, onLogout, authDisabled }) {
+const DATA_YEARS = [2022, 2023, 2024, 2025];
+
+export default function Sidebar({ active, onNav, tenant, email, onLogout, authDisabled, selectedYear, onYearChange }) {
   return (
     <nav className="flex h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-panel">
       <div className="border-b border-border px-4 py-4">
@@ -12,6 +14,20 @@ export default function Sidebar({ active, onNav, tenant, email, onLogout, authDi
           </span>
         </div>
         <p className="mt-0.5 text-[11px] text-muted">{tenant?.sidebarSubtitle || 'behavioral intelligence'}</p>
+        {onYearChange && (
+          <label className="mt-2 flex items-center gap-2 text-[11px] text-muted">
+            Data year:
+            <select
+              value={selectedYear}
+              onChange={(e) => onYearChange(Number(e.target.value))}
+              className="rounded border border-border bg-ink px-2 py-0.5 text-xs text-white focus:border-accent focus:outline-none"
+            >
+              {DATA_YEARS.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
       <div className="flex-1 px-2 py-3">
