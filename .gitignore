@@ -1,6 +1,16 @@
+# Reference material — not part of the new build (§19)
 _v1.24L_source/
+CLIDashboards_v1.24L.zip
+
+# Deps & build output
 node_modules/
-.env
 dist/
+
+# Secrets — never commit (§3.9)
+.env
+.env.local
+*.local
+
+# Operator-local runtime files
 .ntfy-topic
 .autorun-enabled
