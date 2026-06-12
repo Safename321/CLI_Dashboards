@@ -1,8 +1,14 @@
 # 04 — Phased Delivery Plan
 
+> **Revised 2026-06-12** against CLI_Dashboards **v2.0.0** (see `00-RELEVANCE-AUDIT.md`).
+> The v2.0.0 rewrite built a chunk of Phase 0 before this plan kicked off: Express
+> service skeleton, server-side bcrypt+JWT auth/sessions, CORS allow-list, rate
+> limiting, and the de-monolithing of `App.jsx`. Phase-0 remaining work is
+> **~5–8 engineer-weeks**, down from the original 8–12.
+
 ## TL;DR
 
-The most consequential decision in this plan is **including a Phase 1 CSV/SFTP path that lets CLI close the first enterprise deal before committing to the full backend build**. The full Workday API integration (Phase 2) is real engineering work — 8 to 12 engineer-weeks on top of an 8 to 12 engineer-week Phase 0 foundation build. That's 4 to 6 months of work before any Workday-API-using customer can go live. A CSV/SFTP intermediate step gets revenue moving in 4 weeks.
+The most consequential decision in this plan is **including a Phase 1 CSV path that lets CLI close the first enterprise deal before committing to the full backend build**. The full Workday API integration (Phase 2) is real engineering work — 8 to 12 engineer-weeks on top of a **5 to 8 engineer-week Phase 0 foundation remainder** (originally 8–12; v2.0.0 already built the rest). A CSV intermediate step gets revenue moving in 4 weeks.
 
 Estimates assume one full-time senior engineer with relevant experience. Less experience or part-time effort lengthens proportionally. **All estimates are ±50% — engineering estimates always are, and Workday-flavored ones especially.**
 
@@ -10,27 +16,28 @@ Estimates assume one full-time senior engineer with relevant experience. Less ex
 
 **Trigger:** decision to pursue enterprise customers. Already decided.
 
-**Estimate:** 8-12 engineer-weeks. This is the work that has to happen before any Workday integration code can be written.
+**Estimate:** ~~8-12~~ → **5-8 engineer-weeks remaining** (revised 2026-06-12). The
+v2.0.0 rewrite already delivered roughly 30–40% of this phase — marked ✅/🟡 below.
 
 ### Deliverables
 
-| Deliverable | Approx weeks | Why it's needed |
-|---|---|---|
-| Stand up Postgres database (Neon or Vercel PG) with migration tooling (Drizzle or Prisma) | 1 | No persistence today. Everything Workday-related needs to land in a DB. |
-| Build out the `cli-proxy.vercel.app` project into a real service repo with auth, sessions, and the database client | 2 | The proxy is currently 7 pass-through endpoints. It becomes the actual backend. |
-| Replace the shared-password `LoginGate.jsx` with real per-user authentication (SAML SSO + email/password fallback) | 2-3 | Procurement won't accept a shared password. Customers will mandate SSO. |
-| Migrate hardcoded data in `App.jsx` (achievingStyles, OASI, etc.) into the database with API endpoints to read it | 1-2 | Today the SPA hardcodes scores. The SPA needs to be reading from server-backed endpoints before there's anywhere to write Workday-synced data. |
-| Job queue (Inngest) integration | 0.5 | Required for async Workday work in Phase 2. |
-| Observability: Sentry + log drain to Axiom | 0.5 | Required before going live with any paying customer. |
-| Encryption-at-rest pattern for customer credentials (AES-256-GCM, env-var key) | 0.5-1 | Required before storing the first Workday ISU password. |
-| Tests: integration tests for the new auth flow, database migrations CI | 1 | Below the line you can't ship without; above the line is testing detail. |
+| Deliverable | Status (v2.0.0) | Approx weeks remaining | Why it's needed |
+|---|---|---|---|
+| Stand up Postgres database (self-hosted on droplet, or Neon) with migration tooling (Drizzle or Prisma) | ❌ not built | 1 | No DB persistence today (data is file-based: `public/data/spgi-data.json` + `src/data/datasets/*`). Everything Workday-related needs to land in a DB. |
+| Build out `cli-proxy-server/` into a real service with auth, sessions, and the database client | 🟡 **mostly done** — Express service, routers, bcrypt+JWT auth/sessions, CORS allow-list, rate limiting all exist; DB client missing | 0.5 | The proxy became the actual backend in v2.0.0. Only the DB client remains. |
+| Replace the shared-password `LoginGate.jsx` with real per-user authentication (SAML SSO + email/password fallback) | 🟡 **half done** — `LoginGate.jsx` is gone; server-side email/password + JWT + per-tenant accounts exist. **SAML/OIDC SSO still missing.** | 1.5-2 | Procurement won't accept a shared password (solved). Customers will mandate SSO (open). |
+| Migrate hardcoded data in `App.jsx` (achievingStyles, OASI, etc.) into the database with API endpoints to read it | 🟡 **partly addressed** — the 10k-line monolith is gone; data lives in JSON files read via `DataContext`. Still file-based, not DB-backed. | 1 | The SPA needs server-backed reads before there's anywhere to write Workday-synced data. |
+| Job queue (BullMQ or pg-boss — was "Inngest" when Vercel was the target) | ❌ not built | 0.5 | Required for async Workday work in Phase 2. |
+| Observability: Sentry + log drain to Axiom | ❌ not built | 0.5 | Required before going live with any paying customer. |
+| Encryption-at-rest pattern for customer credentials (AES-256-GCM, env-var key) | ❌ not built (though `.env` hygiene for server secrets already exists) | 0.5-1 | Required before storing the first Workday ISU password. |
+| Tests: integration tests for the new auth flow, database migrations CI | 🟡 partly — unit suites (vitest) + e2e (Playwright) exist and run; DB-migration CI doesn't (no DB) | 0.5 | Below the line you can't ship without; above the line is testing detail. |
 
 ### Success criteria
 
-- A new customer can sign up with SSO and reach the dashboard.
+- A new customer can sign up with SSO and reach the dashboard. *(email/password works today; SSO open)*
 - Their dashboard reads its data from Postgres-backed APIs, not from the bundled `spgi-data.json` or hardcoded objects.
 - An admin can paste a Workday ISU username + password into a settings page, and CLI stores them encrypted.
-- A background job triggered manually can call any Vercel function endpoint and run async work without timing out.
+- A background job triggered manually can run async work without timing out. *(The droplet's long-running Express process has no serverless timeout, but queued execution + retries still need the job queue.)*
 
 ### What this phase deliberately doesn't include
 
@@ -48,6 +55,13 @@ Phase 0 deliverables are complete and the team is comfortable that a real custom
 **Trigger:** first enterprise prospect ready to begin a paid pilot, and Phase 0 deliverables are stable.
 
 **Estimate:** 3-5 engineer-weeks.
+
+> **2026-06-12:** the first slice of this phase landed ahead of schedule — a
+> JWT-protected `/api/workday` route, a CSV parser/validator
+> (`cli-proxy-server/lib/workersCsv.js`), and an authenticated CSV upload endpoint
+> (`POST /api/workday/workers/csv`) now exist on the v2.0.0 Express server. The
+> upload endpoint stands in for the SFTP pickup until a customer actually requires
+> SFTP; rows land in an in-memory store until the Phase-0 Postgres work completes.
 
 ### Why CSV/SFTP first
 

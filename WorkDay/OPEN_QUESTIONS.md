@@ -70,11 +70,10 @@ Workday categorizes Marketplace listings (Talent Management, HCM Extensions, Rec
 
 ## Documentation
 
-### 18. Where do these design documents officially live? **[housekeeping]**
-The brief asked for `/docs/workday/` but the current repo has no `/docs/` directory. Confirm the right home — could be:
-- A new `/docs/workday/` in the existing dashboard repo
-- A new dedicated docs repo
-- A Notion/Confluence/internal wiki (and these files become the seed content)
+### 18. Where do these design documents officially live? **[ANSWERED 2026-06-12]**
+**Answered:** they live in `WorkDay/` at the root of the `CLI_Dashboards` repo (branch
+`AllRepo`), versioned with the code. `00-RELEVANCE-AUDIT.md` in the same directory
+tracks doc-vs-code drift after the v2.0.0 rewrite.
 
 ### 19. Who owns these documents long-term? **[housekeeping]**
 A design document is only useful if someone keeps it in sync with reality as decisions get made. Identify an owner per phase.
@@ -83,14 +82,14 @@ A design document is only useful if someone keeps it in sync with reality as dec
 
 These are things I made reasonable assumptions about and proceeded. If any are wrong, the corresponding design choice should be revisited.
 
-| Assumption | Where it lives | If wrong, change |
-|---|---|---|
-| Use Postgres (not MongoDB / DynamoDB / etc.) | Throughout | The data-model schema would need re-expression |
-| Use ISU not OAuth as the default Workday auth | `03-api-inventory.md` | Auth flow + credential storage rewrites |
-| Use Inngest for job queueing | `01-architecture.md` | Worker code structure rewrites |
-| Use Vercel as the deployment platform throughout | All four docs | Hosting and CI/CD rewrites |
-| Use WID as the worker identity key | `02-data-model-mapping.md` | Identity migration; impacts schema |
-| CSV/SFTP as Phase 1 bridge | `04-staging-plan.md` | If skipped, Phase 1 effort merges into Phase 2 and timeline doubles |
-| BlackRock uses one tenant with sub-orgs | `02-data-model-mapping.md` | Add `customer_groups` table; multi-customer accounting |
+| Assumption | Where it lives | If wrong, change | Status (2026-06-12) |
+|---|---|---|---|
+| Use Postgres (not MongoDB / DynamoDB / etc.) | Throughout | The data-model schema would need re-expression | Still assumed |
+| Use ISU not OAuth as the default Workday auth | `03-api-inventory.md` | Auth flow + credential storage rewrites | Still assumed |
+| Use Inngest for job queueing | `01-architecture.md` | Worker code structure rewrites | **Revised:** Inngest assumed Vercel. On the v2.0.0 droplet, BullMQ or pg-boss fits better — see revised `01-architecture.md`. |
+| Use Vercel as the deployment platform throughout | All four docs | Hosting and CI/CD rewrites | **Wrong as of v2.0.0:** deployment is a long-running Express server on a DigitalOcean droplet under `/CLI_Dashboards/`. Docs revised accordingly (`00-RELEVANCE-AUDIT.md`). |
+| Use WID as the worker identity key | `02-data-model-mapping.md` | Identity migration; impacts schema | Still assumed (and used by the Phase-1 CSV upsert key) |
+| CSV/SFTP as Phase 1 bridge | `04-staging-plan.md` | If skipped, Phase 1 effort merges into Phase 2 and timeline doubles | Confirmed direction — first slice (authenticated CSV upload, no SFTP yet) shipped 2026-06-12 |
+| BlackRock uses one tenant with sub-orgs | `02-data-model-mapping.md` | Add `customer_groups` table; multi-customer accounting | Still assumed |
 
 If any of these assumptions are explicitly wrong, please flag the corresponding section to revise before implementation begins.

@@ -2,13 +2,14 @@
 
 This directory holds the design documents that precede any Workday integration code for the CLI Dashboards product. They were produced from a fresh read of the v1.24L codebase and should be treated as the starting point for a future Claude Code (or human) implementation session.
 
-**Last updated:** June 9, 2026 · 5:59 PM ET
-**Source codebase:** `cli-dashboard-v1.24L` (package.json `1.24.12-L`)
+**Last updated:** June 12, 2026 (relevance pass against v2.0.0; originally written June 9, 2026 from v1.24L)
+**Source codebase:** originally `cli-dashboard-v1.24L`; revised against `CLI_Dashboards` v2.0.0 (branch `AllRepo`)
 
 ## What's here
 
 | File | Purpose |
 |---|---|
+| `00-RELEVANCE-AUDIT.md` | **Read first.** What in these docs survived the v1.24L → v2.0.0 rewrite, item by item. |
 | `01-architecture.md` | Where the integration lives, what runs it, how it's monitored, the two primary data flows. |
 | `02-data-model-mapping.md` | The CLI ↔ Workday object mapping. The single most important document — read it before anything else. |
 | `03-api-inventory.md` | Every Workday endpoint we need, SOAP vs REST, auth, rate limits, error handling. Phased by minimum-viable vs deeper integration. |
@@ -18,9 +19,11 @@ This directory holds the design documents that precede any Workday integration c
 
 ## Reader's note
 
-The brief for this work assumed CLI had a conventional backend (database, ORM, OAuth, background workers, observability stack). **It does not.** The product today is a static React SPA built with Vite, deployed to Vercel as static files, with a thin Vercel-serverless proxy (`cli-proxy.vercel.app`) for outbound calls to external APIs. There is no server-side persistence, no authenticated user accounts, no background-job infrastructure. Auth is a single shared password hashed client-side in `LoginGate.jsx`.
+*(Rewritten 2026-06-12 — the original note described v1.24L, which no longer exists.)*
 
-This is not a flaw — for a pre-revenue demo platform it's the right architecture. But it means **Phase 0 of any Workday integration is not "configure OAuth" — it is "build the foundation."** A real backend service, a real database, real per-user authentication, and a real secrets-management approach all have to exist before a single Workday API call gets made in production. The phased plan in `04-staging-plan.md` accounts for that.
+When these docs were first written, the product was a static React SPA with a thin Vercel-serverless proxy, no server-side persistence, no user accounts, and a shared client-side password. **The v2.0.0 ground-up rewrite changed that:** there is now a real Express backend (`cli-proxy-server/server.js`) on a DigitalOcean droplet, with server-side bcrypt + JWT authentication, per-tenant accounts, CORS allow-listing, and rate limiting. The SPA is served by the same Express app under the `/CLI_Dashboards/` base path.
+
+What still does **not** exist: a database (data is file-based JSON), SAML/OIDC SSO, a job queue, per-customer encrypted credential storage, and observability. So **Phase 0 of the Workday integration is no longer "build the foundation from scratch" — roughly 30–40% of it is done** (see `00-RELEVANCE-AUDIT.md`). The remaining Phase-0 work — DB + migrations, SSO, credential encryption, queue, observability — still has to exist before a production Workday API call is made. The phased plan in `04-staging-plan.md` reflects the revised estimates.
 
 A CSV/SFTP "Phase 1" path is included specifically because it lets CLI close the first enterprise deal **before** committing to the full backend build. That phasing decision is the most consequential one in the staging plan and is worth reading carefully.
 

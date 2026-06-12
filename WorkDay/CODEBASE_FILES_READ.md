@@ -1,5 +1,21 @@
 # Codebase Files Read
 
+> **⚠️ STALE — v1.24L snapshot (kept for provenance).** This list records what was
+> read on 2026-06-09 from the **v1.24L** tree. The app was since rewritten ground-up
+> to **v2.0.0** and most of these files no longer exist. Any future re-read should
+> use the v2.0.0 tree; the equivalents are:
+>
+> | v1.24L file (below) | v2.0.0 equivalent |
+> |---|---|
+> | `src/App.jsx` (10,375-line monolith) | `src/App.jsx` (~110-line shell) + `src/dashboards/*` + `src/data/DataContext.jsx` + `src/data/datasets/*` |
+> | `src/LoginGate.jsx` (client-side shared password) | `src/auth/AuthContext.jsx` + `cli-proxy-server/routes/auth.js` + `middleware/auth.js` (bcrypt + JWT) |
+> | `cli-proxy-server/api/chat.js` (Vercel function) | `cli-proxy-server/routes/chat.js` + `lib/anthropic.js` (Express router) |
+> | `cli-proxy-server/api/sec-data.js`, `gdelt.js`, `fred.js`, … | `cli-proxy-server/routes/data.js` |
+> | — (no server entry point) | `cli-proxy-server/server.js` (Express app on a droplet, `APP_BASE` subpath) |
+>
+> The connector layer (`src/connectors/*`) survived the rewrite with the same
+> BaseConnector / ConnectorRegistry pattern and remains accurate.
+
 Files inspected during the production of the four design documents. Listed so future revisions can be informed by the same source material.
 
 Source tree: `/home/claude/cli-dashboard-v1.24L/`
@@ -55,7 +71,9 @@ Read on: June 9, 2026 · 5:59 PM ET
 
 ## What the codebase confirms
 
-1. **No backend exists.** All Workday integration code is greenfield.
-2. **A connector pattern already exists** and is the right abstraction for the HRIS integration. The new code should plug into the existing `BaseConnector` / `ConnectorRegistry` pattern, not invent a new one.
-3. **The Vercel proxy is the right home for the integration's server side.** Same tooling as the existing team's work, same deployment story, same env-var pattern. The right architectural move is to extend that project, not stand up a parallel service.
-4. **The `WorkdayConnector` stub at `src/connectors/HRISConnector.js:6-25` is the entry point.** When the integration exists, this file pulls real data from the new server-side endpoints.
+*(statuses updated 2026-06-12 for v2.0.0 — see `00-RELEVANCE-AUDIT.md`)*
+
+1. ~~**No backend exists.** All Workday integration code is greenfield.~~ **Obsolete:** v2.0.0 has a real Express backend (`cli-proxy-server/server.js`) with JWT auth, CORS allow-listing, and rate limiting. Workday code extends it.
+2. **A connector pattern already exists** and is the right abstraction for the HRIS integration. The new code should plug into the existing `BaseConnector` / `ConnectorRegistry` pattern, not invent a new one. *(Still true.)*
+3. ~~**The Vercel proxy is the right home for the integration's server side.**~~ **Updated:** the home is the **Express server on the droplet** — same conclusion (extend the existing service, don't stand up a parallel one), different runtime: `cli-proxy-server/routes/*.js` Express routers, not Vercel `api/` functions.
+4. **The `WorkdayConnector` stub in `src/connectors/HRISConnector.js` is the entry point.** When the integration exists, this file pulls real data from the new server-side endpoints. *(Still true — and as of 2026-06-12 the `/api/workday` endpoint exists.)*
