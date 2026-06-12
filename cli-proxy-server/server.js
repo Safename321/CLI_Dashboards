@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import dataRoutes from './routes/data.js';
 import workdayRoutes from './routes/workday.js';
+import importRoutes from './routes/import.js';
 
 // Single-source the version from package.json (version + buildLetter), so the
 // health endpoint matches the in-app label (e.g. 2.0.0a) without a second edit.
@@ -33,7 +34,8 @@ const api = express.Router();
 api.get('/api/health', (req, res) => res.json({ ok: true, version: APP_VERSION }));
 api.use('/api/auth', authRoutes);
 api.use('/api/chat', chatRoutes);
-api.use('/api/workday', workdayRoutes); // JWT-gated HRIS bridge (WorkDay/ docs)
+api.use('/api/workday', workdayRoutes);
+api.use('/api/import', importRoutes);  // Multi-HRIS import (Track A) // JWT-gated HRIS bridge (WorkDay/ docs)
 api.use('/api', dataRoutes);
 
 // Serve the built client when dist/ exists, so one origin hosts app + API in
