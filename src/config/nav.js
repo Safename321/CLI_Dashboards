@@ -1,12 +1,11 @@
-// Sidebar navigation groups (mirrors v1.24L grouping). The view ids match the
-// keys in dashboards/index.js. Single source for nav + routing.
-export const NAV_GROUPS = [
+// Sidebar navigation — role-based sections matching v1.24L (CEO, CFO, CSO,
+// CHRO, Trainer, HR Hiring, Senior / Team Manager, Utility). Each section has a
+// descriptor and is independently collapsible in the Sidebar. View ids match the
+// keys in dashboards/index.jsx. Single source for nav + routing.
+export const NAV_SECTIONS = [
   {
-    title: 'Overview',
-    items: [{ id: 'overview', label: 'Overview', icon: '📖' }],
-  },
-  {
-    title: 'Executive',
+    title: 'CEO',
+    descriptor: 'Top-level synthesis',
     items: [
       { id: 'ceo-advisory', label: 'CEO Advisory', icon: '🎯', alerts: 3 },
       { id: 'meeting-prep', label: 'Meeting Prep', icon: '📅', alerts: 1 },
@@ -16,24 +15,27 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    title: 'Predictive',
+    title: 'CFO',
+    descriptor: 'Financial command',
     items: [
       { id: 'early-warning', label: 'Early Warning KPIs', icon: '⚡', alerts: 2 },
       { id: 'investor-behavior', label: 'Investor Behavior', icon: '📈' },
       { id: 'scenario-modeling', label: 'Scenario Modeling', icon: '🔮' },
-      { id: 'causal-analysis', label: 'Behavioral-Outcome', icon: '🔗' },
     ],
   },
   {
-    title: 'External & Customer',
+    title: 'CSO',
+    descriptor: 'Outside-in & options',
     items: [
       { id: 'external', label: 'External View', icon: '🌐', alerts: 3 },
       { id: 'customer-health', label: 'Customer Health', icon: '❤️' },
+      { id: 'causal-analysis', label: 'Behavioral-Outcome', icon: '🔗' },
       { id: 'merger-integration', label: 'Post Merger Integration', icon: '🔄' },
     ],
   },
   {
-    title: 'Behavioral (OASI/ASI)',
+    title: 'CHRO - Chief of HR',
+    descriptor: 'People & culture',
     items: [
       { id: 'org-oasi', label: 'OASI', icon: '🏢' },
       { id: 'aspirational-oasi', label: 'Aspirational OASI', icon: '🎯' },
@@ -44,25 +46,50 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    title: 'Tools',
+    title: 'Trainer',
+    descriptor: 'Learning & development',
     items: [
       { id: 'mgmt-challenges', label: 'Management Challenges', icon: '⚡' },
       { id: 'hiring', label: 'Hiring & On-Boarding', icon: '📝' },
+    ],
+  },
+  {
+    title: 'HR Hiring',
+    descriptor: 'Talent acquisition',
+    items: [
       { id: 'fill-jobs', label: 'Fill Jobs', icon: '🎯' },
     ],
   },
   {
-    title: 'System',
+    title: 'Senior / Team Manager',
+    descriptor: 'Daily operations',
+    items: [
+      { id: 'sentiment', label: 'Team Sentiment', icon: '💭' },
+      { id: 'employee-leading', label: 'Team Leading Indicators', icon: '👥' },
+      { id: 'meeting-prep', label: 'Meeting Prep (1:1s)', icon: '📅' },
+    ],
+  },
+  {
+    title: 'Utility',
+    descriptor: 'Reference & help',
     items: [
       { id: 'tenant-config', label: 'Tenant Config', icon: '🔌' },
       { id: 'data-provenance', label: 'Data Provenance', icon: '🔍' },
       { id: 'about-cli', label: 'About CLI', icon: 'ℹ️' },
-      { id: 'further-reading', label: 'Further Reading', icon: '📚' },
       { id: 'help', label: 'Help & Guide', icon: '📖' },
     ],
   },
 ];
 
-// Flattened lookup of every nav item by id.
-export const NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
+// Views reachable but not shown as their own sidebar button (matches v1.24L):
+// overview is the landing/home (reached via the header logo); further-reading is
+// linked from About/Help. Kept here so labelFor/iconFor resolve their titles.
+const UNLISTED_VIEWS = [
+  { id: 'overview', label: 'Overview', icon: '📖' },
+  { id: 'further-reading', label: 'Further Reading', icon: '📚' },
+];
+
+// Flattened lookup of every view by id (first occurrence wins — the canonical
+// label, e.g. 'sentiment' resolves to 'Sentiment Analysis', not 'Team Sentiment').
+export const NAV_ITEMS = [...NAV_SECTIONS.flatMap((s) => s.items), ...UNLISTED_VIEWS];
 export const DEFAULT_VIEW = 'overview';
