@@ -5,6 +5,8 @@
 // No silent failures (§4.5): every failed fetch records lastError and still
 // returns the last-known payload as stalePayload so the UI can surface both.
 
+import { API_PREFIX } from '../lib/apiBase.js';
+
 const STORAGE_PREFIX = 'cli_connector_v2__';
 const SCHEMA_VERSION = 2;
 
@@ -16,7 +18,9 @@ const realClock = {
 
 export class BaseConnector {
   constructor(config = {}) {
-    this.config = config;
+    // Default the proxy base to the app's mount path so real connectors hit
+    // '/<base>/api/...' when hosted under a subpath; subclasses read config.proxyBase.
+    this.config = { proxyBase: API_PREFIX, ...config };
     this.tenantId = config.tenantId || 'default';
     this.enabled = config.enabled !== false;
     this.refreshMinutes = config.refreshMinutes || 60;

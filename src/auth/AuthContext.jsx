@@ -6,6 +6,7 @@
 // a non-secret bearer for reload restore, which is re-validated via /api/auth/me.
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { getTenant } from '../config/tenants.js';
+import { apiUrl } from '../lib/apiBase.js';
 
 const AuthContext = createContext(null);
 const TOKEN_KEY = 'cli_session_token_v2';
@@ -23,7 +24,7 @@ export function AuthProvider({ children }) {
     (async () => {
       // Is auth disabled (public demo build)? Ask the server.
       try {
-        const cfg = await fetch('/api/auth/config').then((r) => (r.ok ? r.json() : null));
+        const cfg = await fetch(apiUrl('/api/auth/config')).then((r) => (r.ok ? r.json() : null));
         if (!cancelled && cfg?.authDisabled) {
           setAuthDisabled(true);
           setTenant(getTenant('spgi'));
@@ -40,7 +41,7 @@ export function AuthProvider({ children }) {
         return;
       }
       try {
-        const me = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${saved}` } });
+        const me = await fetch(apiUrl('/api/auth/me'), { headers: { Authorization: `Bearer ${saved}` } });
         if (me.ok) {
           const { email: e, tenant: t } = await me.json();
           if (!cancelled) {
@@ -63,7 +64,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (emailInput, password) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(apiUrl('/api/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: emailInput, password }),

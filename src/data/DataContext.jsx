@@ -1,6 +1,7 @@
 // Loads the tenant dataset into React state (§4.4 — network/JSON is source of
 // truth, immutable updates, no module-global mutable app state).
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { assetUrl } from '../lib/apiBase.js';
 
 const DataContext = createContext(null);
 
@@ -18,7 +19,7 @@ export function DataProvider({ tenant, children }) {
       setStatus('ready');
       return;
     }
-    fetch('/data/spgi-data.json')
+    fetch(assetUrl('data/spgi-data.json'))
       .then((r) => {
         if (!r.ok) throw new Error(`data load failed: ${r.status}`);
         return r.json();

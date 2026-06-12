@@ -2,6 +2,7 @@
 // session JWT. The server validates auth, rate-limits, calls Anthropic, and
 // returns { text, empty } — content-block filtering happens server-side, so
 // the client never parses raw Anthropic payloads (and never sees an API key).
+import { apiUrl } from '../lib/apiBase.js';
 
 const FRIENDLY = {
   401: 'Session expired — please sign in again.',
@@ -35,7 +36,7 @@ export async function sendMentorMessage({ token, system, messages, dashboardCont
 
   let res;
   try {
-    res = await fetch('/api/chat', {
+    res = await fetch(apiUrl('/api/chat'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

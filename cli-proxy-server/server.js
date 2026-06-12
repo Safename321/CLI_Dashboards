@@ -16,19 +16,30 @@ app.set('trust proxy', 1); // correct client IPs behind a proxy for rate limitin
 app.use(express.json({ limit: '1mb' }));
 app.use(corsMiddleware);
 
-app.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0' }));
-app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api', dataRoutes);
+// Mount everything under an optional base path so the app can be hosted at the
+// origin root (APP_BASE unset) or under a subpath, e.g. APP_BASE=/CLI_Dashboards/
+// — must match the client's Vite `base`. BASE_PATH is normalized to no trailing
+// slash ('' at root, '/CLI_Dashboards' under a subpath).
+const BASE_PATH = (process.env.APP_BASE || '/').replace(/\/+$/, '');
+const api = express.Router();
+api.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0' }));
+api.use('/api/auth', authRoutes);
+api.use('/api/chat', chatRoutes);
+api.use('/api', dataRoutes);
 
 // Serve the built client when dist/ exists, so one origin hosts app + API in
 // every §8 serving context (localhost or public IP, HTTP or HTTPS). Same-origin
 // /api calls need no CORS entry; the allow-list governs cross-origin callers.
 const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 if (fs.existsSync(distDir)) {
-  app.use(express.static(distDir));
-  app.get(/^\/(?!api\/).*/, (req, res) => res.sendFile(path.join(distDir, 'index.html')));
+  api.use(express.static(distDir));
+  // SPA fallback for any non-API path under the base.
+  api.get(/^(?!\/api\/).*/, (req, res) => res.sendFile(path.join(distDir, 'index.html')));
 }
+
+app.use(BASE_PATH || '/', api);
+// When hosted under a subpath, bounce the bare origin to the app.
+if (BASE_PATH) app.get('/', (req, res) => res.redirect(BASE_PATH + '/'));
 
 // CORS rejections surface as a clean 403, not a stack trace.
 app.use((err, req, res, next) => {
@@ -40,6 +51,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 8787;
 app.listen(PORT, () => {
   console.log(`[cli-proxy] listening on :${PORT}`);
+  console.log(`[cli-proxy] base path: ${BASE_PATH || '/'}`);
   console.log(`[cli-proxy] CORS allow-list: ${ALLOWED_ORIGINS.join(', ')}`);
   console.log(`[cli-proxy] auth ${process.env.AUTH_DISABLED === 'true' ? 'DISABLED (public demo)' : 'enabled'}`);
 });
