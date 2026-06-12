@@ -26,5 +26,12 @@
     "deployer": "safename321",
     "ip": "185.220.69.91",
     "time": "2026-06-12 19:17:45 EDT"
+  },
+  {
+    "version": "v2.0.0m",
+    "message": "Add zip + GitHub release to deploy pipeline",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 19:22:26 EDT"
   }
 ]
