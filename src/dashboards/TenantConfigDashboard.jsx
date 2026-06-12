@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
 import { useRegistry } from '../connectors/RegistryContext.jsx';
+import HRISImportPanel from './HRISImportPanel.jsx';
 import { DOMAIN_LABELS, DOMAIN_DESCRIPTIONS, DOMAIN_ORDER } from '../data/datasets/connector-domains.js';
 
 function freshness(oldestSuccess) {
@@ -46,6 +47,8 @@ export default function TenantConfigDashboard() {
       subtitle='Configure data connectors per domain. The "Update Data" button calls every enabled connector in parallel and merges results into the dashboard.'
     >
       <div className="space-y-6">
+        {/* HRIS Import */}
+        <HRISImportPanel />
         {/* Run-all summary */}
         <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-panel/60 p-4">
           <div>
