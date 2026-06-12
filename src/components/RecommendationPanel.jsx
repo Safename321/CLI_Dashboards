@@ -132,7 +132,9 @@ function ReportModal({ tactic, panelTitle, evidence, strategy, data, onClose }) 
   );
 }
 
-export default function RecommendationPanel({ severity, title, evidence, strategy, tactics, downloadUrl, downloadLabel, reportData }) {
+// `download` ({label, onDownload}) supports custom document generators;
+// `downloadUrl`/`downloadLabel` keep the legacy Board/Investor packet routing.
+export default function RecommendationPanel({ severity, title, evidence, strategy, tactics, downloadUrl, downloadLabel, download, reportData }) {
   const [expanded, setExpanded] = useState(true);
   const [selectedTactic, setSelectedTactic] = useState(null);
   const [downloadStatus, setDownloadStatus] = useState(null);
@@ -153,7 +155,8 @@ export default function RecommendationPanel({ severity, title, evidence, strateg
     setDownloadStatus('downloading');
     setTimeout(() => {
       try {
-        if (downloadUrl && downloadUrl.includes('Board')) generateBoardPacketPDF(data);
+        if (download?.onDownload) download.onDownload();
+        else if (downloadUrl && downloadUrl.includes('Board')) generateBoardPacketPDF(data);
         else if (downloadUrl && downloadUrl.includes('Investor')) generateInvestorPDF(data);
       } catch (err) {
         console.error('[RecommendationPanel] packet generation failed:', err);
@@ -162,6 +165,7 @@ export default function RecommendationPanel({ severity, title, evidence, strateg
       setTimeout(() => setDownloadStatus(null), 2000);
     }, 300);
   };
+  const hasDownload = Boolean(downloadUrl || download);
 
   return (
     <div className={`${c.bg} border-l-4 ${c.border} mb-6 overflow-hidden rounded-r-xl`} style={{ borderLeftColor: c.accent }}>
@@ -197,11 +201,11 @@ export default function RecommendationPanel({ severity, title, evidence, strateg
       {expanded && (
         <div className="space-y-4 px-4 pb-4">
           {/* Pre-generated downloads */}
-          {downloadUrl && (
+          {hasDownload && (
             <div className="rounded-lg border border-emerald-500/30 bg-emerald-900/30 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-emerald-400">{downloadLabel || 'Pre-Generated Presentation Ready'}</div>
+                  <div className="text-sm font-semibold text-emerald-400">{download?.label || downloadLabel || 'Pre-Generated Presentation Ready'}</div>
                   <div className="text-xs text-muted">Downloads as HTML -- Print to PDF in browser</div>
                 </div>
                 <button

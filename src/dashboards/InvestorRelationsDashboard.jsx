@@ -2,6 +2,7 @@
 // divisions, M&A, and media sentiment (view id: investor-relations).
 import { useMemo } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
+import DemoDataBanner from '../components/DemoDataBanner.jsx';
 import RecommendationPanel from '../components/RecommendationPanel.jsx';
 import { FinancialTrendChart, AnalystRatingsPanel, MnAActivityPanel } from '../components/financial.jsx';
 import { useData, useYearData } from '../data/DataContext.jsx';
@@ -11,35 +12,6 @@ import { IR_ALERT, IR_PRICE_52W, IR_DIVIDEND_NOTE } from '../data/datasets/execu
 const signed = (v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}`;
 const pctChange = (curr, prev) => (curr != null && prev ? `${signed((curr / prev - 1) * 100)}%` : null);
 const ppChange = (curr, prev) => (curr != null && prev != null ? `${signed(curr - prev)} pp` : null);
-
-// Compact data-sources banner (legacy DemoDataBanner, tenant-aware via context).
-function DataSourcesBanner({ tenant }) {
-  if (tenant?.emptyState) {
-    return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-900/20 px-4 py-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-semibold text-amber-300">🧪 {tenant.companyName} tenant — awaiting data</span>
-          <span className="text-[11px] text-amber-200/80">CLI Flutter app pipeline → database → dashboard · no measurements recorded yet</span>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-lg border border-cyan-500/40 bg-cyan-900/20 px-4 py-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-cyan-300">📊 Data sources{tenant ? ` · ${tenant.companyName}` : ''}</span>
-        <div className="flex items-center gap-3 text-[11px]">
-          <span className="text-emerald-300">
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" aria-hidden /> Real — SEC EDGAR (financials)
-          </span>
-          <span className="text-amber-300">
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400" aria-hidden /> Demo — OASI scores, sentiment, headcount
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function InvestorRelationsDashboard({ yearData, onMetricClick }) {
   const { data, tenant } = useData();
@@ -103,7 +75,7 @@ export default function InvestorRelationsDashboard({ yearData, onMetricClick }) 
       }
     >
       <div className="space-y-6">
-        <DataSourcesBanner tenant={tenant} />
+        <DemoDataBanner />
 
         <RecommendationPanel
           severity={IR_ALERT.severity}

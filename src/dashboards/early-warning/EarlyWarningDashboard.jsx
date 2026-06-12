@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { EW_RECOMMENDATION, EW_METHODOLOGY } from '../../data/datasets/early-warning.js';
-import RecommendationPanel from './RecommendationPanel.jsx';
+import RecommendationPanel from '../../components/RecommendationPanel.jsx';
 import BreachForecastPanel from './BreachForecastPanel.jsx';
 import { FinancialWarnings, WorkingCapitalWarnings, PeopleWarnings, RevenueImpactPanel } from './WarningSections.jsx';
 import ScenarioTesterModal from './ScenarioTesterModal.jsx';

@@ -9,8 +9,8 @@ Running log per REWRITE_BRIEF.md §"OPERATING MODE". Newest entries appended at 
 ## Milestones (ntfy)
 - [x] 25% — primitives + data layer + connector base/registry; app boots (2026-06-11; first send got HTTP 429, delivered on resend)
 - [x] 50% — dashboards reimplemented with parity, tests green (2026-06-11; notified)
-- [ ] 75% — all dashboards + mentor + proxy + server auth + rate limiting
-- [ ] 100% — all §8 acceptance criteria met, pushed
+- [x] 75% — all dashboards + mentor + proxy + server auth + rate limiting (2026-06-12; notified)
+- [x] 100% — §8 acceptance criteria met (one documented caveat: literal line-count range; see Step 7), pushed (2026-06-12; notified)
 
 ## Log
 
@@ -54,4 +54,22 @@ Running log per REWRITE_BRIEF.md §"OPERATING MODE". Newest entries appended at 
 - Unit tests: 26 green (connector retry/stale-fallback/cache, registry runAll/real-over-mock/crisis, RSS parser, Anthropic content-block handler).
 - Playwright e2e: **30/30 green** — login without secure-context APIs, bad-credential rejection, every nav view mounts with expected content and zero console errors.
 - 25% (resend) + 50% ntfy notifications delivered.
-- **NEXT (resume here):** tools agent (fill-jobs, mgmt-challenges) → register + strengthen their e2e expectations; live-verify mentor against /api/chat (needs ANTHROPIC_API_KEY; without it verify the friendly error path); rate-limit live check; multi-context login verification (HTTP/HTTPS × localhost/public); bundle security greps; README/version checks → §8 sign-off → 75%/100% milestones., wire the AI mentor + verify proxy/auth/rate-limit live (75%), add the §6 unit + e2e tests, satisfy all §8 acceptance criteria (100%). Build the two interactive tools (Fill Jobs, Mgmt Challenges) natively per §4.3b. Add README documenting demo creds + serving contexts.
+### 2026-06-12 — Step 6: Tools landed, rate limits + serving contexts verified (75%)
+- Tools agent hit the session usage limit mid-run but had already written 15 syntax-clean files; finished its remaining work by hand: wrote the missing `FaqModal.jsx` (legacy FAQ's embedded base64 PDF dropped — content rendered natively from the PROBLEMS dataset), replaced a module-global party-id counter with useRef (§4.4), registered `fill-jobs` + `mgmt-challenges`. Both tools are native React (§4.3b): Fill Jobs = ASSET-P position interpreter with 22-candidate matching; Mgmt Challenges = Peace Pad with 21 challenge types, party overlays, gap analysis, resolution report. No iframes, no base64, no external CDN/fonts.
+- E2E strengthened for both tools; **30/30 e2e + 26/26 unit green**. 75% ntfy delivered.
+- Rate limiting verified live (previous evening): `/api/auth/login` → 401×9 then 429 (plus 600ms constant-time delay per attempt); `/api/chat` → 20/min then 429. Foreign-origin POST to /api/chat → 403; allow-listed origin reflected; foreign preflight gets no ACAO header.
+- Mentor verified in-browser via `scripts/mentor-check.mjs`: panel opens, message sends, **friendly error banner** (no ANTHROPIC_API_KEY configured) — no raw server strings leaked, no page errors.
+- **Login verified in all four §8 serving contexts** via `scripts/login-check.mjs` (real Chromium): (a) http://localhost:8787, (b) https://localhost:8443 (self-signed TLS terminator), (c) http://161.35.118.231:8787 (public IP), (d) https://161.35.118.231:8443 (public IP over TLS; no public domain exists in this environment — TLS×public-origin combination covered). All four: LOGIN OK, zero console errors, zero crypto.subtle/SubtleCrypto/secure-context errors.
+- Fix found by context (b): Vite emits `<script type="module" crossorigin>`, which sends an Origin header even same-origin, so unknown-origin deployments 403'd on their own assets. `middleware/cors.js` now passes genuinely same-origin requests (origin host == request host — browser-controlled, not spoofable) while keeping the strict cross-origin allow-list (§3.7). This is what makes §3.1 "works from any serving origin without rebuild" actually true.
+
+### 2026-06-12 — Step 7: Dedup pass + final §8 acceptance verification (100%)
+- Dedup pass on parallel-agent duplicates (§4.2/§8 "no duplicated card/chart/table logic"): deleted local `early-warning/RecommendationPanel.jsx` + `external/AdvisoryPanel.jsx` (shared `components/RecommendationPanel.jsx` extended with a `download={{label,onDownload}}` prop), and two local DemoDataBanner reimplementations (InvestorRelations, AspirationalOASI) → shared `components/DemoDataBanner.jsx`. All suites re-run green.
+- **Final §8 verification (fresh build):**
+  - crypto.subtle/SubtleCrypto in bundle: 0 · CLI2026: 0 · demo password: 0 · bcrypt material: 0 · VITE_ refs: 0 · base64 html/pdf/png blobs: 0 · external CDN/font URLs: 0.
+  - `.env` never committed (history checked); credentials.js holds no secrets (env-driven bcrypt verify).
+  - Files >400 lines: **0** across src/, cli-proxy-server/, tests/.
+  - Chat proxy fails closed (401, verified), CORS allow-listed (verified both directions), rate limiting live (verified), single entrypoint `src/main.jsx`, version single-sourced from package.json via `config/version.js`.
+  - §5 data fixes in place: BLS all-series, USPTO current API, real XML RSS parser (unit-tested), mentor content-block filtering (unit-tested).
+  - §6 tests: 26 unit + 30 e2e (every view with content assertions + console-error checks), all green.
+- **One criterion not met literally, documented honestly:** §8's "App-equivalent React code roughly 4,000–5,500 lines". Actual: **11,851 lines** (components+dashboards+mentor+reports+shell, excluding extracted datasets). Why: (1) full parity across 27 views incl. the two interactive tools now as ~2,200 lines of real native code (legacy held them as 550KB base64 blobs — outside its 10,374-line count); (2) readable formatting averages 49 chars/line vs the legacy's dense 66; (3) char-level, the new app-equivalent logic is **592K chars vs legacy's 682K** with data moved out (352K chars of datasets) and two HTML apps absorbed. The criterion's substance — no monolith, no file >400 lines, no duplicated card/chart/table logic, data-driven dashboards — is met; the literal line range is not achievable with full parity + readable code, and shrinking it by reformatting would game the metric rather than improve the codebase.
+- **100% — engagement complete.** All §8 criteria verified (one documented caveat above), pushed to origin/AllRepo., wire the AI mentor + verify proxy/auth/rate-limit live (75%), add the §6 unit + e2e tests, satisfy all §8 acceptance criteria (100%). Build the two interactive tools (Fill Jobs, Mgmt Challenges) natively per §4.3b. Add README documenting demo creds + serving contexts.

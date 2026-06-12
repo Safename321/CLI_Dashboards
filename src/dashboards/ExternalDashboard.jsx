@@ -6,7 +6,7 @@ import DashboardShell from '../components/DashboardShell.jsx';
 import { MetricCard, Panel, StatusBadge } from '../components/primitives.jsx';
 import { useData } from '../data/DataContext.jsx';
 import { useRegistry } from '../connectors/RegistryContext.jsx';
-import AdvisoryPanel from './external/AdvisoryPanel.jsx';
+import RecommendationPanel from '../components/RecommendationPanel.jsx';
 import {
   CRISIS_RECOMMENDATION,
   DEMO_CRISIS,
@@ -67,7 +67,7 @@ export default function ExternalDashboard({ yearData, selectedYear }) {
       subtitle="Brand perception, competitive landscape, and external stakeholder sentiment"
     >
       <div className="space-y-6">
-        <AdvisoryPanel
+        <RecommendationPanel
           severity={CRISIS_RECOMMENDATION.severity}
           title={CRISIS_RECOMMENDATION.title}
           evidence={[

@@ -35,26 +35,26 @@ Authoritative source: the `renderDashboard` switch at `App.jsx:10263` plus the s
 | 27 | `further-reading` | FurtherReadingView | Reference list (`renderFurtherReading`, App.jsx:2349) |
 
 ## Cross-cutting subsystems
-- [ ] **AI Mentor** — CLI Achieving Styles system prompt (own asset, §4.1), chat UI, deep-link/navigate from responses (`renderCLAIMMessage`, App.jsx:9211); response handler filters content blocks by type (§5).
-- [ ] **OASI/ASI radar** — 9 Achieving Styles (Vicarious, Contributory, Collaborative, Intrinsic, Competitive, Power, Entrusting, Social, Personal) across 3 clusters (Relational, Direct, Instrumental).
-- [ ] **Report generation** — Achieving-Styles-lens reports (App.jsx:1184+ logic), no base64 blobs.
-- [ ] **Connector layer** — BaseConnector (retry/backoff, stale fallback, localStorage), ConnectorRegistry (runAll, getLatestForDomain, derivePrCrisis), 11 domains real+mock.
-- [ ] **Two interactive tools** — Fill Jobs + Management Challenges, rebuilt native (preferred) sharing design system; no external CDN/font at runtime.
-- [ ] **Multi-tenant** — tenants zoetis / spgi / generic; tenant detection by email domain (now server-side at login).
+- [x] **AI Mentor** — CLI Achieving Styles system prompt (own asset, §4.1), chat UI, deep-link/navigate from responses (`renderCLAIMMessage`, App.jsx:9211); response handler filters content blocks by type (§5).
+- [x] **OASI/ASI radar** — 9 Achieving Styles (Vicarious, Contributory, Collaborative, Intrinsic, Competitive, Power, Entrusting, Social, Personal) across 3 clusters (Relational, Direct, Instrumental).
+- [x] **Report generation** — Achieving-Styles-lens reports (App.jsx:1184+ logic), no base64 blobs.
+- [x] **Connector layer** — BaseConnector (retry/backoff, stale fallback, localStorage), ConnectorRegistry (runAll, getLatestForDomain, derivePrCrisis), 11 domains real+mock.
+- [x] **Two interactive tools** — Fill Jobs + Management Challenges, rebuilt native (preferred) sharing design system; no external CDN/font at runtime.
+- [x] **Multi-tenant** — tenants zoetis / spgi / generic; tenant detection by email domain (now server-side at login).
 
 ## Data-correctness fixes (§5) to carry in
-- [ ] BLS JOLTS: fetch ALL requested series (old code `slice(0,4)`).
-- [ ] USPTO: current PatentsView Search API, verify live or mark mock-only.
-- [ ] RSS (Google News): real XML parser, not regex.
-- [ ] Mentor: filter Anthropic content blocks by type; handle empty/error responses.
+- [x] BLS JOLTS: fetch ALL requested series (old code `slice(0,4)`).
+- [x] USPTO: current PatentsView Search API, verify live or mark mock-only.
+- [x] RSS (Google News): real XML parser, not regex.
+- [x] Mentor: filter Anthropic content blocks by type; handle empty/error responses.
 
 ## Security (§3) — definition of done
-- [ ] Login works in all 4 serving contexts; no `crypto.subtle` in auth path.
-- [ ] No client-side auth secrets / hashes / credential strings in bundle.
-- [ ] Server-managed, configurable demo credentials (env/config, not client).
-- [ ] Single entrypoint `src/main.jsx`.
-- [ ] No `VITE_`-prefixed secrets; `.env.example` provided.
-- [ ] `/api/chat` fails closed (401 without valid token).
-- [ ] CORS allow-listed on chat + auth endpoints (no wildcard).
-- [ ] Rate limiting on `/api/chat` (per-IP) and `/api/auth/login` (per-IP + backoff).
-- [ ] No secrets in repo or git history.
+- [x] Login works in all 4 serving contexts; no `crypto.subtle` in auth path.
+- [x] No client-side auth secrets / hashes / credential strings in bundle.
+- [x] Server-managed, configurable demo credentials (env/config, not client).
+- [x] Single entrypoint `src/main.jsx`.
+- [x] No `VITE_`-prefixed secrets; `.env.example` provided.
+- [x] `/api/chat` fails closed (401 without valid token).
+- [x] CORS allow-listed on chat + auth endpoints (no wildcard).
+- [x] Rate limiting on `/api/chat` (per-IP) and `/api/auth/login` (per-IP + backoff).
+- [x] No secrets in repo or git history.

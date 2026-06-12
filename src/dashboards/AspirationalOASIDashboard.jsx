@@ -3,6 +3,7 @@
 // (App.jsx ~6025-6233). View id: aspirational-oasi.
 import { useMemo } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
+import DemoDataBanner from '../components/DemoDataBanner.jsx';
 import { OASIOverlayRadarChart } from '../components/OASIRadar.jsx';
 import { useData } from '../data/DataContext.jsx';
 import {
@@ -46,30 +47,6 @@ const STATE_CARDS = [
   { tone: 'border-emerald-500/30 bg-emerald-900/20', tag: 'text-emerald-400', tagText: 'Target State (2028)', title: 'Balanced Connective Leadership', titleClass: 'text-emerald-300', text: 'Relational (7.1 avg) and Instrumental (6.4 avg) elevated; Direct (5.8 avg) moderated.' },
 ];
 
-function DemoDataBanner({ tenant }) {
-  if (tenant?.emptyState) {
-    return (
-      <div className="rounded-lg border border-amber-500/40 bg-amber-900/20 px-4 py-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-sm font-semibold text-amber-300">🧪 {tenant.companyName} tenant — awaiting data</span>
-          <span className="text-[11px] text-amber-200/80">CLI Flutter app pipeline → database → dashboard · no measurements recorded yet</span>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-lg border border-cyan-500/40 bg-cyan-900/20 px-4 py-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-cyan-300">📊 Data sources{tenant ? ` · ${tenant.companyName}` : ''}</span>
-        <div className="flex items-center gap-3 text-[11px]">
-          <span className="text-emerald-300"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />Real — SEC EDGAR (financials)</span>
-          <span className="text-amber-300"><span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400" />Demo — OASI scores, sentiment, headcount</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function AspirationalOASIDashboard() {
   const { tenant } = useData();
   const scores = ORG_OASI_SCORES;
@@ -93,7 +70,7 @@ export default function AspirationalOASIDashboard() {
       subtitle="Desired vs. current organizational culture — the change target for leadership"
     >
       <div className="space-y-6">
-        <DemoDataBanner tenant={tenant} />
+        <DemoDataBanner />
 
         <div className="flex items-center justify-between">
           <div>

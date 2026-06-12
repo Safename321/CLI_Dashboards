@@ -2,7 +2,7 @@
 // dashboard data. Tiny in v1.24L: one advisory panel with a board-packet
 // download (HTML report, print-to-PDF — same pattern as the legacy generators).
 import DashboardShell from '../components/DashboardShell.jsx';
-import AdvisoryPanel from './external/AdvisoryPanel.jsx';
+import RecommendationPanel from '../components/RecommendationPanel.jsx';
 
 function downloadBoardBrief(yearData) {
   const fin = yearData || {};
@@ -47,7 +47,7 @@ export default function MeetingPrepDashboard({ yearData }) {
       alerts={1}
       subtitle="Briefing summaries and talking points generated from current dashboard data"
     >
-      <AdvisoryPanel
+      <RecommendationPanel
         severity="info"
         title="Board Meeting in 5 Days"
         evidence={['May 22, 2026', 'Agenda ready']}
