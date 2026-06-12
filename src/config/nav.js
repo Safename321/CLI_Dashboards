@@ -92,4 +92,4 @@ const UNLISTED_VIEWS = [
 // Flattened lookup of every view by id (first occurrence wins — the canonical
 // label, e.g. 'sentiment' resolves to 'Sentiment Analysis', not 'Team Sentiment').
 export const NAV_ITEMS = [...NAV_SECTIONS.flatMap((s) => s.items), ...UNLISTED_VIEWS];
-export const DEFAULT_VIEW = 'overview';
+export const DEFAULT_VIEW = 'ceo-advisory';
