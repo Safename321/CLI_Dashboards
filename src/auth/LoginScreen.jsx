@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext.jsx';
 import { APP_VERSION_LABEL } from '../config/version.js';
+import { CLILogo } from '../components/CLILogo.jsx';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -32,12 +33,12 @@ export default function LoginScreen() {
         onSubmit={onSubmit}
         className="w-full max-w-[420px] rounded-xl border border-border bg-panel p-8 shadow-2xl"
       >
-        <div className="mb-1 flex items-baseline gap-2">
-          <span className="text-2xl font-black text-brand">The Future</span>
-          <span className="text-xs text-muted">· CLI</span>
+        <div className="mb-1 flex items-center gap-3">
+          <CLILogo size={48} />
+          <span className="text-3xl font-black text-brand">The Future</span>
         </div>
         <p className="mb-6 text-[13px] text-muted">
-          Connective Leadership Institute · Behavioral intelligence platform
+          Connective Leadership Dashboards · Behavioral intelligence platform
         </p>
 
         <label className="mb-3 block">

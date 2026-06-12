@@ -1,13 +1,14 @@
 // App shell ONLY (§4.1): sidebar + view switch + top-level state. No dashboard
 // logic lives here. Data via DataProvider, auth via AuthProvider, connector
 // registry via RegistryProvider; metric drill + AI mentor mounted here.
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import TrendChartModal from './components/TrendChartModal.jsx';
 import { DataProvider, useYearData } from './data/DataContext.jsx';
-import { RegistryProvider } from './connectors/RegistryContext.jsx';
+import { RegistryProvider, useRegistry } from './connectors/RegistryContext.jsx';
 import { useAuth } from './auth/AuthContext.jsx';
 import AIMentor from './mentor/AIMentor.jsx';
+import ScenarioTesterModal from './dashboards/early-warning/ScenarioTesterModal.jsx';
 import { renderView } from './dashboards/index.jsx';
 import { DEFAULT_VIEW } from './config/nav.js';
 
@@ -18,7 +19,16 @@ function AppInner() {
   const [mentorOpen, setMentorOpen] = useState(false);
   const [conversation, setConversation] = useState([]);
   const [preSelection, setPreSelection] = useState(null);
+  const [scenarioOpen, setScenarioOpen] = useState(false);
   const yearData = useYearData(selectedYear);
+
+  // Global Scenario Tester: the sidebar button dispatches this event (v1.24L
+  // parity), so the modal opens from any view.
+  useEffect(() => {
+    const open = () => setScenarioOpen(true);
+    window.addEventListener('cli:open-scenario-tester', open);
+    return () => window.removeEventListener('cli:open-scenario-tester', open);
+  }, []);
 
   const onMetricClick = useCallback((metric, label) => setTrendMetric({ metric, label }), []);
   // Deep-link from mentor: navigate to a view with an optional pre-selection payload.
@@ -46,6 +56,7 @@ function AppInner() {
       {trendMetric && (
         <TrendChartModal metric={trendMetric.metric} label={trendMetric.label} onClose={() => setTrendMetric(null)} />
       )}
+      <ScenarioTesterModal open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
       <AIMentor
         isOpen={mentorOpen}
         onClose={() => setMentorOpen(false)}
@@ -65,6 +76,7 @@ function AppInner() {
 // the year selector re-render stays local.
 function SidebarSlot({ view, setView, selectedYear, setSelectedYear }) {
   const { tenant, email, logout, authDisabled } = useAuth();
+  const { runAll, running } = useRegistry();
   return (
     <Sidebar
       active={view}
@@ -75,6 +87,8 @@ function SidebarSlot({ view, setView, selectedYear, setSelectedYear }) {
       authDisabled={authDisabled}
       selectedYear={selectedYear}
       onYearChange={setSelectedYear}
+      onUpdate={runAll}
+      updating={running}
     />
   );
 }

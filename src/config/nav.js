@@ -76,17 +76,17 @@ export const NAV_SECTIONS = [
       { id: 'tenant-config', label: 'Tenant Config', icon: '🔌' },
       { id: 'data-provenance', label: 'Data Provenance', icon: '🔍' },
       { id: 'about-cli', label: 'About CLI', icon: 'ℹ️' },
+      { id: 'further-reading', label: 'Further Reading', icon: '📚' },
       { id: 'help', label: 'Help & Guide', icon: '📖' },
     ],
   },
 ];
 
 // Views reachable but not shown as their own sidebar button (matches v1.24L):
-// overview is the landing/home (reached via the header logo); further-reading is
-// linked from About/Help. Kept here so labelFor/iconFor resolve their titles.
+// overview is the landing/home, reached via the header logo. Kept here so
+// labelFor/iconFor resolve its title.
 const UNLISTED_VIEWS = [
   { id: 'overview', label: 'Overview', icon: '📖' },
-  { id: 'further-reading', label: 'Further Reading', icon: '📚' },
 ];
 
 // Flattened lookup of every view by id (first occurrence wins — the canonical

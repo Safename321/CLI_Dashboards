@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { NAV_SECTIONS } from '../config/nav.js';
 import { APP_VERSION_LABEL } from '../config/version.js';
-import { assetUrl } from '../lib/apiBase.js';
+import { CLILogo } from './CLILogo.jsx';
 
 // v1.24L palette
 const SIDEBAR_BG = '#0c1e35';
@@ -25,7 +25,7 @@ const DEFAULT_COLLAPSED = NAV_SECTIONS.reduce(
   {},
 );
 
-export default function Sidebar({ active, onNav, tenant, email, onLogout, authDisabled, selectedYear, onYearChange }) {
+export default function Sidebar({ active, onNav, tenant, email, onLogout, authDisabled, selectedYear, onYearChange, onUpdate, updating }) {
   const [collapsed, setCollapsed] = useState(() => {
     try {
       const saved = localStorage.getItem(COLLAPSE_KEY);
@@ -44,18 +44,18 @@ export default function Sidebar({ active, onNav, tenant, email, onLogout, authDi
 
   return (
     <div
-      className="flex w-56 shrink-0 flex-col overflow-y-auto"
+      className="flex h-full w-56 shrink-0 flex-col"
       style={{ backgroundColor: SIDEBAR_BG, borderRight: `1px solid ${SIDEBAR_BORDER}` }}
     >
       {/* Header — logo + brand, click to go Home (overview) */}
       <button
         onClick={() => onNav('overview')}
-        className="p-4 text-left"
+        className="shrink-0 p-4 text-left"
         style={{ borderBottom: `1px solid ${SIDEBAR_BORDER}`, background: 'transparent', cursor: 'pointer' }}
         title="Home"
       >
         <div className="flex items-center gap-3">
-          <img src={assetUrl('cli-wheel.png')} alt="CLI" style={{ width: 40, height: 40 }} />
+          <CLILogo size={40} />
           <span style={{ color: '#E00000', fontFamily: "'Arial Black','Arial',sans-serif", fontWeight: 800, fontSize: '30px', lineHeight: '34px' }}>
             The Future
           </span>
@@ -125,8 +125,25 @@ export default function Sidebar({ active, onNav, tenant, email, onLogout, authDi
         })}
       </nav>
 
-      {/* Footer — account, version, data year */}
-      <div className="space-y-2 px-3 py-2">
+      {/* Footer — quick actions, account, version, data year (pinned; never scrolls) */}
+      <div className="shrink-0 space-y-2 px-3 py-2">
+        <button
+          onClick={() => { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('cli:open-scenario-tester')); }}
+          style={{ width: '100%', background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.5)', color: '#67e8f9', fontSize: '11px', fontWeight: 700, padding: '6px 8px', borderRadius: '6px', cursor: 'pointer', textAlign: 'center' }}
+          onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(6,182,212,0.25)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(6,182,212,0.15)'; }}
+        >
+          🔮 Scenario Tester
+        </button>
+        {onUpdate && (
+          <button
+            onClick={onUpdate}
+            disabled={updating}
+            style={{ width: '100%', background: 'transparent', border: `1px solid ${SIDEBAR_BORDER}`, color: '#4a7fa5', fontSize: '10px', padding: '4px 8px', borderRadius: '6px', cursor: updating ? 'default' : 'pointer', textAlign: 'center' }}
+          >
+            {updating ? '⟳ Updating...' : '↻ Update Data'}
+          </button>
+        )}
         {!authDisabled && email && (
           <button
             onClick={onLogout}
@@ -142,7 +159,7 @@ export default function Sidebar({ active, onNav, tenant, email, onLogout, authDi
       </div>
 
       {onYearChange && (
-        <div className="p-2" style={{ borderTop: `1px solid ${SIDEBAR_BORDER}` }}>
+        <div className="shrink-0 p-2" style={{ borderTop: `1px solid ${SIDEBAR_BORDER}` }}>
           <div className="flex items-center justify-between gap-2 px-1">
             <span style={{ color: '#94a3b8', fontSize: '12px' }}>Data Year:</span>
             <select

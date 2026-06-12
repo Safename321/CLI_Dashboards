@@ -10,6 +10,7 @@ import SYSTEM_PROMPT from './system-prompt.md?raw';
 import { sendMentorMessage } from './api.js';
 import renderMentorMessage from './renderMessage.jsx';
 import { buildDashboardContext, getMentorAlerts } from './buildContext.js';
+import { CLILogo } from '../components/CLILogo.jsx';
 import { generateSessionReport } from './sessionReport.js';
 import MentorTabs from './MentorTabs.jsx';
 import MentorAlerts from './MentorAlerts.jsx';
@@ -148,7 +149,7 @@ export default function AIMentor({
         >
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow">
-              <img src="/cli-wheel.png" alt="" className="h-6 w-6 object-contain" />
+              <CLILogo size={24} />
             </div>
             <span className="text-sm font-bold tracking-tight text-white">CLI — AI Mentor</span>
             <span className="text-xs text-cyan-300 opacity-70">· {currentDashboard}</span>
@@ -214,7 +215,7 @@ export default function AIMentor({
                       {accentColor ? (
                         <span className="text-[11px]">{msgTab?.icon}</span>
                       ) : (
-                        <img src="/cli-wheel.png" alt="" className="h-5 w-5 object-contain" />
+                        <CLILogo size={20} />
                       )}
                     </div>
                   )}
