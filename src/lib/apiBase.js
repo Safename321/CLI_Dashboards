@@ -3,7 +3,10 @@
 // build-time `base` option; it always carries a trailing slash ('/' or
 // '/CLI_Dashboards/'). All same-origin fetches go through these so absolute
 // '/api' / '/data' paths don't escape the subpath.
-const BASE = (import.meta?.env?.BASE_URL) || '/';
+// NOTE: must be the exact token `import.meta.env.BASE_URL` (no optional
+// chaining) so Vite statically replaces it with the build-time base. Using
+// `import.meta?.env?.BASE_URL` silently defeats that and collapses to '/'.
+const BASE = import.meta.env.BASE_URL || '/';
 
 // API endpoint under the app base.
 //   apiUrl('/api/auth/login') -> '/CLI_Dashboards/api/auth/login'  (subpath)
