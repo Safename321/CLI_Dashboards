@@ -54,9 +54,9 @@ export default function Sidebar({ active, onNav, tenant, email, onLogout, authDi
         style={{ borderBottom: `1px solid ${SIDEBAR_BORDER}`, background: 'transparent', cursor: 'pointer' }}
         title="Home"
       >
-        <div className="flex items-center gap-3">
-          <CLILogo size={40} />
-          <span style={{ color: '#E00000', fontFamily: "'Arial Black','Arial',sans-serif", fontWeight: 800, fontSize: '30px', lineHeight: '34px' }}>
+        <div className="flex items-center gap-4">
+          <CLILogo size={56} />
+          <span className="flex-1" style={{ color: '#E00000', fontFamily: "'Arial Black','Arial',sans-serif", fontWeight: 800, fontSize: '28px', lineHeight: '30px' }}>
             The Future
           </span>
         </div>

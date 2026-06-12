@@ -9,6 +9,7 @@ import { RegistryProvider, useRegistry } from './connectors/RegistryContext.jsx'
 import { useAuth } from './auth/AuthContext.jsx';
 import AIMentor from './mentor/AIMentor.jsx';
 import ScenarioTesterModal from './dashboards/early-warning/ScenarioTesterModal.jsx';
+import { CLILogo } from './components/CLILogo.jsx';
 import { renderView } from './dashboards/index.jsx';
 import { DEFAULT_VIEW } from './config/nav.js';
 
@@ -47,9 +48,12 @@ function AppInner() {
         <button
           onClick={() => setMentorOpen(true)}
           aria-label="Open AI mentor"
-          className="absolute bottom-5 right-5 z-40 rounded-full border border-accent/50 bg-panel px-4 py-3 text-sm font-semibold text-accent shadow-lg transition-colors hover:bg-accent/10"
+          className="absolute bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-accent/50 bg-panel py-2.5 pl-2.5 pr-4 text-sm font-semibold text-accent shadow-lg transition-colors hover:bg-accent/10"
         >
-          💬 CLI Mentor
+          <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white">
+            <CLILogo size={22} />
+          </span>
+          CLI Mentor
         </button>
       </main>
 
