@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CLI Dashboards — Deploy Log</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 2rem; }
+  h1 { font-size: 1.4rem; color: #22d3ee; margin-bottom: 0.5rem; }
+  .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 2rem; }
+  .entry { border: 1px solid #1e293b; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; background: #1e293b; }
+  .version { color: #22d3ee; font-weight: 700; font-size: 1.1rem; }
+  .msg { color: #f1f5f9; margin: 0.3rem 0; }
+  .meta { color: #64748b; font-size: 0.8rem; }
+  .empty { color: #475569; font-style: italic; }
+  a { color: #22d3ee; }
+</style>
+</head>
+<body>
+<h1>CLI Dashboards — Deploy Log</h1>
+<p class="sub">Latest deployments. Auto-updated on each deploy.</p>
+<div id="log"><p class="empty">Loading...</p></div>
+<script>
+fetch('/deploy-log.json').then(r=>r.json()).then(entries=>{
+  const el=document.getElementById('log');
+  if(!entries.length){el.innerHTML='<p class="empty">No deployments yet.</p>';return;}
+  el.innerHTML=entries.slice().reverse().map(e=>`
+    <div class="entry">
+      <span class="version">${e.version}</span>
+      <p class="msg">${e.message}</p>
+      <div class="meta">${e.deployer} &middot; ${e.ip} &middot; ${e.time}</div>
+    </div>`).join('');
+});
+</script>
+</body>
+</html>

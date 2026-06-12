@@ -18,3 +18,5 @@ dist/
 # all env files incl. editor backups (.env.save, .env.local) — never commit secrets
 .env*
 !.env.example
+
+.vercel
