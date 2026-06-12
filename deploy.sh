@@ -41,24 +41,18 @@ git add -A
 git commit -m "$MSG ($VERSION)"
 git push origin AllRepo
 
-# 7. Create zip (exclude .git, node_modules, dist, .env)
+# 7. Create zip using git archive (avoids file locks)
 ZIPNAME="cli-dashboards-${VERSION}.zip"
-ZIPPATH="/tmp/${ZIPNAME}"
 echo "Creating ${ZIPNAME}..."
-powershell.exe -Command "
-  \$src = (Get-Location).Path
-  if (Test-Path '$ZIPPATH') { Remove-Item '$ZIPPATH' }
-  \$items = Get-ChildItem -Path \$src -Exclude '.git','node_modules','dist','.env'
-  Compress-Archive -Path \$items.FullName -DestinationPath 'C:\tmp\${ZIPNAME}' -Force
-"
+git archive --format=zip --prefix="cli-dashboards-${VERSION}/" -o "/tmp/${ZIPNAME}" HEAD
 
 # 8. Create GitHub release + upload zip
 echo "Creating GitHub release ${VERSION}..."
-CRED=$(git credential fill <<EOF 2>/dev/null | grep password | cut -d= -f2
+CRED=$(git credential fill 2>/dev/null << CREDEOF | grep password | cut -d= -f2
 protocol=https
 host=github.com
 
-EOF
+CREDEOF
 )
 git tag "$VERSION" 2>/dev/null || true
 git push origin "$VERSION" 2>/dev/null || true
@@ -67,23 +61,23 @@ RELEASE_JSON=$(curl -s -X POST "https://api.github.com/repos/${REPO}/releases" \
   -H "Authorization: token $CRED" \
   -H "Accept: application/vnd.github+json" \
   -d "{\"tag_name\":\"${VERSION}\",\"name\":\"CLI Dashboards ${VERSION}\",\"body\":\"${MSG}\",\"draft\":false,\"prerelease\":false}")
-RELEASE_ID=$(echo "$RELEASE_JSON" | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).id")
+RELEASE_ID=$(echo "$RELEASE_JSON" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id")
 
 if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "undefined" ]; then
   echo "Uploading ${ZIPNAME} to release..."
   curl -s -X POST "https://uploads.github.com/repos/${REPO}/releases/${RELEASE_ID}/assets?name=${ZIPNAME}" \
     -H "Authorization: token $CRED" \
     -H "Content-Type: application/zip" \
-    --data-binary "@C:/tmp/${ZIPNAME}" > /dev/null
+    --data-binary "@/tmp/${ZIPNAME}" > /dev/null
   echo "Zip uploaded to GitHub release."
 else
-  echo "Warning: Could not create release (may already exist). Skipping zip upload."
+  echo "Warning: Could not create release. Skipping zip upload."
 fi
 
 # 9. Deploy to Vercel
 vercel --prod --yes
 
-# 10. Notify via ntfy.sh (shows on status page + push notification)
+# 10. Notify via ntfy.sh (shows on status page instantly)
 curl -s -X POST "$NTFY_TOPIC" \
   -H "Title: Deployed $VERSION" \
   -H "Tags: rocket" \

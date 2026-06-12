@@ -33,5 +33,12 @@
     "deployer": "safename321",
     "ip": "185.220.69.91",
     "time": "2026-06-12 19:22:26 EDT"
+  },
+  {
+    "version": "v2.0.0n",
+    "message": "Fix deploy pipeline and add PUBLISHING.md",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 19:24:14 EDT"
   }
 ]
