@@ -1,7 +1,7 @@
 {
   "name": "cli-dashboards",
   "version": "2.0.0",
-  "buildLetter": "k",
+  "buildLetter": "l",
   "type": "module",
   "description": "CLI Dashboards — behavioral-intelligence platform (clean rewrite of v1.24L)",
   "scripts": {
