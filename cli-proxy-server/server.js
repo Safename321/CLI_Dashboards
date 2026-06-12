@@ -11,6 +11,13 @@ import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import dataRoutes from './routes/data.js';
 
+// Single-source the version from package.json (version + buildLetter), so the
+// health endpoint matches the in-app label (e.g. 2.0.0a) without a second edit.
+const pkg = JSON.parse(
+  fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'),
+);
+const APP_VERSION = `${pkg.version}${pkg.buildLetter || ''}`;
+
 const app = express();
 app.set('trust proxy', 1); // correct client IPs behind a proxy for rate limiting
 app.use(express.json({ limit: '1mb' }));
@@ -22,7 +29,7 @@ app.use(corsMiddleware);
 // slash ('' at root, '/CLI_Dashboards' under a subpath).
 const BASE_PATH = (process.env.APP_BASE || '/').replace(/\/+$/, '');
 const api = express.Router();
-api.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0' }));
+api.get('/api/health', (req, res) => res.json({ ok: true, version: APP_VERSION }));
 api.use('/api/auth', authRoutes);
 api.use('/api/chat', chatRoutes);
 api.use('/api', dataRoutes);
