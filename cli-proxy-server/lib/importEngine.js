@@ -2,6 +2,13 @@ import { getDb, schema } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 import { ingestWorkers as ingestWorkersMemory } from './workdayStore.js';
 
+async function ensureCustomer(db, tenantId) {
+  const existing = await db.select().from(schema.customers).where(eq(schema.customers.name, tenantId)).limit(1);
+  if (existing.length > 0) return existing[0].id;
+  const [created] = await db.insert(schema.customers).values({ name: tenantId }).returning();
+  return created.id;
+}
+
 export async function importWorkers(customerId, workers, { fileName = null, provider = 'csv' } = {}) {
   const db = getDb();
   if (!db) {
@@ -14,7 +21,8 @@ export async function importWorkers(customerId, workers, { fileName = null, prov
     return ingestWorkersMemory(customerId, memWorkers, { fileName });
   }
 
-  const [importRun] = await db.insert(schema.importRuns).values({ customerId, hrisProvider: provider, status: 'running', fileName }).returning();
+  const custUuid = await ensureCustomer(db, customerId);
+  const [importRun] = await db.insert(schema.importRuns).values({ customerId: custUuid, hrisProvider: provider, status: 'running', fileName }).returning();
   let inserted = 0, updated = 0;
   const errors = [];
   const now = new Date();
@@ -22,7 +30,7 @@ export async function importWorkers(customerId, workers, { fileName = null, prov
   for (const w of workers) {
     try {
       const existing = await db.select({ id: schema.workers.id }).from(schema.workers)
-        .where(and(eq(schema.workers.customerId, customerId), eq(schema.workers.externalId, w.externalId))).limit(1);
+        .where(and(eq(schema.workers.customerId, custUuid), eq(schema.workers.externalId, w.externalId))).limit(1);
       if (existing.length > 0) {
         await db.update(schema.workers).set({
           employeeId: w.employeeId, email: w.email, legalName: w.legalName, preferredName: w.preferredName,
@@ -32,7 +40,7 @@ export async function importWorkers(customerId, workers, { fileName = null, prov
         updated++;
       } else {
         await db.insert(schema.workers).values({
-          customerId, externalId: w.externalId, employeeId: w.employeeId, email: w.email, legalName: w.legalName,
+          customerId: custUuid, externalId: w.externalId, employeeId: w.employeeId, email: w.email, legalName: w.legalName,
           preferredName: w.preferredName, positionTitle: w.positionTitle, positionExternalId: w.positionExternalId,
           organizationName: w.organizationName, managerExternalId: w.managerExternalId, status: w.status,
           hireDate: w.hireDate, terminationDate: w.terminationDate, lastSyncedAt: now,
@@ -50,16 +58,17 @@ export async function importWorkers(customerId, workers, { fileName = null, prov
 export async function importOrganizations(customerId, orgs) {
   const db = getDb();
   if (!db) return { inserted: 0, updated: 0 };
+  const custUuid = await ensureCustomer(db, customerId);
   let inserted = 0, updated = 0;
   const now = new Date();
   for (const o of orgs) {
     const existing = await db.select({ id: schema.organizations.id }).from(schema.organizations)
-      .where(and(eq(schema.organizations.customerId, customerId), eq(schema.organizations.externalId, o.externalId))).limit(1);
+      .where(and(eq(schema.organizations.customerId, custUuid), eq(schema.organizations.externalId, o.externalId))).limit(1);
     if (existing.length > 0) {
       await db.update(schema.organizations).set({ name: o.name, parentExternalId: o.parentExternalId, orgType: o.orgType, lastSyncedAt: now }).where(eq(schema.organizations.id, existing[0].id));
       updated++;
     } else {
-      await db.insert(schema.organizations).values({ customerId, externalId: o.externalId, name: o.name, parentExternalId: o.parentExternalId, orgType: o.orgType, lastSyncedAt: now });
+      await db.insert(schema.organizations).values({ customerId: custUuid, externalId: o.externalId, name: o.name, parentExternalId: o.parentExternalId, orgType: o.orgType, lastSyncedAt: now });
       inserted++;
     }
   }
