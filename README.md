@@ -51,6 +51,17 @@ npm run build     # vite production build
 npm run test:e2e  # Playwright: login + every dashboard mounts with expected content, no console errors
 ```
 
+## Subpath hosting
+
+The app can be hosted at the origin root (default) or under a subpath via `APP_BASE` — e.g. `https://host/CLI_Dashboards/`. The base is baked into the bundle at build time, so **`dist/` is base-specific**: the build and the server must use the same `APP_BASE`.
+
+```bash
+APP_BASE=/CLI_Dashboards/ npm run build     # bundle for subpath hosting
+APP_BASE=/CLI_Dashboards/ npm run server    # serve app + API under the subpath
+```
+
+`npm run test:e2e` assumes a root build (`npm run build` with `APP_BASE` unset).
+
 ## Serving contexts
 
 Login is verified to work in all four contexts (no secure-context-only APIs):
