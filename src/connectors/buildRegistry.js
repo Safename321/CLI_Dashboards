@@ -10,11 +10,14 @@ import { MockMarketsConnector } from './MarketsConnector.js';
 import { MockInnovationConnector } from './InnovationConnector.js';
 import { MockOwnedSocialConnector } from './OwnedSocialConnector.js';
 import { MockCultureConnector } from './CultureConnector.js';
-import { MockHRISConnector } from './HRISConnector.js';
+import { MockHRISConnector, WorkdayConnector } from './HRISConnector.js';
 import { MockCustomerHealthConnector } from './CustomerHealthConnector.js';
 
 // tenant: a tenant metadata object from config/tenants.js
-export function buildDefaultRegistry(tenant = {}) {
+// auth:   { hasSession, getToken } from the auth layer — when a session exists,
+//         the real WorkdayConnector is registered (JWT-gated /api/workday;
+//         serves labelled staged/CSV data until Workday creds exist).
+export function buildDefaultRegistry(tenant = {}, auth = {}) {
   const reg = new ConnectorRegistry();
   const tenantId = tenant.id || 'spgi';
   const companyName = tenant.companyName || 'S&P Global';
@@ -36,6 +39,10 @@ export function buildDefaultRegistry(tenant = {}) {
   reg.register(new MockOwnedSocialConnector({ ...common, pageName: `${companyName} Official`, refreshMinutes: 60 }), 'owned-social-mock');
   reg.register(new MockCultureConnector({ ...common, employerName: companyName, refreshMinutes: 24 * 60 }), 'culture-mock');
   reg.register(new MockHRISConnector({ ...common, employerName: companyName, refreshMinutes: 60 }), 'hris-mock');
+  if (auth.hasSession && typeof auth.getToken === 'function') {
+    // Registered alongside the mock; getLatestForDomain prefers real over mock.
+    reg.register(new WorkdayConnector({ ...common, getAuthToken: auth.getToken, refreshMinutes: 60 }), 'workday');
+  }
   reg.register(new MockCustomerHealthConnector({ ...common, refreshMinutes: 30 }), 'customer-health-mock');
 
   return reg;
