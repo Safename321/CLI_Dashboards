@@ -16,7 +16,6 @@ import FaqModal from './FaqModal.jsx';
 import { generateReport } from './report.js';
 
 const EMPTY_FIELDS = { desc: '', outcome: '', timeframe: '', orgGoals: '', notes: '' };
-let partySeq = 0;
 
 export default function MgmtChallengesDashboard() {
   const [selProbId, setSelProbId] = useState(null);
@@ -32,6 +31,7 @@ export default function MgmtChallengesDashboard() {
   const [reportOpts, setReportOpts] = useState({ summary: true, behavioral: true, instruments: true, risks: true, playbook: false, cli: false });
   const [banner, setBanner] = useState('');
   const bannerTimer = useRef(null);
+  const partySeqRef = useRef(0); // unique party-id counter (component-scoped, §4.4)
 
   const selProb = PROBLEMS.find((p) => p.id === selProbId) || null;
 
@@ -52,7 +52,7 @@ export default function MgmtChallengesDashboard() {
       const col = PARTY_COLORS[prev.length % PARTY_COLORS.length];
       const sc = scores || STYLES.map(() => parseFloat((4.5 + Math.random() * 3).toFixed(1)));
       return [...prev, {
-        id: 'p' + Date.now() + '-' + partySeq++,
+        id: 'p' + Date.now() + '-' + partySeqRef.current++,
         name: name || 'Party ' + String.fromCharCode(65 + prev.length),
         role: role || '',
         instrument: instrument || 'ASI',

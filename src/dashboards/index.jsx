@@ -26,6 +26,8 @@ import TenantConfigDashboard from './TenantConfigDashboard.jsx';
 import AboutCLIDashboard from './AboutCLIDashboard.jsx';
 import HelpDashboard from './help/HelpDashboard.jsx';
 import FurtherReadingDashboard from './FurtherReadingDashboard.jsx';
+import FillJobsDashboard from './fill-jobs/FillJobsDashboard.jsx';
+import MgmtChallengesDashboard from './mgmt-challenges/MgmtChallengesDashboard.jsx';
 import { NAV_ITEMS } from '../config/nav.js';
 
 const PORTED = {
@@ -51,6 +53,8 @@ const PORTED = {
   'data-provenance': DataProvenanceDashboard,
   'meeting-prep': MeetingPrepDashboard,
   'tenant-config': TenantConfigDashboard,
+  'fill-jobs': FillJobsDashboard,
+  'mgmt-challenges': MgmtChallengesDashboard,
   'about-cli': AboutCLIDashboard,
   help: HelpDashboard,
   'further-reading': FurtherReadingDashboard,
