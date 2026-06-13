@@ -20,3 +20,15 @@ dist/
 !.env.example
 
 .vercel
+
+# Planning/working docs — kept locally, excluded from the GitHub repo to keep it clean.
+# (src/mentor/system-prompt.md is intentionally NOT ignored — it's loaded at runtime.)
+/ARCHITECTURE.md
+/PARITY_CHECKLIST.md
+/PROGRESS.md
+/PUBLISHING.md
+/README.md
+/REWRITE_BRIEF.md
+/WORKDAY_IMPL_BRIEF.md
+/WORKDAY_PROGRESS.md
+/WorkDay/
