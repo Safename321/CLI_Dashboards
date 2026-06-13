@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy.sh — test, build, bump, commit, push, zip, release, deploy, notify.
+# deploy.sh — test, build, bump, commit, push, zip, release, deploy (3 targets), notify.
 # Usage: ./deploy.sh "what you changed"
 set -e
 
@@ -7,6 +7,12 @@ cd "$(dirname "$0")"
 MSG="${1:-Update}"
 NTFY_TOPIC="https://ntfy.sh/clidash-3dd4654f0f939b8cc5"
 REPO="Safename321/CLI_Dashboards"
+DROPLET_HOST="161.35.118.231"
+DROPLET_PATH="/root/CLI_Dashboards"
+SSH_KEY="$HOME/.ssh/id_cli"
+VERCEL_URL="https://cli-dashboards-gamma.vercel.app"
+VERCEL_URL2="https://cli-dashboards-v200n.vercel.app"
+GHPAGES_URL="https://safename321.github.io/CLI_Dashboards"
 
 # 1. Run tests
 echo "Running tests..."
@@ -74,8 +80,37 @@ else
   echo "Warning: Could not create release. Skipping zip upload."
 fi
 
-# 9. Deploy to Vercel
-vercel --prod --yes
+# 9a. Deploy to both Vercel projects
+echo "Deploying to Vercel (gamma)..."
+vercel link --yes --project cli-dashboards
+vercel --prod --yes --force
+echo "Deploying to Vercel (v200n)..."
+vercel link --yes --project cli-dashboards-v2.0.0n
+vercel --prod --yes --force
+
+# 9b. Deploy to DigitalOcean droplet
+echo "Deploying to droplet ${DROPLET_HOST}..."
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build"
+# Restart the server (kill old node server.js, start new one)
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} "kill \$(ps aux | grep 'node cli-proxy-server/server.js' | grep -v grep | awk '{print \$2}') 2>/dev/null || true; sleep 1; cd ${DROPLET_PATH} && nohup node cli-proxy-server/server.js > /root/cli-dash-webserver.log 2>&1 &"
+echo "Droplet deployed."
+
+# 9c. Deploy to GitHub Pages (needs separate build with /CLI_Dashboards/ base)
+echo "Deploying to GitHub Pages..."
+GHPAGES_DIR=$(mktemp -d)
+npx vite build --base /CLI_Dashboards/ --outDir "$GHPAGES_DIR"
+cp public/deploy-log.json "$GHPAGES_DIR/"
+cp public/status.html "$GHPAGES_DIR/"
+cd "$GHPAGES_DIR"
+git init
+git checkout -b gh-pages
+git add -A
+git commit -m "Deploy ${VERSION}"
+git remote add origin "https://github.com/${REPO}.git"
+git push -f origin gh-pages
+cd -
+rm -rf "$GHPAGES_DIR"
+echo "GitHub Pages deployed."
 
 # 10. Notify via ntfy.sh (shows on status page instantly)
 curl -s -X POST "$NTFY_TOPIC" \
@@ -85,9 +120,14 @@ curl -s -X POST "$NTFY_TOPIC" \
 $MSG
 Deployer: $DEPLOYER | IP: $IP
 $TIMESTAMP
-https://cli-dashboards-gamma.vercel.app" > /dev/null
+Vercel:  ${VERCEL_URL}
+Droplet: http://${DROPLET_HOST}:8000/CLI_Dashboards/
+GitHub:  ${GHPAGES_URL}" > /dev/null
 
 echo ""
-echo "Done! $VERSION is live."
+echo "Done! $VERSION is live on all 3 targets."
+echo "Vercel:  ${VERCEL_URL}"
+echo "Droplet: http://${DROPLET_HOST}:8000/CLI_Dashboards/"
+echo "GitHub:  ${GHPAGES_URL}"
 echo "Release: https://github.com/${REPO}/releases/tag/${VERSION}"
-echo "Status:  https://cli-dashboards-gamma.vercel.app/status.html"
+echo "Status:  ${VERCEL_URL}/status.html"

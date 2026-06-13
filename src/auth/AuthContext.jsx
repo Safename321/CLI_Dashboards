@@ -32,7 +32,13 @@ export function AuthProvider({ children }) {
           return;
         }
       } catch {
-        /* server may be down in pure-static preview — fall through to login */
+        /* Server unreachable (e.g. GitHub Pages static host) — enter demo mode */
+        if (!cancelled) {
+          setAuthDisabled(true);
+          setTenant(getTenant('spgi'));
+          setStatus('authed');
+          return;
+        }
       }
       // Restore an existing session token.
       const saved = sessionStorage.getItem(TOKEN_KEY);

@@ -84,3 +84,15 @@ Running log per REWRITE_BRIEF.md §"OPERATING MODE". Newest entries appended at 
 - Their deployed `dist/` was built **before** the helper commit, so the bundle still fetched `/api/*` at the origin root → login failed in the browser (API itself was healthy via curl). Fix: rebuilt `dist/` from current code with `APP_BASE=/CLI_Dashboards/`.
 - Verified in real Chromium at `http://localhost:8000` → redirect to `/CLI_Dashboards/` → **LOGIN OK**, dashboard renders, zero console / secure-context errors.
 - README: documented that `dist/` is base-specific (rebuild when changing APP_BASE; e2e assumes a root build). dist/ stays gitignored.
+
+### 2026-06-13 — Step 9: Multi-target deployment + Vercel CORS fix + tenant isolation audit
+
+- **Root cause of Vercel login failure:** `middleware/cors.js` defaults `CORS_ALLOWED_ORIGINS` to `http://localhost:5173`. On Vercel, serverless function requests have mismatched Origin/Host headers (unlike the droplet where same-origin bypasses the allow-list). Fix: set `CORS_ALLOWED_ORIGINS` env var on both Vercel projects to include their domains.
+- **Three-target deployment established:** deploy.sh now deploys to Vercel (gamma + v200n projects), DigitalOcean droplet (SSH + git pull + rebuild), and GitHub Pages (separate build with `--base /CLI_Dashboards/`).
+- **GitHub Pages auth bypass:** `AuthContext.jsx` catch block for failed `/api/auth/config` fetch now enters demo mode (sets `authDisabled: true`, tenant `spgi`) instead of showing the login screen forever. This only fires when the server is unreachable (static host) — Vercel and droplet are unaffected because their servers respond successfully.
+- **Vercel environment variables configured:** `JWT_SECRET`, `JWT_TTL`, `CLI_ACCOUNTS` (3 accounts × CLI2026! bcrypt hash), and `CORS_ALLOWED_ORIGINS` set on both Vercel projects via `vercel env add`.
+- **SSH key generated:** `~/.ssh/id_cli` (ed25519, `cli@connectiveleadership.com`) authorized on droplet for automated deploys.
+- **Droplet `.env` fixed:** `PORT=8000`, `APP_BASE=/CLI_Dashboards/` — was previously `PORT=8787` with no `APP_BASE`, causing the app to serve at the wrong URL.
+- **Per-tenant data isolation audited:** Tenant routing works (auth → JWT → presentation), but data isolation has 3 critical gaps: (1) `scores` table missing `customer_id`, (2) chat endpoint has no tenant context, (3) data files hardcoded to `spgi-data.json`. Full plan documented in `MarkDownFiles/07-per-tenant-isolation.md`.
+- **PUBLISHING.md rewritten:** Now documents all 3 deployment targets, environment variable requirements, build differences per target, and credential management.
+- Version: v2.0.0o. All 3 targets confirmed live.

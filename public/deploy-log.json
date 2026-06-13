@@ -40,5 +40,12 @@
     "deployer": "safename321",
     "ip": "185.220.69.91",
     "time": "2026-06-12 19:24:14 EDT"
+  },
+  {
+    "version": "v2.0.0o",
+    "message": "Add 3-target deploy (Vercel + Droplet + GitHub Pages), fix CORS for Vercel",
+    "deployer": "claude-code",
+    "ip": "local",
+    "time": "2026-06-13"
   }
 ]

@@ -69,3 +69,43 @@ Per REWRITE_BRIEF §4 & §7.2. Goal: full v1.24L parity with no file > ~400 line
 - runtime client: (none beyond react/react-dom/recharts)
 - server: `express`, `jsonwebtoken`, `bcryptjs`, `express-rate-limit`, `cors`, `fast-xml-parser` (RSS), `dotenv`
 - dev: existing playwright/vite/tailwind + `vitest` for unit tests
+
+## Deployment architecture (3 targets)
+
+The app deploys to three hosts simultaneously via `deploy.sh`:
+
+```
+deploy.sh
+├── Vercel (gamma)  — cli-dashboards-gamma.vercel.app     (primary, serverless)
+├── Vercel (v200n)  — cli-dashboards-v200n.vercel.app     (secondary, serverless)
+├── DO Droplet      — 161.35.118.231:8000/CLI_Dashboards/ (reference, Express)
+└── GitHub Pages    — safename321.github.io/CLI_Dashboards (demo, static-only)
+```
+
+### Build differences per target
+
+| Target | Vite `base` | `APP_BASE` env | Auth | Server |
+|--------|-------------|----------------|------|--------|
+| Vercel | `/` (default) | not set | Full (JWT) | Serverless functions via `vercel.json` |
+| Droplet | `/CLI_Dashboards/` | `/CLI_Dashboards/` | Full (JWT) | Express on port 8000 |
+| GitHub Pages | `/CLI_Dashboards/` (via `--base`) | not set | Disabled (no server) | None — static files only |
+
+### CORS
+
+The server's `middleware/cors.js` checks `CORS_ALLOWED_ORIGINS` for cross-origin requests. Same-origin requests (where `Origin` header host matches `Host` header) bypass the allow-list. On Vercel, serverless functions see mismatched Origin/Host headers, so the Vercel domain **must** be in the allow-list or login fails with 403.
+
+### Environment variables per target
+
+| Variable | Vercel | Droplet `.env` | GitHub Pages |
+|----------|--------|----------------|--------------|
+| `JWT_SECRET` | Vercel Dashboard | `.env` | N/A |
+| `JWT_TTL` | Vercel Dashboard | `.env` | N/A |
+| `CLI_ACCOUNTS` | Vercel Dashboard | `.env` | N/A |
+| `CORS_ALLOWED_ORIGINS` | Vercel Dashboard | `.env` | N/A |
+| `PORT` | auto | `8000` | N/A |
+| `APP_BASE` | not set | `/CLI_Dashboards/` | N/A |
+| `ANTHROPIC_API_KEY` | Vercel Dashboard | `.env` | N/A |
+
+### Tenant isolation status
+
+Tenant routing is implemented (email domain → tenant ID in JWT → presentation metadata). Data isolation is **not yet implemented** — see `MarkDownFiles/07-per-tenant-isolation.md` for the full plan. Key gaps: `scores` table missing `customer_id`, chat endpoint has no tenant context, data files are hardcoded to S&P Global.
