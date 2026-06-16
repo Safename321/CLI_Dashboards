@@ -28,6 +28,9 @@ import HelpDashboard from './help/HelpDashboard.jsx';
 import FurtherReadingDashboard from './FurtherReadingDashboard.jsx';
 import FillJobsDashboard from './fill-jobs/FillJobsDashboard.jsx';
 import MgmtChallengesDashboard from './mgmt-challenges/MgmtChallengesDashboard.jsx';
+import SuperAdminConsole from './SuperAdminConsole.jsx';
+import HRISImportPanel from './HRISImportPanel.jsx';
+import { dashFetch } from '../lib/auth.js';
 import { NAV_ITEMS } from '../config/nav.js';
 
 const PORTED = {
@@ -58,12 +61,18 @@ const PORTED = {
   'about-cli': AboutCLIDashboard,
   help: HelpDashboard,
   'further-reading': FurtherReadingDashboard,
+  super: SuperAdminConsole,
 };
 
 const labelFor = (id) => NAV_ITEMS.find((n) => n.id === id)?.label || id;
 const iconFor = (id) => NAV_ITEMS.find((n) => n.id === id)?.icon;
 
 export function renderView(view, props = {}) {
+  // HRIS onboarding panel (admin-visible) is wired directly to the Laravel
+  // dashboard endpoint via dashFetch; it doesn't take the generic dashboard props.
+  if (view === 'hris') {
+    return <HRISImportPanel api={dashFetch} basePath="/dashboard/hris" />;
+  }
   const Comp = PORTED[view];
   if (Comp) return <Comp {...props} />;
   return <Placeholder view={view} label={labelFor(view)} icon={iconFor(view)} />;

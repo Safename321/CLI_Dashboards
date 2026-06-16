@@ -80,6 +80,17 @@ export const NAV_SECTIONS = [
       { id: 'help', label: 'Help & Guide', icon: '📖' },
     ],
   },
+  {
+    // Role-gated section: items carry a `roles` whitelist; the Sidebar hides any
+    // item whose roles don't include the current user's role (useAuth().role).
+    // Items without a `roles` field stay visible to everyone (default behavior).
+    title: 'Administration',
+    descriptor: 'Tenant & onboarding',
+    items: [
+      { id: 'hris', label: 'HRIS / Onboarding', icon: '🧑‍💼', roles: ['admin', 'super'] },
+      { id: 'super', label: 'SuperAdmin Console', icon: '🛡️', roles: ['super'] },
+    ],
+  },
 ];
 
 // Views reachable but not shown as their own sidebar button (matches v1.24L):

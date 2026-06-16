@@ -3,16 +3,38 @@
 import { useEffect, useMemo, useState } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { ASI_ROSTER } from '../../data/datasets/asi-roster.js';
+import { useRoster } from '../../lib/liveData.js';
 import { INSTRUMENTS, CLI_TRICOLOR_GRADIENT } from './instruments.js';
 import InstrumentCheckbox from './InstrumentCheckbox.jsx';
 import ConfirmationModal from './ConfirmationModal.jsx';
 import { ExpandableSection } from './RosterSections.jsx';
 import EmployeeCard from './EmployeeCard.jsx';
 
+// Build the nested roster shape ({ sectionKey: { title, count, subgroups:[...] } })
+// the view consumes from the live flat roster (/dashboard/roster →
+// [{ id, firstname, lastname, email }]). Returns null when the roster is empty so the
+// caller falls back to the static demo roster (keeps unseeded tenants rendering).
+const buildLiveRoster = (rows) => {
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const employees = rows.map((r) => ({
+    name: [r.firstname, r.lastname].filter(Boolean).join(' ').trim() || r.email || 'Unknown',
+    designation: r.designation || r.email || '',
+    background: r.email || '',
+  }));
+  return {
+    company: {
+      title: 'Company Roster',
+      icon: '👥',
+      count: employees.length,
+      subgroups: [{ seniority: 'All Employees', employees }],
+    },
+  };
+};
+
 // Flat list of every employee with its stable empId ("sectionKey-subIdx-empIdx")
-const flattenRoster = () => {
+const flattenRoster = (roster) => {
   const all = [];
-  Object.entries(ASI_ROSTER).forEach(([key, section]) => {
+  Object.entries(roster).forEach(([key, section]) => {
     section.subgroups.forEach((subgroup, subIdx) => {
       subgroup.employees.forEach((emp, empIdx) => {
         all.push({
@@ -36,7 +58,12 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   const [instrumentState, setInstrumentState] = useState({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const allEmployees = useMemo(flattenRoster, []);
+  // Source the roster from the live /dashboard/roster endpoint, falling back to the
+  // static demo roster when it's empty (unseeded tenant / fetch unavailable).
+  const liveRows = useRoster();
+  const roster = useMemo(() => buildLiveRoster(liveRows) ?? ASI_ROSTER, [liveRows]);
+
+  const allEmployees = useMemo(() => flattenRoster(roster), [roster]);
 
   // Apply mentor deep-link pre-selection: check the instrument for the targeted
   // employees and expand the sections/subgroups that contain them.
@@ -85,7 +112,7 @@ export default function IndividualASIDashboard({ preSelection = null }) {
     );
   }, [searchQuery, allEmployees]);
 
-  const totalEmployees = Object.values(ASI_ROSTER).reduce((sum, section) => sum + section.count, 0);
+  const totalEmployees = Object.values(roster).reduce((sum, section) => sum + section.count, 0);
 
   const handleBulkInstrumentChange = (instrumentKey, value) => {
     setInstrumentState((prev) => {
@@ -190,7 +217,7 @@ export default function IndividualASIDashboard({ preSelection = null }) {
         {/* Roster sections (hidden while searching) */}
         {!searchQuery && (
           <div className="space-y-4">
-            {Object.entries(ASI_ROSTER).map(([key, section]) => (
+            {Object.entries(roster).map(([key, section]) => (
               <ExpandableSection
                 key={key}
                 section={section}

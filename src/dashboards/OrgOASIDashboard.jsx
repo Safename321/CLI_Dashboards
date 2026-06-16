@@ -3,12 +3,32 @@
 import { useMemo, useState } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
 import { OASIRadarChart } from '../components/OASIRadar.jsx';
+import { useOrgOasi } from '../lib/liveData.js';
 import {
   ORG_OASI_SCORES,
   OASI_GAP_ANALYSIS,
   OASI_KEY_FINDINGS,
   OASI_INSTRUMENT_DATA,
 } from '../data/datasets/oasi-scores.js';
+
+const OASI_STYLE_KEYS = [
+  'intrinsic', 'competitive', 'power', 'personal', 'social',
+  'entrusting', 'collaborative', 'contributory', 'vicarious',
+];
+
+// Normalise the live /dashboard/org-oasi result into the {style: score} shape the
+// views/radar expect. The endpoint returns { status, scale, scores:{...}, recordCount }
+// and useOrgOasi() returns that wrapper (j.data ?? j); some callers/tests may also hand
+// back the bare scores object. Returns null when there is no usable live data so the
+// caller falls back to the static demo scores (keeps unseeded tenants rendering).
+export function liveOasiScores(live) {
+  if (!live) return null;
+  const scores = live.scores ?? live;
+  if (!scores || typeof scores !== 'object') return null;
+  const total = OASI_STYLE_KEYS.reduce((a, k) => a + (Number(scores[k]) || 0), 0);
+  if (total <= 0) return null; // all-zero (empty tenant) → use fallback
+  return OASI_STYLE_KEYS.reduce((o, k) => ({ ...o, [k]: Number(scores[k]) || 0 }), {});
+}
 
 const CLUSTER_COLORS = { direct: '#eab308', instrumental: '#ef4444', relational: '#3b82f6' };
 
@@ -38,7 +58,10 @@ const FINDING_TONES = {
 
 export default function OrgOASIDashboard() {
   const [activeTab, setActiveTab] = useState('current');
-  const scores = ORG_OASI_SCORES;
+  // Live cli_v5 org-OASI aggregate; fall back to the static demo scores when the
+  // fetch returns nothing (unseeded tenant / cli_v5 unreachable) so the view still renders.
+  const live = useOrgOasi();
+  const scores = liveOasiScores(live) ?? ORG_OASI_SCORES;
 
   const { mean, setMeans, stdDev, min, max, gapRows } = useMemo(() => {
     const vals = Object.values(scores);

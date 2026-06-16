@@ -25,7 +25,17 @@ const DEFAULT_COLLAPSED = NAV_SECTIONS.reduce(
   {},
 );
 
-export default function Sidebar({ active, onNav, tenant, email, onLogout, authDisabled, selectedYear, onYearChange, onUpdate, updating }) {
+export default function Sidebar({ active, onNav, tenant, email, role, onLogout, authDisabled, selectedYear, onYearChange, onUpdate, updating }) {
+  // Role-gated nav: an item with a `roles` whitelist is shown only when the
+  // current role is in it; items without `roles` are visible to everyone. A
+  // section with no visible items is dropped entirely.
+  const visibleSections = NAV_SECTIONS
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => !item.roles || item.roles.includes(role)),
+    }))
+    .filter((section) => section.items.length > 0);
+
   const [collapsed, setCollapsed] = useState(() => {
     try {
       const saved = localStorage.getItem(COLLAPSE_KEY);
@@ -67,7 +77,7 @@ export default function Sidebar({ active, onNav, tenant, email, onLogout, authDi
 
       {/* Role sections */}
       <nav className="flex-1 overflow-y-auto py-1">
-        {NAV_SECTIONS.map((section, si) => {
+        {visibleSections.map((section, si) => {
           const isCollapsed = !!collapsed[section.title];
           return (
             <div key={section.title} className="mb-0">

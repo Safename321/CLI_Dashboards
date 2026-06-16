@@ -1,102 +1,82 @@
-// Auth state for the client. ALL credential validation is server-side (§3.1):
-// login POSTs to /api/auth/login and receives a signed JWT + resolved tenant.
-// No Web Crypto, no client-side hashing, works in every serving context.
+// Auth state for the v2 client, wired to the Laravel backend via lib/auth.js.
+// Credential validation is server-side (POST /api/auth/login → signed JWT + user).
+// Token + user live in sessionStorage (restored on reload); real multi-tenancy is
+// enforced server-side by the JWT, so the client only derives presentation branding.
 //
-// The token is held in memory (primary) and mirrored to sessionStorage only as
-// a non-secret bearer for reload restore, which is re-validated via /api/auth/me.
+// Public/demo build: set VITE_AUTH_DISABLED=true to skip login and show the S&P demo
+// (the honest fallback when there is no backend — never a decorative gate).
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { getTenant } from '../config/tenants.js';
-import { apiUrl } from '../lib/apiBase.js';
+import { getTenant, tenantFromUser } from '../config/tenants.js';
+import {
+  login as apiLogin, logout as apiLogout, getUser, getToken,
+  setImpersonation, getImpersonation,
+} from '../lib/auth.js';
 
 const AuthContext = createContext(null);
-const TOKEN_KEY = 'cli_session_token_v2';
+const AUTH_DISABLED = import.meta.env.VITE_AUTH_DISABLED === 'true';
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
   const [tenant, setTenant] = useState(null);
-  const [email, setEmail] = useState(null);
-  const [authDisabled, setAuthDisabled] = useState(false);
   const [status, setStatus] = useState('checking'); // checking | anon | authed
+  const [impersonation, setImpersonationState] = useState(getImpersonation());
 
-  // Restore + capability probe on mount.
+  // Restore session from storage on mount (no /auth/me round-trip — token is re-validated
+  // lazily by dashFetch's 401→refresh on the first real call).
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      // Is auth disabled (public demo build)? Ask the server.
-      try {
-        const cfg = await fetch(apiUrl('/api/auth/config')).then((r) => (r.ok ? r.json() : null));
-        if (!cancelled && cfg?.authDisabled) {
-          setAuthDisabled(true);
-          setTenant(getTenant('spgi'));
-          setStatus('authed');
-          return;
-        }
-      } catch {
-        /* Server unreachable (e.g. GitHub Pages static host) — enter demo mode */
-        if (!cancelled) {
-          setAuthDisabled(true);
-          setTenant(getTenant('spgi'));
-          setStatus('authed');
-          return;
-        }
-      }
-      // Restore an existing session token.
-      const saved = sessionStorage.getItem(TOKEN_KEY);
-      if (!saved) {
-        if (!cancelled) setStatus('anon');
-        return;
-      }
-      try {
-        const me = await fetch(apiUrl('/api/auth/me'), { headers: { Authorization: `Bearer ${saved}` } });
-        if (me.ok) {
-          const { email: e, tenant: t } = await me.json();
-          if (!cancelled) {
-            setToken(saved);
-            setEmail(e);
-            setTenant(getTenant(t));
-            setStatus('authed');
-          }
-          return;
-        }
-      } catch {
-        /* ignore */
-      }
-      sessionStorage.removeItem(TOKEN_KEY);
-      if (!cancelled) setStatus('anon');
-    })();
-    return () => {
-      cancelled = true;
-    };
+    if (AUTH_DISABLED) {
+      setTenant(getTenant('spgi'));
+      setStatus('authed');
+      return;
+    }
+    const u = getUser();
+    if (u && getToken()) {
+      setUser(u);
+      setTenant(tenantFromUser(u));
+      setStatus('authed');
+    } else {
+      setStatus('anon');
+    }
   }, []);
 
-  const login = useCallback(async (emailInput, password) => {
-    const res = await fetch(apiUrl('/api/auth/login'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailInput, password }),
-    });
-    if (!res.ok) {
-      // Never leak internal error strings (§3.1).
-      const msg = res.status === 429 ? 'Too many attempts — please wait and try again.' : 'Incorrect email or password';
-      throw new Error(msg);
-    }
-    const { token: t, tenant: tid, email: e } = await res.json();
-    sessionStorage.setItem(TOKEN_KEY, t);
-    setToken(t);
-    setEmail(e || emailInput);
-    setTenant(getTenant(tid));
+  const login = useCallback(async (email, password) => {
+    const u = await apiLogin(email, password);
+    setUser(u);
+    setTenant(tenantFromUser(u));
     setStatus('authed');
+    return u;
   }, []);
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem(TOKEN_KEY);
-    setToken(null);
-    setEmail(null);
+    apiLogout();
+    setUser(null);
     setTenant(null);
+    setImpersonationState(null);
     setStatus('anon');
   }, []);
 
-  const value = { token, tenant, email, status, authDisabled, login, logout };
+  // SuperAdmin: view a specific company's data (sets X-Impersonate-Company on every dashFetch).
+  const impersonateCompany = useCallback((companyId, companyName = null) => {
+    setImpersonation(companyId);
+    setImpersonationState(companyId);
+    setTenant(companyId
+      ? tenantFromUser({ company: companyName, companyId })
+      : (user ? tenantFromUser(user) : null));
+  }, [user]);
+
+  const value = {
+    user,
+    token: getToken(),
+    email: user?.email ?? null,
+    role: user?.role ?? (AUTH_DISABLED ? 'demo' : null),
+    tenant,
+    status,
+    authDisabled: AUTH_DISABLED,
+    impersonation,
+    login,
+    logout,
+    impersonateCompany,
+  };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

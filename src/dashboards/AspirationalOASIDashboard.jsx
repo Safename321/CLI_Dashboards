@@ -6,6 +6,8 @@ import DashboardShell from '../components/DashboardShell.jsx';
 import DemoDataBanner from '../components/DemoDataBanner.jsx';
 import { OASIOverlayRadarChart } from '../components/OASIRadar.jsx';
 import { useData } from '../data/DataContext.jsx';
+import { useOrgOasi } from '../lib/liveData.js';
+import { liveOasiScores } from './OrgOASIDashboard.jsx';
 import {
   ORG_OASI_SCORES,
   IDEAL_OASI_SCORES,
@@ -49,7 +51,10 @@ const STATE_CARDS = [
 
 export default function AspirationalOASIDashboard() {
   const { tenant } = useData();
-  const scores = ORG_OASI_SCORES;
+  // Current profile from the live cli_v5 org-OASI aggregate; static demo as fallback.
+  // Ideal/target stays static (it's the configured goal state, not a measurement).
+  const live = useOrgOasi();
+  const scores = liveOasiScores(live) ?? ORG_OASI_SCORES;
   const idealScores = IDEAL_OASI_SCORES;
 
   const styleComparison = useMemo(

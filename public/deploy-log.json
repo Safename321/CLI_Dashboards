@@ -47,5 +47,12 @@
     "deployer": "claude-code",
     "ip": "local",
     "time": "2026-06-13"
+  },
+  {
+    "version": "v2.0.0p",
+    "message": "Version bump to 2.0.0p",
+    "deployer": "claude-code",
+    "ip": "local",
+    "time": "2026-06-16"
   }
 ]

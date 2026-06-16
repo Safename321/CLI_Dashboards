@@ -1,291 +1,178 @@
-import { useState, useRef } from 'react';
-import { apiUrl } from '../lib/apiBase.js';
+// HRISImportPanel — SuperAdmin UI for Workday/SAP/ADP/CSV import, wired to the Laravel
+// /api/super/companies/{companyId}/hris/* endpoints (Track A inbound import).
+//
+// Replaces the v2 repo's HRISImportPanel.jsx (which talked to the Express proxy). Drop into
+// src/dashboards/ of the integrated dashboard.
+//
+// AUTH WIRING: needs the dashboard's authenticated fetch. Pass `api` (e.g. dashFetch from
+// lib/auth.js — JWT + X-Impersonate-Company) so this file stays auth-agnostic.
+//
+// SCOPE: works for BOTH roles via `basePath`:
+//   • SuperAdmin (per company):  <HRISImportPanel api={dashFetch} companyId={id} />
+//        → basePath defaults to `/super/companies/${companyId}/hris`
+//   • Company admin (own company): <HRISImportPanel api={dashFetch} basePath="/dashboard/hris" />
+//        → no companyId needed; the server resolves the company from the JWT.
 
-/* -- provider catalogue ------------------------------------------------- */
+import React, { useEffect, useState, useCallback } from 'react';
+
 const PROVIDERS = [
-  {
-    id: 'csv',
-    name: 'CSV Upload',
-    description: 'Upload a workers CSV exported from any HRIS',
-    fields: [],
-  },
-  {
-    id: 'workday',
-    name: 'Workday',
-    description: 'Import via Workday Web Services API',
-    fields: [
-      { key: 'tenantUrl', label: 'Tenant URL' },
-      { key: 'username', label: 'ISU Username' },
-      { key: 'password', label: 'ISU Password', type: 'password' },
-    ],
-  },
-  {
-    id: 'sap',
-    name: 'SAP SuccessFactors',
-    description: 'Import via OData v2 API',
-    fields: [
-      { key: 'apiUrl', label: 'API URL' },
-      { key: 'companyId', label: 'Company ID' },
-      { key: 'username', label: 'Username' },
-      { key: 'password', label: 'Password', type: 'password' },
-    ],
-  },
-  {
-    id: 'adp',
-    name: 'ADP',
-    description: 'Import via ADP REST API (requires client certificate)',
-    fields: [
-      { key: 'clientId', label: 'Client ID' },
-      { key: 'clientSecret', label: 'Client Secret', type: 'password' },
-      { key: 'cert', label: 'Certificate (PEM)', multiline: true },
-      { key: 'key', label: 'Private Key (PEM)', multiline: true },
-    ],
-  },
+  { id: 'workday', name: 'Workday',
+    config: ['tenant', 'host', 'wws_version'],
+    creds:  ['username', 'password'] },
+  { id: 'sap', name: 'SAP SuccessFactors',
+    config: ['api_url', 'company_id', 'client_id', 'token_url', 'identity_key_field'],
+    creds:  ['private_key_pem', 'saml_user', 'api_key'] },
+  { id: 'adp', name: 'ADP',
+    config: ['base_url', 'product'],
+    creds:  ['client_id', 'client_secret', 'client_cert_pem', 'client_key_pem'] },
 ];
 
-/* -- status badge ------------------------------------------------------- */
-function StatusBadge({ status }) {
-  const map = {
-    idle: { label: 'Idle', cls: 'bg-white/10 text-muted' },
-    testing: { label: 'Testing\u2026', cls: 'bg-yellow-500/20 text-yellow-300 animate-pulse' },
-    connected: { label: 'Connected', cls: 'bg-emerald-500/20 text-emerald-400' },
-    importing: { label: 'Importing\u2026', cls: 'bg-cyan-500/20 text-cyan-300 animate-pulse' },
-    success: { label: 'Success', cls: 'bg-emerald-500/20 text-emerald-400' },
-    error: { label: 'Error', cls: 'bg-red-500/20 text-red-400' },
-  };
-  const { label, cls } = map[status] || map.idle;
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-xs font-medium ${cls}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {label}
-    </span>
-  );
-}
+export default function HRISImportPanel({ companyId, api, basePath }) {
+  // Super → /super/companies/{id}/hris ; admin self-serve → /dashboard/hris (company from JWT).
+  const base = basePath || `/super/companies/${companyId}/hris`;
+  const call = useCallback(async (path, opts = {}) => {
+    const res = await api(`${base}/${path}`, opts);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    return body;
+  }, [api, base]);
 
-/* -- main panel --------------------------------------------------------- */
-export default function HRISImportPanel() {
-  const [provider, setProvider] = useState('csv');
+  const [status, setStatus] = useState(null);
+  const [provider, setProvider] = useState('workday');
+  const [config, setConfig] = useState({});
   const [creds, setCreds] = useState({});
-  const [status, setStatus] = useState('idle');
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const fileRef = useRef(null);
-  const dropRef = useRef(null);
+  const [busy, setBusy] = useState('');
+  const [msg, setMsg] = useState(null);
 
-  const activeProvider = PROVIDERS.find((p) => p.id === provider);
+  const spec = PROVIDERS.find(p => p.id === provider);
 
-  const updateCred = (key, value) =>
-    setCreds((prev) => ({ ...prev, [key]: value }));
+  const refresh = useCallback(() => {
+    call('status').then(setStatus).catch(e => setMsg({ type: 'error', text: e.message }));
+  }, [call]);
 
-  const reset = () => {
-    setStatus('idle');
-    setResult(null);
-    setError(null);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const run = async (label, fn) => {
+    setBusy(label); setMsg(null);
+    try { setMsg({ type: 'ok', text: await fn() }); refresh(); }
+    catch (e) { setMsg({ type: 'error', text: e.message }); }
+    finally { setBusy(''); }
   };
 
-  /* -- CSV upload ------------------------------------------------------- */
-  const handleCsvUpload = async (file) => {
-    if (!file) return;
-    reset();
-    setStatus('importing');
-    try {
-      const text = await file.text();
-      const res = await fetch(apiUrl('/api/import/csv'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/csv' },
-        body: text,
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Import failed');
-      setResult(json);
-      setStatus('success');
-    } catch (err) {
-      setError(err.message);
-      setStatus('error');
-    }
-  };
+  const saveConnection = () => run('save', async () => {
+    await call('connection', { method: 'POST', body: JSON.stringify({ provider, config, credentials: creds }) });
+    return `${spec.name} connection saved.`;
+  });
 
-  const onDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer?.files?.[0];
-    if (file) handleCsvUpload(file);
-  };
+  const testConnection = () => run('test', async () => {
+    const r = await call('test', { method: 'POST', body: JSON.stringify({ provider }) });
+    return r.ok ? `✓ ${spec.name} connection OK.` : `✗ ${r.error || 'failed'}`;
+  });
 
-  /* -- API provider actions --------------------------------------------- */
-  const testConnection = async () => {
-    reset();
-    setStatus('testing');
-    try {
-      const res = await fetch(apiUrl('/api/import/test'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, ...creds }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Connection test failed');
-      setStatus('connected');
-    } catch (err) {
-      setError(err.message);
-      setStatus('error');
-    }
-  };
+  const startImport = () => run('import', async () => {
+    const r = await call('import', { method: 'POST', body: JSON.stringify({ provider }) });
+    return r.message || 'Import queued.';
+  });
 
-  const importNow = async () => {
-    setResult(null);
-    setError(null);
-    setStatus('importing');
-    try {
-      const res = await fetch(apiUrl('/api/import/run'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, ...creds }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Import failed');
-      setResult(json);
-      setStatus('success');
-    } catch (err) {
-      setError(err.message);
-      setStatus('error');
-    }
-  };
+  const uploadCsv = (file, sendEmail) => run('csv', async () => {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (sendEmail) fd.append('sendEmail', '1');
+    // multipart — do not set JSON content-type; let the browser set the boundary.
+    const res = await api(`${base}/import-csv`, { method: 'POST', body: fd });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    return `CSV: ${body.created} created, ${body.skipped} skipped, ${body.failed} failed`
+      + (body.warnings?.length ? ` (${body.warnings.length} warnings)` : '');
+  });
 
-  /* -- render ----------------------------------------------------------- */
   return (
     <div className="space-y-6">
-      {/* header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">HRIS Import</h2>
-          <p className="text-sm text-muted">
-            Pull worker data from your Human Resources Information System
-          </p>
-        </div>
-        <StatusBadge status={status} />
-      </div>
+      <header>
+        <h2 className="text-xl font-semibold">HRIS Import</h2>
+        <p className="text-sm text-gray-500">Import workers from Workday, SAP SuccessFactors, ADP, or a CSV export. Inbound only — existing users are never overwritten.</p>
+      </header>
 
-      {/* provider picker */}
-      <div className="flex flex-wrap gap-2">
-        {PROVIDERS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => { setProvider(p.id); reset(); setCreds({}); }}
-            className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-              provider === p.id
-                ? 'border-cyan-500 bg-cyan-600 text-white'
-                : 'border-border bg-ink/60 text-muted hover:text-white'
-            }`}
-          >
-            {p.name}
-          </button>
-        ))}
-      </div>
-
-      <p className="text-sm text-muted">{activeProvider?.description}</p>
-
-      {/* CSV drag-and-drop zone */}
-      {provider === 'csv' && (
-        <div
-          ref={dropRef}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={onDrop}
-          className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border bg-ink/60 p-10 text-center transition hover:border-cyan-500"
-        >
-          <svg className="h-10 w-10 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16" />
-          </svg>
-          <p className="text-sm text-muted">
-            Drag &amp; drop a <span className="font-semibold text-white">.csv</span> file here, or
-          </p>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-500 transition"
-          >
-            Browse Files
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={(e) => handleCsvUpload(e.target.files?.[0])}
-          />
+      {msg && (
+        <div className={`rounded p-3 text-sm ${msg.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+          {msg.text}
         </div>
       )}
 
-      {/* Credential form for API providers */}
-      {provider !== 'csv' && (
-        <div className="space-y-4 rounded-xl border border-border bg-ink/60 p-6">
-          {activeProvider?.fields.map((f) => (
-            <label key={f.key} className="block space-y-1">
-              <span className="text-sm font-medium text-muted">{f.label || f.key}</span>
-              {f.multiline ? (
-                <textarea
-                  rows={4}
-                  value={creds[f.key] || ''}
-                  onChange={(e) => updateCred(f.key, e.target.value)}
-                  className="block w-full rounded-lg border border-border bg-black/30 px-3 py-2 text-sm text-white placeholder-muted focus:border-cyan-500 focus:outline-none"
-                  placeholder={f.label || f.key}
-                />
-              ) : (
-                <input
-                  type={f.type || 'text'}
-                  value={creds[f.key] || ''}
-                  onChange={(e) => updateCred(f.key, e.target.value)}
-                  className="block w-full rounded-lg border border-border bg-black/30 px-3 py-2 text-sm text-white placeholder-muted focus:border-cyan-500 focus:outline-none"
-                  placeholder={f.label || f.key}
-                />
-              )}
-            </label>
+      {/* Existing connections + last import */}
+      <section className="rounded border p-4">
+        <h3 className="font-medium mb-2">Connections</h3>
+        {!status?.connections?.length && <p className="text-sm text-gray-400">None configured yet.</p>}
+        <ul className="space-y-1 text-sm">
+          {status?.connections?.map(c => (
+            <li key={c.provider} className="flex justify-between">
+              <span className="font-mono">{c.provider}</span>
+              <span className="text-gray-500">
+                {c.status}
+                {c.lastImport && ` · last: ${c.lastImport.created}✓/${c.lastImport.skipped}–/${c.lastImport.failed}✗`}
+                {c.lastImportAt && ` · ${new Date(c.lastImportAt).toLocaleString()}`}
+              </span>
+            </li>
           ))}
+        </ul>
+      </section>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={testConnection}
-              disabled={status === 'testing'}
-              className="rounded-lg border border-border bg-ink/60 px-4 py-2 text-sm font-medium text-muted hover:text-white transition disabled:opacity-50"
-            >
-              {status === 'testing' ? 'Testing\u2026' : 'Test Connection'}
+      {/* API connection editor */}
+      <section className="rounded border p-4 space-y-3">
+        <div className="flex gap-2">
+          {PROVIDERS.map(p => (
+            <button key={p.id} onClick={() => { setProvider(p.id); setConfig({}); setCreds({}); }}
+              className={`px-3 py-1 rounded text-sm ${provider === p.id ? 'bg-red-600 text-white' : 'bg-gray-100'}`}>
+              {p.name}
             </button>
-            <button
-              type="button"
-              onClick={importNow}
-              disabled={status === 'importing'}
-              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-500 transition disabled:opacity-50"
-            >
-              {status === 'importing' ? 'Importing\u2026' : 'Import Now'}
-            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-xs font-semibold text-gray-500 mb-1">Config</p>
+            {spec.config.map(f => (
+              <input key={f} placeholder={f} value={config[f] || ''}
+                onChange={e => setConfig({ ...config, [f]: e.target.value })}
+                className="w-full mb-1 border rounded px-2 py-1 text-sm" />
+            ))}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 mb-1">Credentials (encrypted at rest)</p>
+            {spec.creds.map(f => (
+              <textarea key={f} placeholder={f} value={creds[f] || ''}
+                onChange={e => setCreds({ ...creds, [f]: e.target.value })}
+                rows={f.includes('pem') ? 3 : 1}
+                className="w-full mb-1 border rounded px-2 py-1 text-sm font-mono" />
+            ))}
           </div>
         </div>
-      )}
 
-      {/* success result */}
-      {status === 'success' && result && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-          <h3 className="text-sm font-semibold text-emerald-400">Import Complete</h3>
-          <div className="mt-2 flex gap-6 text-sm">
-            <span className="text-emerald-300">
-              <span className="font-mono font-bold">{result.inserted ?? 0}</span> inserted
-            </span>
-            <span className="text-emerald-300">
-              <span className="font-mono font-bold">{result.updated ?? 0}</span> updated
-            </span>
-            <span className="text-emerald-300">
-              <span className="font-mono font-bold">{result.total ?? 0}</span> total
-            </span>
-          </div>
+        <div className="flex gap-2">
+          <button disabled={!!busy} onClick={saveConnection} className="px-3 py-1 rounded bg-gray-800 text-white text-sm disabled:opacity-50">
+            {busy === 'save' ? 'Saving…' : 'Save connection'}
+          </button>
+          <button disabled={!!busy} onClick={testConnection} className="px-3 py-1 rounded bg-gray-100 text-sm disabled:opacity-50">
+            {busy === 'test' ? 'Testing…' : 'Test'}
+          </button>
+          <button disabled={!!busy} onClick={startImport} className="px-3 py-1 rounded bg-red-600 text-white text-sm disabled:opacity-50">
+            {busy === 'import' ? 'Queuing…' : 'Import now'}
+          </button>
         </div>
-      )}
+      </section>
 
-      {/* error */}
-      {status === 'error' && error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-          <h3 className="text-sm font-semibold text-red-400">Import Error</h3>
-          <p className="mt-1 text-sm text-red-300">{error}</p>
-        </div>
-      )}
+      {/* CSV upload */}
+      <section className="rounded border p-4 space-y-2">
+        <h3 className="font-medium">CSV import</h3>
+        <p className="text-xs text-gray-500">Workday/BambooHR/generic export. Recognized columns: email, first/last name, employee id, title, department, manager id, status, hire date.</p>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" id="csvSendEmail" /> email a welcome message with temp passwords
+        </label>
+        <input type="file" accept=".csv,text/csv" disabled={!!busy}
+          onChange={e => e.target.files[0] && uploadCsv(e.target.files[0], document.getElementById('csvSendEmail')?.checked)}
+          className="text-sm" />
+        {busy === 'csv' && <span className="text-sm text-gray-500">Importing…</span>}
+      </section>
     </div>
   );
 }

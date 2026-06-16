@@ -79,7 +79,7 @@ function AppInner() {
 // Sidebar needs auth context for the account footer; kept out of AppInner so
 // the year selector re-render stays local.
 function SidebarSlot({ view, setView, selectedYear, setSelectedYear }) {
-  const { tenant, email, logout, authDisabled } = useAuth();
+  const { tenant, email, role, logout, authDisabled } = useAuth();
   const { runAll, running } = useRegistry();
   return (
     <Sidebar
@@ -87,6 +87,7 @@ function SidebarSlot({ view, setView, selectedYear, setSelectedYear }) {
       onNav={setView}
       tenant={tenant}
       email={email}
+      role={role}
       onLogout={logout}
       authDisabled={authDisabled}
       selectedYear={selectedYear}
