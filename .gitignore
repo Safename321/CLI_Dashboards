@@ -5,6 +5,7 @@ CLIDashboards_v1.24L.zip
 # Deps & build output
 node_modules/
 dist/
+ghpages-out/
 
 # Secrets — never commit (§3.9)
 .env
