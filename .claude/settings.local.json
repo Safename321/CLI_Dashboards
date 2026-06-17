@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(bash deploy.sh \"v2.0.0p full deployment — all 3 targets\" 2>&1)"
     ]
   }
 }
