@@ -25,7 +25,7 @@ That's it. One command deploys to all 3 targets, creates a GitHub release, and s
 | 9a | **Deploy to Vercel (gamma)** | `vercel link --project cli-dashboards && vercel --prod --yes --force` |
 | 9b | **Deploy to Vercel (v200n)** | `vercel link --project cli-dashboards-v2.0.0n && vercel --prod --yes --force` |
 | 9c | **Deploy to Droplet** | SSH: `git pull && npm install && APP_BASE=/CLI_Dashboards/ npx vite build` then restart server |
-| 9d | **Deploy to GitHub Pages** | Builds with `--base /CLI_Dashboards/`, pushes `dist/` to `gh-pages` branch |
+| 9d | **Deploy to GitHub Pages** | Builds with `--base /CLI_Dashboards/`, copies `404.html` for SPA routing, pushes to `gh-pages` branch |
 | 10 | **Notify** | Sends to ntfy.sh → appears on status page with chime |
 
 ## Where Things Live
@@ -83,7 +83,11 @@ GitHub Pages serves static files only — **no backend API**. The app detects th
 
 **Build:** Requires `--base /CLI_Dashboards/` because GitHub Pages serves from `https://safename321.github.io/CLI_Dashboards/` — the repo name becomes the path prefix.
 
+**SPA routing:** A copy of `index.html` is deployed as `404.html` so that GitHub Pages serves the app shell for all routes (client-side routing).
+
 **Pages config:** Source branch is `gh-pages`, path `/`. Set in GitHub repo Settings → Pages.
+
+**MSYS/Git Bash note:** On Windows (MSYS), vite's `--base` and `--outDir` flags get mangled by automatic path conversion. deploy.sh uses `MSYS_NO_PATHCONV=1` and a relative `outDir` to work around this.
 
 ## Version Scheme
 
@@ -101,11 +105,11 @@ GitHub Pages serves static files only — **no backend API**. The app detects th
 
 ## Login Credentials
 
-Three demo accounts, all using password `CLI2026!`:
+Three demo accounts, all using password `CLIdash2026!`:
 
 | Email | Tenant | Notes |
 |-------|--------|-------|
-| `admin@connectiveleadership.com` | generic | White-label demo |
+| `admin@Connectiveleadership.com` | generic | White-label demo |
 | `admin@snpglobal.com` | spgi | S&P Global branding, has live data |
 | `admin@zoetis.com` | zoetis | Zoetis branding, empty state |
 

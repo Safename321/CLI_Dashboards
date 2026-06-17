@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy.sh — test, build, bump, commit, push, zip, release, deploy (3 targets), notify.
+# deploy.sh — test, build, bump, commit, push, zip, release, deploy (4 targets), notify.
 # Usage: ./deploy.sh "what you changed"
 set -e
 
@@ -67,7 +67,7 @@ RELEASE_JSON=$(curl -s -X POST "https://api.github.com/repos/${REPO}/releases" \
   -H "Authorization: token $CRED" \
   -H "Accept: application/vnd.github+json" \
   -d "{\"tag_name\":\"${VERSION}\",\"name\":\"CLI Dashboards ${VERSION}\",\"body\":\"${MSG}\",\"draft\":false,\"prerelease\":false}")
-RELEASE_ID=$(echo "$RELEASE_JSON" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id")
+RELEASE_ID=$(echo "$RELEASE_JSON" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id" 2>/dev/null || echo "")
 
 if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "undefined" ]; then
   echo "Uploading ${ZIPNAME} to release..."
@@ -90,17 +90,21 @@ vercel --prod --yes --force
 
 # 9b. Deploy to DigitalOcean droplet
 echo "Deploying to droplet ${DROPLET_HOST}..."
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build"
-# Restart the server (kill old node server.js, start new one)
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} "kill \$(ps aux | grep 'node cli-proxy-server/server.js' | grep -v grep | awk '{print \$2}') 2>/dev/null || true; sleep 1; cd ${DROPLET_PATH} && nohup node cli-proxy-server/server.js > /root/cli-dash-webserver.log 2>&1 &"
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
+  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build"
+# Restart the server — use -f flag on ssh to background the nohup command and return immediately
+ssh -f -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
+  "kill \$(ps aux | grep 'node cli-proxy-server/server.js' | grep -v grep | awk '{print \$2}') 2>/dev/null || true; sleep 1; cd ${DROPLET_PATH} && nohup node cli-proxy-server/server.js > /root/cli-dash-webserver.log 2>&1 &"
 echo "Droplet deployed."
 
 # 9c. Deploy to GitHub Pages (needs separate build with /CLI_Dashboards/ base)
 echo "Deploying to GitHub Pages..."
-GHPAGES_DIR=$(mktemp -d)
-npx vite build --base /CLI_Dashboards/ --outDir "$GHPAGES_DIR"
-cp public/deploy-log.json "$GHPAGES_DIR/"
-cp public/status.html "$GHPAGES_DIR/"
+GHPAGES_DIR="ghpages-out"
+rm -rf "$GHPAGES_DIR"
+# MSYS_NO_PATHCONV prevents Git Bash from mangling the --base path on Windows
+MSYS_NO_PATHCONV=1 npx vite build --base="/CLI_Dashboards/" --outDir="$GHPAGES_DIR" --emptyOutDir
+# Copy 404.html for SPA client-side routing on GitHub Pages
+cp "$GHPAGES_DIR/index.html" "$GHPAGES_DIR/404.html"
 cd "$GHPAGES_DIR"
 git init
 git checkout -b gh-pages
@@ -125,8 +129,9 @@ Droplet: http://${DROPLET_HOST}:8000/CLI_Dashboards/
 GitHub:  ${GHPAGES_URL}" > /dev/null
 
 echo ""
-echo "Done! $VERSION is live on all 3 targets."
+echo "Done! $VERSION is live on all targets."
 echo "Vercel:  ${VERCEL_URL}"
+echo "Vercel2: ${VERCEL_URL2}"
 echo "Droplet: http://${DROPLET_HOST}:8000/CLI_Dashboards/"
 echo "GitHub:  ${GHPAGES_URL}"
 echo "Release: https://github.com/${REPO}/releases/tag/${VERSION}"

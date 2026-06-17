@@ -55,13 +55,13 @@ The app deploys to 3 targets via a single `./deploy.sh` command:
 | **Vercel (gamma)** | https://cli-dashboards-gamma.vercel.app | Full login | Primary production |
 | **Vercel (v200n)** | https://cli-dashboards-v200n.vercel.app | Full login | Secondary production |
 | **DO Droplet** | http://161.35.118.231:8000/CLI_Dashboards/ | Full login | Known-good reference for debugging |
-| **GitHub Pages** | https://safename321.github.io/CLI_Dashboards/ | Demo mode (no login) | Public demo, auto-enters with S&P Global data |
+| **GitHub Pages** | https://safename321.github.io/CLI_Dashboards/ | Demo mode (no login) | Public demo, auto-enters with S&P Global data. Includes `404.html` for SPA routing |
 
 ### Key deployment notes
 
 - **Vercel** requires `CORS_ALLOWED_ORIGINS` env var including the Vercel domain, or login returns 403
 - **Droplet** requires `APP_BASE=/CLI_Dashboards/` and `PORT=8000` in `.env`, and `npm install` (full, not `--production`) so vite is available for builds
-- **GitHub Pages** requires building with `--base /CLI_Dashboards/` (the repo name becomes the URL prefix). Auth is auto-disabled because `AuthContext.jsx` catches the failed `/api/auth/config` fetch and enters demo mode
+- **GitHub Pages** requires building with `--base /CLI_Dashboards/` (the repo name becomes the URL prefix). A `404.html` (copy of `index.html`) is needed for SPA routing. Auth is auto-disabled because `AuthContext.jsx` catches the failed `/api/auth/config` fetch and enters demo mode. On Windows/MSYS, use `MSYS_NO_PATHCONV=1` to prevent path mangling in the `--base` flag
 - **SSH access** to droplet uses `~/.ssh/id_cli` key as `root@161.35.118.231`
 
 ### Notifications

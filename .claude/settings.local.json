@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(bash deploy.sh \"v2.0.0p full deployment — all 3 targets\" 2>&1)"
+      "Bash(bash deploy.sh \"v2.0.0p full deployment — all 3 targets\" 2>&1)",
+      "Bash(ssh:*)",
+      "Bash(curl:*)",
+      "Bash(GHPAGES_DIR=\"/tmp/ghpages-deploy\" && mkdir -p \"$GHPAGES_DIR\" && npx vite build --base=\"/CLI_Dashboards/\" --outDir=\"$GHPAGES_DIR\" --emptyOutDir 2>&1 && cp public/deploy-log.json \"$GHPAGES_DIR/\" && cp public/status.html \"$GHPAGES_DIR/\" && echo \"BUILD_DONE\")",
+      "Bash(MSYS_NO_PATHCONV=1 npx vite build --base=\"/CLI_Dashboards/\" --outDir=\"/tmp/ghpages-deploy\" --emptyOutDir 2>&1)",
+      "Bash(rm:*)",
+      "WebFetch(domain:safename321.github.io)",
+      "Bash(cp:*)",
+      "Bash(bash deploy.sh \"Update docs, fix deploy.sh for MSYS/SPA routing, credential updates\" 2>&1)"
     ]
   }
 }

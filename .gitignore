@@ -32,3 +32,5 @@ dist/
 /WORKDAY_IMPL_BRIEF.md
 /WORKDAY_PROGRESS.md
 /WorkDay/
+
+.vercel

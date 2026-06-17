@@ -34,7 +34,11 @@ Per REWRITE_BRIEF §4 & §7.2. Goal: full v1.24L parity with no file > ~400 line
 │   │   ├─ ReportModal.jsx    RecommendationPanel.jsx   DataTable.jsx
 │   │   ├─ DashboardShell.jsx (title/subtitle/alert header + tab strip)
 │   │   └─ Tabs.jsx  Slider.jsx  Iframe.jsx (a11y: title)
-│   ├─ dashboards/        # ONE file per dashboard (27 views); data-driven where they differ only by content
+│   ├─ lib/
+│   │   ├─ apiBase.js      # base URL helpers for APP_BASE subpath support
+│   │   ├─ auth.js         # client-side auth utilities (token management)
+│   │   └─ liveData.js     # live data fetching helpers
+│   ├─ dashboards/        # ONE file per dashboard (27+ views); data-driven where they differ only by content
 │   ├─ mentor/
 │   │   ├─ Mentor.jsx        # chat UI + deep-link navigation
 │   │   ├─ systemPrompt.md   # CLI Achieving Styles prompt as an ASSET, not inline (§4.1)
@@ -49,9 +53,17 @@ Per REWRITE_BRIEF §4 & §7.2. Goal: full v1.24L parity with no file > ~400 line
 │   ├─ routes/
 │   │   ├─ auth.js        # POST /api/auth/login → validate (bcrypt) → signed JWT
 │   │   ├─ chat.js        # POST /api/chat → verify token → forward to Anthropic (fails closed)
-│   │   └─ data/*.js      # sec/fred/bls-jolts/gdelt/google-news/alphavantage/uspto/markets
+│   │   ├─ data/*.js      # sec/fred/bls-jolts/gdelt/google-news/alphavantage/uspto/markets
+│   │   ├─ workday.js     # GET/POST /api/workday — JWT-protected HRIS endpoints
+│   │   └─ import.js      # CSV/API import pipeline endpoints
 │   ├─ config/credentials.js  # demo accounts from env map (§3.3), bcrypt hashes
-│   └─ lib/ (anthropic.js, rss.js using a real XML parser, fetchJson with retry)
+│   ├─ db/                # Drizzle schema + Neon Postgres migrations
+│   └─ lib/
+│       ├─ anthropic.js rss.js fetchJson.js  # existing utilities
+│       ├─ workersCsv.js   # RFC-4180 CSV parser + schema validation
+│       ├─ workdayStore.js # per-tenant in-memory store (pre-Postgres)
+│       ├─ importEngine.js # shared import pipeline
+│       └─ adapters/       # HRIS adapter interface + Workday/SAP/ADP/CSV adapters
 └─ tests/
     ├─ dashboards.spec.js   # e2e: every view mounts, real per-dashboard assertions (§6)
     └─ unit/               # connector retry/stale, registry runAll/crisis, RSS parser, mentor handler

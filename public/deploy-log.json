@@ -61,5 +61,12 @@
     "deployer": "safename321",
     "ip": "38.15.231.204",
     "time": "2026-06-17 16:28:09 EDT"
+  },
+  {
+    "version": "v2.0.0r",
+    "message": "Update docs, fix deploy.sh for MSYS/SPA routing, credential updates",
+    "deployer": "safename321",
+    "ip": "38.15.231.204",
+    "time": "2026-06-17 17:12:03 EDT"
   }
 ]

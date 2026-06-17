@@ -96,3 +96,19 @@ Running log per REWRITE_BRIEF.md §"OPERATING MODE". Newest entries appended at 
 - **Per-tenant data isolation audited:** Tenant routing works (auth → JWT → presentation), but data isolation has 3 critical gaps: (1) `scores` table missing `customer_id`, (2) chat endpoint has no tenant context, (3) data files hardcoded to `spgi-data.json`. Full plan documented in `MarkDownFiles/07-per-tenant-isolation.md`.
 - **PUBLISHING.md rewritten:** Now documents all 3 deployment targets, environment variable requirements, build differences per target, and credential management.
 - Version: v2.0.0o. All 3 targets confirmed live.
+
+### 2026-06-17 — Step 10: v2.0.0q deployment + deploy.sh fixes
+
+- **Full deploy from Windows (MSYS/Git Bash):** Tests 51/51 green, build clean (976 modules, 1,347 kB JS), version bumped p→q, committed and pushed to AllRepo.
+- **Vercel:** Both gamma and v200n deployed successfully via `vercel --prod --yes --force`.
+- **DigitalOcean Droplet:** `git pull` + `npm install` + `vite build` + server restart — all successful. Server running on port 8000.
+- **GitHub Pages fix:** Initial deploy pushed empty gh-pages (vite `--outDir` with absolute path silently wrote to wrong location on MSYS). Root cause: MSYS automatic path conversion mangles `/CLI_Dashboards/` in `--base` flag. Fix: `MSYS_NO_PATHCONV=1` + relative `outDir`. Also added `404.html` (copy of `index.html`) for SPA client-side routing.
+- **deploy.sh fixes applied:**
+  - GitHub Pages build uses `MSYS_NO_PATHCONV=1` and relative `outDir="ghpages-out"` to avoid MSYS path mangling
+  - `404.html` automatically copied from `index.html` for SPA routing on GitHub Pages
+  - Droplet SSH restart uses `ssh -f` flag to background the nohup command and return immediately (previously stalled the deploy script)
+  - GitHub release creation error handling improved (won't crash if `node -p` fails)
+- **deploy-nobump.sh updated:** Now includes GitHub Pages target, removed stale "Laravel-wired" reference, uses same SSH and MSYS fixes.
+- **Credentials updated:** Password changed to `CLIdash2026!` across all targets. Primary login: `admin@Connectiveleadership.com`.
+- **Git repo initialized** in working directory with full remote history from `origin/AllRepo` (previously was not a git repo — code was copied from NAS build `cli-dashboards-v2.0.0p-full`).
+- Version: v2.0.0q. All 4 targets confirmed live (Vercel gamma, Vercel v200n, Droplet, GitHub Pages).
