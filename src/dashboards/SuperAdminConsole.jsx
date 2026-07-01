@@ -69,6 +69,7 @@ function TenantsView({ onImpersonate }) {
   const [usage, setUsage] = useState({}); // companyId -> usage
   const [expanded, setExpanded] = useState(null); // `${companyId}:admins` | `:employees` | `:hris` | `:data`
   const [form, setForm] = useState({ name: '', slug: '', plan: 'trial' });
+  const [editForm, setEditForm] = useState({ plan: 'trial', max_admins: 5, max_employees: 100 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,10 +102,49 @@ function TenantsView({ onImpersonate }) {
     catch (e) { setError(e.message); }
   };
 
+  // Update plan + seat caps (PATCH /super/companies/{id}). Name/slug aren't editable server-side.
+  const openEdit = (c) => {
+    setEditForm({ plan: c.plan, max_admins: c.max_admins, max_employees: c.max_employees });
+    setExpanded((cur) => (cur === `${c.id}:edit` ? null : `${c.id}:edit`));
+  };
+  const saveEdit = async (id) => {
+    try {
+      await api(`/super/companies/${id}`, { method: 'PATCH', body: JSON.stringify({
+        plan: editForm.plan,
+        max_admins: Number(editForm.max_admins),
+        max_employees: Number(editForm.max_employees),
+      }) });
+      setExpanded(null); load();
+    } catch (e) { setError(e.message); }
+  };
+
+  // Reversible retire: archives + signs out all admins. Restore flips back to active.
+  const archive = async (id) => {
+    if (!window.confirm('Archive this company? Its admins are signed out and blocked from logging in. No data is deleted — reversible via Restore.')) return;
+    try { await api(`/super/companies/${id}/archive`, { method: 'POST' }); load(); }
+    catch (e) { setError(e.message); }
+  };
+  const restore = async (id) => {
+    try { await api(`/super/companies/${id}/restore`, { method: 'POST' }); load(); }
+    catch (e) { setError(e.message); }
+  };
+
+  // Permanent cascade purge. Backend requires { confirm: <slug> }; we gate on the slug too.
+  const remove = async (c) => {
+    const typed = window.prompt(
+      `PERMANENT DELETE of "${c.name}".\n\nThis purges its admins, mobile users, assignments, datasets and scores — it cannot be undone.\n\nType the company slug to confirm:\n\n${c.slug}`,
+    );
+    if (typed == null) return;
+    if (typed !== c.slug) { setError(`Delete cancelled: "${typed}" does not match the slug "${c.slug}".`); return; }
+    try { await api(`/super/companies/${c.id}`, { method: 'DELETE', body: JSON.stringify({ confirm: typed }) }); load(); }
+    catch (e) { setError(e.message); }
+  };
+
   const badgeClass = (status) => ({
     active: 'text-green-500',
     suspended: 'text-amber-500',
     cancelled: 'text-red-500',
+    archived: 'text-slate-500',
   }[status] || 'text-slate-400');
 
   const toggle = (key) => setExpanded((cur) => (cur === key ? null : key));
@@ -157,10 +197,14 @@ function TenantsView({ onImpersonate }) {
                         {expanded === `${c.id}:data` ? '▾ Data' : '▸ Data'}
                       </button>
                       <button className={LINK} onClick={() => onImpersonate && onImpersonate(c.id, c.name)}>Impersonate</button>
-                      {c.status === 'active'
-                        ? <button className={LINK} onClick={() => setStatus(c.id, 'suspended')}>Suspend</button>
-                        : <button className={LINK} onClick={() => setStatus(c.id, 'active')}>Activate</button>}
+                      <button className={LINK} onClick={() => openEdit(c)}>{expanded === `${c.id}:edit` ? '▾ Edit' : 'Edit'}</button>
+                      {c.status === 'active' && <button className={LINK} onClick={() => setStatus(c.id, 'suspended')}>Suspend</button>}
+                      {c.status === 'suspended' && <button className={LINK} onClick={() => setStatus(c.id, 'active')}>Activate</button>}
+                      {c.status === 'archived'
+                        ? <button className={LINK} onClick={() => restore(c.id)}>Restore</button>
+                        : <button className={LINK} onClick={() => archive(c.id)}>Archive</button>}
                       <button className={LINK} onClick={() => loadUsage(c.id)}>Usage</button>
+                      <button className="text-sm font-medium text-red-400 hover:text-red-300" onClick={() => remove(c)}>Delete</button>
                     </div>
                     {usage[c.id] && (
                       <div className="mt-1 text-xs text-slate-400">
@@ -182,6 +226,22 @@ function TenantsView({ onImpersonate }) {
                 )}
                 {expanded === `${c.id}:data` && (
                   <tr><td colSpan={6} className="bg-slate-950 p-0"><DataPanel company={c} /></td></tr>
+                )}
+                {expanded === `${c.id}:edit` && (
+                  <tr><td colSpan={6} className="bg-slate-950 px-5 py-4">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <Field label="Plan">
+                        <select className={INP} value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })}>
+                          <option value="trial">trial</option><option value="standard">standard</option><option value="enterprise">enterprise</option>
+                        </select>
+                      </Field>
+                      <Field label="Max admins"><input type="number" min="1" max="1000" className={INP} value={editForm.max_admins} onChange={(e) => setEditForm({ ...editForm, max_admins: e.target.value })} /></Field>
+                      <Field label="Max employees"><input type="number" min="1" max="100000" className={INP} value={editForm.max_employees} onChange={(e) => setEditForm({ ...editForm, max_employees: e.target.value })} /></Field>
+                      <button className={BTN} onClick={() => saveEdit(c.id)}>Save changes</button>
+                      <button className={LINK} onClick={() => setExpanded(null)}>Cancel</button>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">Name &amp; slug aren’t editable here. Changing the plan doesn’t auto-adjust the caps.</p>
+                  </td></tr>
                 )}
               </Fragment>
             ))}

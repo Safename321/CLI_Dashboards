@@ -80,13 +80,18 @@ else
   echo "Warning: Could not create release. Skipping zip upload."
 fi
 
-# 9a. Deploy to both Vercel projects
-echo "Deploying to Vercel (gamma)..."
-vercel link --yes --project cli-dashboards
-vercel --prod --yes --force
-echo "Deploying to Vercel (v200n)..."
-vercel link --yes --project cli-dashboards-v2.0.0n
-vercel --prod --yes --force
+# 9a. Deploy to both Vercel projects (skipped when the CLI is not authenticated —
+# the push to AllRepo auto-deploys gamma via Vercel's Git integration anyway)
+if vercel whoami > /dev/null 2>&1; then
+  echo "Deploying to Vercel (gamma)..."
+  vercel link --yes --project cli-dashboards
+  vercel --prod --yes --force
+  echo "Deploying to Vercel (v200n)..."
+  vercel link --yes --project cli-dashboards-v2.0.0n
+  vercel --prod --yes --force
+else
+  echo "Vercel CLI not authenticated — skipping CLI deploys (gamma still auto-deploys from the AllRepo push)."
+fi
 
 # 9b. Deploy to DigitalOcean droplet
 echo "Deploying to droplet ${DROPLET_HOST}..."

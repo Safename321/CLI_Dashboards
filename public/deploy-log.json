@@ -68,5 +68,12 @@
     "deployer": "safename321",
     "ip": "38.15.231.204",
     "time": "2026-06-17 17:12:03 EDT"
+  },
+  {
+    "version": "v2.0.0s",
+    "message": "Add company Update/Archive/Restore/Delete actions to SuperAdmin console; skip Vercel CLI when unauthenticated",
+    "deployer": "Nahin-sajjad",
+    "ip": "185.180.222.122",
+    "time": "2026-07-02 04:06:47 BST"
   }
 ]
