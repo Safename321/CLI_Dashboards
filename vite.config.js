@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Dev server proxies /api/* to the local Express proxy server (cli-proxy-server)
-// so login/chat/data calls work identically in dev and prod.
+// Dev server proxies /api/* to the Laravel backend so login/chat/data calls work
+// in dev without CORS (set VITE_API_BASE=/api in .env.development so the app uses
+// the relative path this proxy forwards). Override the target with PROXY_TARGET.
 export default defineConfig({
   // Host at the origin root by default; set APP_BASE=/CLI_Dashboards/ to serve
   // the app under a subpath. Must begin and end with a slash.
@@ -13,8 +14,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: process.env.PROXY_TARGET || 'http://localhost:8787',
+        target: process.env.PROXY_TARGET || 'https://app.cardinalfund.com',
         changeOrigin: true,
+        secure: true,
       },
     },
   },
