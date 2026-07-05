@@ -48,7 +48,6 @@ const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 const DEMO_ONLY = {
   'board-packet': ['Board Directors', '📋'],
   'customer-health': ['Customer Health', '❤️'],
-  hiring: ['Hiring & On-Boarding', '📝'],
   'early-warning': ['Early Warning KPIs', '⚡'],
   'scenario-modeling': ['Scenario Modeling', '🔮'],
   'investor-behavior': ['Investor Behavior', '📈'],

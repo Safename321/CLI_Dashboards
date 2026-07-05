@@ -82,5 +82,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.216.221.110",
     "time": "2026-07-05 06:32:43 BST"
+  },
+  {
+    "version": "v2.0.0u",
+    "message": "feat(hiring): live tenant hiring pipeline — /dashboard/hiring wired, applicant status badges + ASI fit, demo view kept for demo build",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-05 22:57:47 BST"
   }
 ]

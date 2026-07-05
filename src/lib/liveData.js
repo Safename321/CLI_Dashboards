@@ -120,6 +120,7 @@ function useLiveBundle(key, path, enabled = true) {
 
 export const useFillJobsBundle = (enabled = true) => useLiveBundle('fillJobsBundle', '/dashboard/fill-jobs-data', enabled);
 export const useOrgOasiBundle  = (enabled = true) => useLiveBundle('orgOasiBundle',  '/dashboard/org-oasi',       enabled);
+export const useHiring         = (enabled = true) => useLiveBundle('hiring',         '/dashboard/hiring',         enabled);
 
 // assignInstruments — POST /assignments (Individual-ASI "assign"). Returns the created batch.
 export async function assignInstruments(payload) {
