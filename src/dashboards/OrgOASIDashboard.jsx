@@ -3,13 +3,42 @@
 import { useMemo, useState } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
 import { OASIRadarChart } from '../components/OASIRadar.jsx';
-import { useOrgOasi } from '../lib/liveData.js';
+import { useOrgOasiBundle } from '../lib/liveData.js';
 import {
   ORG_OASI_SCORES,
   OASI_GAP_ANALYSIS,
   OASI_KEY_FINDINGS,
   OASI_INSTRUMENT_DATA,
 } from '../data/datasets/oasi-scores.js';
+
+// Static demo scores only ship in the public demo build; a real tenant sees live
+// OASI data or an explicit instruction — never fabricated S&P numbers.
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
+
+// Shared empty/loading/error panel for both OASI views when a real tenant has no data.
+export function OasiEmptyState({ status, title, icon }) {
+  const body = status === 'loading'
+    ? <p className="text-sm text-muted">Loading your organization's OASI data…</p>
+    : status === 'error'
+      ? <>
+          <p className="text-sm font-semibold text-red-400">Couldn't load your organization's OASI data.</p>
+          <p className="mt-2 text-sm text-muted">Your session may have expired or the backend is unreachable — refresh and sign in again.</p>
+        </>
+      : <>
+          <p className="text-sm font-semibold text-amber-400">No OASI scores synced yet.</p>
+          <p className="mt-2 text-sm text-muted">The OASI radar aggregates real employee assessment scores. To populate it:</p>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-300">
+            <li>Open <span className="font-semibold text-white">Assign CLI Instruments</span> and send the OASI instrument to employees.</li>
+            <li>They complete it via the emailed magic link.</li>
+            <li>Scores sync back automatically and this radar populates.</li>
+          </ol>
+        </>;
+  return (
+    <DashboardShell title={title} icon={icon} subtitle="Achieving Styles Inventory — what your organization actually rewards">
+      <div className="mx-auto mt-10 max-w-xl rounded-xl border border-border bg-panel p-8">{body}</div>
+    </DashboardShell>
+  );
+}
 
 const OASI_STYLE_KEYS = [
   'intrinsic', 'competitive', 'power', 'personal', 'social',
@@ -58,12 +87,13 @@ const FINDING_TONES = {
 
 export default function OrgOASIDashboard() {
   const [activeTab, setActiveTab] = useState('current');
-  // Live cli_v5 org-OASI aggregate; fall back to the static demo scores when the
-  // fetch returns nothing (unseeded tenant / cli_v5 unreachable) so the view still renders.
-  const live = useOrgOasi();
-  const scores = liveOasiScores(live) ?? ORG_OASI_SCORES;
+  // Live cli_v5 org-OASI aggregate. Demo build → static demo scores; real tenant →
+  // live scores, or an instruction panel (never fabricated demo numbers).
+  const bundle = useOrgOasiBundle(!DEMO_BUILD);
+  const liveScores = DEMO_BUILD ? ORG_OASI_SCORES : liveOasiScores(bundle.data);
+  const scores = liveScores ?? ORG_OASI_SCORES; // shape only; instruction returned below when empty
 
-  const { mean, setMeans, stdDev, min, max, gapRows } = useMemo(() => {
+  const { setMeans, stdDev, min, max, gapRows } = useMemo(() => {
     const vals = Object.values(scores);
     const m = vals.reduce((a, b) => a + b, 0) / 9;
     return {
@@ -80,6 +110,11 @@ export default function OrgOASIDashboard() {
       gapRows: OASI_GAP_ANALYSIS.map((r) => ({ ...r, score: scores[r.key], gap: scores[r.key] - r.expected })),
     };
   }, [scores]);
+
+  // Real tenant with no usable OASI data: instruct, don't fabricate.
+  if (!DEMO_BUILD && !liveScores) {
+    return <OasiEmptyState status={bundle.status} title="OASI" icon="🏢" />;
+  }
 
   return (
     <DashboardShell

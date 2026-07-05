@@ -88,6 +88,39 @@ export const useRoster   = (fallback = []) => useLive('roster',   '/dashboard/ro
 export const useOrgOasi  = (fallback = null) => useLive('orgOasi', '/dashboard/org-oasi',        (j) => j.data ?? j, fallback);
 export const useFillJobs = (fallback = null) => useLive('fillJobs','/dashboard/fill-jobs-data',  (j) => j.data ?? j, fallback);
 
+// useLiveBundle — status-aware tenant fetch returning { data, status } so views can
+// distinguish loading / error / genuinely-empty and show proper guidance instead of
+// silently falling back to demo data. status: 'loading' | 'ready' | 'error' | 'disabled'.
+// Pass enabled=false (demo build) to skip the network call entirely.
+function useLiveBundle(key, path, enabled = true) {
+  const tenant = getEffectiveTenantKey();
+  const cacheKey = `${tenant}:live:${key}`;
+  const [state, setState] = useState(() =>
+    (enabled ? (_cache.get(cacheKey) ?? { data: null, status: 'loading' }) : { data: null, status: 'disabled' }));
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    const cached = _cache.get(cacheKey);
+    if (cached) { setState(cached); return; }
+    dashFetch(path)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((json) => {
+        if (cancelled) return;
+        const next = { data: json?.data ?? json ?? null, status: 'ready' };
+        _cache.set(cacheKey, next);
+        setState(next);
+      })
+      .catch(() => { if (!cancelled) setState({ data: null, status: 'error' }); });
+    return () => { cancelled = true; };
+  }, [cacheKey, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return state;
+}
+
+export const useFillJobsBundle = (enabled = true) => useLiveBundle('fillJobsBundle', '/dashboard/fill-jobs-data', enabled);
+export const useOrgOasiBundle  = (enabled = true) => useLiveBundle('orgOasiBundle',  '/dashboard/org-oasi',       enabled);
+
 // assignInstruments — POST /assignments (Individual-ASI "assign"). Returns the created batch.
 export async function assignInstruments(payload) {
   const res = await dashFetch('/assignments', { method: 'POST', body: JSON.stringify(payload) });

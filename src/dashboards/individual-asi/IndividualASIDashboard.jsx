@@ -3,12 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { ASI_ROSTER } from '../../data/datasets/asi-roster.js';
-import { useRoster } from '../../lib/liveData.js';
+import { useRoster, assignInstruments } from '../../lib/liveData.js';
 import { INSTRUMENTS, CLI_TRICOLOR_GRADIENT } from './instruments.js';
 import InstrumentCheckbox from './InstrumentCheckbox.jsx';
 import ConfirmationModal from './ConfirmationModal.jsx';
 import { ExpandableSection } from './RosterSections.jsx';
 import EmployeeCard from './EmployeeCard.jsx';
+
+// Static demo roster is for the public onboarding demo only. A real company login
+// shows its own employees, or instructions to onboard them — never demo people.
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 
 // Build the nested roster shape ({ sectionKey: { title, count, subgroups:[...] } })
 // the view consumes from the live flat roster (/dashboard/roster →
@@ -20,6 +24,11 @@ const buildLiveRoster = (rows) => {
     name: [r.firstname, r.lastname].filter(Boolean).join(' ').trim() || r.email || 'Unknown',
     designation: r.designation || r.email || '',
     background: r.email || '',
+    // Preserved for the assignment payload (POST /assignments needs userId or email).
+    userId: r.id ?? r.userId ?? null,
+    email: r.email || '',
+    firstName: r.firstname || '',
+    lastName: r.lastname || '',
   }));
   return {
     company: {
@@ -57,11 +66,17 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   const [expanded, setExpanded] = useState({});
   const [instrumentState, setInstrumentState] = useState({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [sendOk, setSendOk] = useState('');
 
   // Source the roster from the live /dashboard/roster endpoint, falling back to the
   // static demo roster when it's empty (unseeded tenant / fetch unavailable).
   const liveRows = useRoster();
-  const roster = useMemo(() => buildLiveRoster(liveRows) ?? ASI_ROSTER, [liveRows]);
+  const liveRoster = useMemo(() => buildLiveRoster(liveRows), [liveRows]);
+  // Demo build → demo roster; real login → live roster, or {} (empty) so we render
+  // an onboarding instruction below instead of demo people.
+  const roster = liveRoster ?? (DEMO_BUILD ? ASI_ROSTER : {});
 
   const allEmployees = useMemo(() => flattenRoster(roster), [roster]);
 
@@ -97,11 +112,48 @@ export default function IndividualASIDashboard({ preSelection = null }) {
     }));
   };
 
-  const handleSend = () => {
-    console.log('Sending instruments:', instrumentState);
-    // TODO: POST instrumentState to the CLI instrument-dispatch API once specified.
-    setShowConfirmModal(false);
-    setInstrumentState({});
+  // Resolve an instrumentState key back to its employee. Roster rows use the
+  // "sectionKey-subIdx-empIdx" empId; search rows use "search-<idx>".
+  const resolveEmp = (key) =>
+    (key.startsWith('search-') ? searchResults[Number(key.split('-')[1])] : allEmployees.find((e) => e.empId === key));
+
+  const handleSend = async () => {
+    // One assignment row per selected employee, carrying the checked instruments.
+    const rows = [];
+    Object.entries(instrumentState).forEach(([key, insts]) => {
+      const chosen = Object.entries(insts || {}).filter(([, v]) => v).map(([k]) => k);
+      if (!chosen.length) return;
+      const emp = resolveEmp(key);
+      if (!emp) return;
+      const row = { instruments: chosen };
+      if (emp.userId) {
+        row.userId = emp.userId;
+      } else if (emp.email) {
+        row.firstName = emp.firstName || (emp.name || '').split(' ')[0] || emp.name || 'Unknown';
+        row.lastName = emp.lastName || (emp.name || '').split(' ').slice(1).join(' ') || '-';
+        row.email = emp.email;
+      } else {
+        return; // demo roster row has no id/email — can't dispatch
+      }
+      if (emp.designation) row.designation = emp.designation;
+      rows.push(row);
+    });
+
+    if (!rows.length) {
+      setSendError('Select at least one employee (with an email) and one instrument. The demo roster has no emails — sign in to a real tenant to dispatch.');
+      return;
+    }
+    setSending(true); setSendError(''); setSendOk('');
+    try {
+      const res = await assignInstruments({ assignments: rows, sendEmails: true, groupLabel: 'Dashboard assignment' });
+      setShowConfirmModal(false);
+      setInstrumentState({});
+      setSendOk(`Assigned to ${res.stubsCreated ?? rows.length} employee${rows.length === 1 ? '' : 's'}${res.emailsQueued ? ` · ${res.emailsQueued} invite email(s) queued` : ''}.`);
+    } catch (e) {
+      setSendError(e.message || 'Assignment failed. Check your connection and try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const searchResults = useMemo(() => {
@@ -142,6 +194,22 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   const everyResultAllChecked = searchResults.every((emp, idx) =>
     INSTRUMENTS.every((inst) => instrumentState[`search-${idx}`]?.[inst.key])
   );
+
+  // Real company login with no employees yet: instruct onboarding, don't show demo people.
+  if (!DEMO_BUILD && !liveRoster) {
+    return (
+      <DashboardShell title="Assign CLI Instruments" icon="👤" subtitle="Assign CLI instruments to your employees">
+        <div className="mx-auto mt-10 max-w-xl rounded-xl border border-border bg-panel p-8">
+          <p className="text-sm font-semibold text-amber-400">No employees in your organization yet.</p>
+          <p className="mt-2 text-sm text-muted">Add your team before assigning instruments:</p>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-300">
+            <li>Open <span className="font-semibold text-white">HRIS / Onboarding</span> to add employees manually, bulk-paste them, or import from your HRIS.</li>
+            <li>Return here — your employees appear in the roster, ready to receive CLI instruments.</li>
+          </ol>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell
@@ -232,17 +300,21 @@ export default function IndividualASIDashboard({ preSelection = null }) {
         )}
 
         {/* Commit */}
-        <div className="flex justify-center pt-4">
+        <div className="flex flex-col items-center gap-3 pt-4">
           <button
-            onClick={() => setShowConfirmModal(true)}
-            className="rounded-lg bg-cyan-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-cyan-500"
+            onClick={() => { setSendError(''); setSendOk(''); setShowConfirmModal(true); }}
+            disabled={sending}
+            className="rounded-lg bg-cyan-600 px-8 py-3 text-lg font-semibold text-white shadow-lg transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Commit
+            {sending ? 'Sending…' : 'Commit'}
           </button>
+          {sendError && <div className="max-w-lg rounded-lg border border-red-500/40 bg-red-900/20 px-4 py-2 text-center text-sm text-red-300">{sendError}</div>}
+          {sendOk && <div className="max-w-lg rounded-lg border border-emerald-500/40 bg-emerald-900/20 px-4 py-2 text-center text-sm text-emerald-300">{sendOk}</div>}
         </div>
 
         <ConfirmationModal
           isOpen={showConfirmModal}
+          sending={sending}
           onSend={handleSend}
           onCancel={() => setShowConfirmModal(false)}
         />

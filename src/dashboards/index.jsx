@@ -30,8 +30,32 @@ import FillJobsDashboard from './fill-jobs/FillJobsDashboard.jsx';
 import MgmtChallengesDashboard from './mgmt-challenges/MgmtChallengesDashboard.jsx';
 import SuperAdminConsole from './SuperAdminConsole.jsx';
 import HRISImportPanel from './HRISImportPanel.jsx';
-import { dashFetch } from '../lib/auth.js';
+import DemoOnlyNotice from './DemoOnlyNotice.jsx';
+import { dashFetch, getUser } from '../lib/auth.js';
 import { NAV_ITEMS } from '../config/nav.js';
+
+// Views that must never render for a role that lacks them. The Sidebar already
+// hides these, but renderView is reachable directly (mentor deep-links, tampered
+// state) so we re-check here — defense-in-depth; the server still enforces authz.
+const ROLE_GATED = { super: ['super'], hris: ['admin', 'super'] };
+
+// Views whose data is still demonstration-only (fabricated S&P figures, no live
+// source). Demo data belongs to the public onboarding demo build only — on a real
+// company login these render a DemoOnlyNotice instead. Gating here (not inside each
+// component) keeps the hook-bearing component from mounting at all, so it avoids the
+// conditional-hooks pitfall. [title, icon] per view id.
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
+const DEMO_ONLY = {
+  'board-packet': ['Board Directors', '📋'],
+  'customer-health': ['Customer Health', '❤️'],
+  hiring: ['Hiring & On-Boarding', '📝'],
+  'early-warning': ['Early Warning KPIs', '⚡'],
+  'scenario-modeling': ['Scenario Modeling', '🔮'],
+  'investor-behavior': ['Investor Behavior', '📈'],
+  merger: ['Post Merger Updates', '🤝'],
+  'employee-leading': ['Employee Leading', '👥'],
+  'merger-integration': ['Post Merger Integration', '🔄'],
+};
 
 const PORTED = {
   overview: OverviewDashboard,
@@ -68,6 +92,16 @@ const labelFor = (id) => NAV_ITEMS.find((n) => n.id === id)?.label || id;
 const iconFor = (id) => NAV_ITEMS.find((n) => n.id === id)?.icon;
 
 export function renderView(view, props = {}) {
+  // Role gate (defense-in-depth): block super/hris for roles that lack them.
+  const allow = ROLE_GATED[view];
+  if (allow && !allow.includes(getUser()?.role)) {
+    return <Placeholder view={view} label="Not authorized" icon="🔒" />;
+  }
+  // Demo-only views: on a real company login, show the notice instead of demo data.
+  if (!DEMO_BUILD && DEMO_ONLY[view]) {
+    const [title, icon] = DEMO_ONLY[view];
+    return <DemoOnlyNotice title={title} icon={icon} />;
+  }
   // HRIS onboarding panel (admin-visible) is wired directly to the Laravel
   // dashboard endpoint via dashFetch; it doesn't take the generic dashboard props.
   if (view === 'hris') {

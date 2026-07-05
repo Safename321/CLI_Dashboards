@@ -49,7 +49,7 @@ export default function MentorAlerts({ alerts, onNavigate, onClose, onDismiss })
               className="cursor-pointer rounded border px-2 py-0.5 text-[10px] hover:opacity-80"
             >
               <span className="mr-1" style={{ color: alert.severity === 'critical' ? '#f87171' : '#fbbf24' }}>●</span>
-              {alert.title.replace(/^[🚨⚠️]\s*/u, '')}
+              {alert.title.replace(/^(?:🚨|⚠️)\s*/u, '')}
             </span>
           ))}
         </span>

@@ -1,5 +1,5 @@
 // Send-instruments confirmation modal.
-export default function ConfirmationModal({ isOpen, onSend, onCancel }) {
+export default function ConfirmationModal({ isOpen, onSend, onCancel, sending = false }) {
   if (!isOpen) return null;
 
   return (
@@ -10,15 +10,17 @@ export default function ConfirmationModal({ isOpen, onSend, onCancel }) {
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="rounded-lg bg-slate-700 px-6 py-2 font-medium text-white transition-colors hover:bg-slate-600"
+            disabled={sending}
+            className="rounded-lg bg-slate-700 px-6 py-2 font-medium text-white transition-colors hover:bg-slate-600 disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             onClick={onSend}
-            className="rounded-lg bg-cyan-600 px-6 py-2 font-medium text-white transition-colors hover:bg-cyan-500"
+            disabled={sending}
+            className="rounded-lg bg-cyan-600 px-6 py-2 font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Send
+            {sending ? 'Sending…' : 'Send'}
           </button>
         </div>
       </div>

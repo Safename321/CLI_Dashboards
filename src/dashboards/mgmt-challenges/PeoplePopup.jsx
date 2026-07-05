@@ -1,9 +1,11 @@
-// Management Challenges — "Involved Parties" picker drawer over the SPGI
-// people/teams database. Done commits: teams → OASI, individuals → ASI.
+// Management Challenges — "Involved Parties" picker drawer over the people/teams
+// database. `db` is injected by the dashboard: the tenant's live employees (real
+// ASI profiles) on a real login, or the static SPGI demo set on the demo build.
+// Done commits: teams → OASI, individuals → ASI.
 import { useState, useMemo } from 'react';
 import { PEOPLE_DB } from '../../data/datasets/mgmt-challenges.js';
 
-export default function PeoplePopup({ parties, onDone }) {
+export default function PeoplePopup({ parties, onDone, db = PEOPLE_DB, note = null }) {
   const [search, setSearch] = useState('');
   const [teamsOnly, setTeamsOnly] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
@@ -11,14 +13,14 @@ export default function PeoplePopup({ parties, onDone }) {
   const f = search.toLowerCase();
   const groups = useMemo(
     () =>
-      PEOPLE_DB.map((grp, gi) => ({
+      db.map((grp, gi) => ({
         grp,
         gi,
         visible: grp.people
           .map((person, pi) => ({ person, pi }))
           .filter(({ person }) => !f || person.name.toLowerCase().includes(f) || person.role.toLowerCase().includes(f)),
       })).filter((g) => (!teamsOnly || g.grp.type === 'team') && g.visible.length > 0),
-    [f, teamsOnly],
+    [db, f, teamsOnly],
   );
 
   const toggle = (key) =>
@@ -36,7 +38,7 @@ export default function PeoplePopup({ parties, onDone }) {
       <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
         <div>
           <div className="text-sm font-bold text-white">Select Involved Parties</div>
-          <div className="mt-0.5 text-[10px] text-muted">Choose from SPGI database · teams auto-assigned OASI · individuals auto-assigned ASI</div>
+          <div className="mt-0.5 text-[10px] text-muted">Teams auto-assigned OASI · individuals auto-assigned ASI</div>
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-ink px-3 py-1 text-xs text-accent">{selected.size} selected</span>
@@ -116,7 +118,12 @@ export default function PeoplePopup({ parties, onDone }) {
             </table>
           </div>
         ))}
-        {groups.length === 0 && <div className="mt-6 text-center text-xs italic text-muted">No matches.</div>}
+        {note && (
+          <div className="mt-6 rounded-lg border border-amber-500/40 bg-amber-900/15 px-4 py-3 text-xs leading-relaxed text-amber-200">
+            {note}
+          </div>
+        )}
+        {!note && groups.length === 0 && <div className="mt-6 text-center text-xs italic text-muted">No matches.</div>}
       </div>
     </div>
   );

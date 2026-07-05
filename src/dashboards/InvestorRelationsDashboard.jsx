@@ -14,7 +14,7 @@ const pctChange = (curr, prev) => (curr != null && prev ? `${signed((curr / prev
 const ppChange = (curr, prev) => (curr != null && prev != null ? `${signed(curr - prev)} pp` : null);
 
 export default function InvestorRelationsDashboard({ yearData, onMetricClick }) {
-  const { data, tenant } = useData();
+  const { data } = useData();
   const latest = useYearData();
   const current = yearData || latest;
 

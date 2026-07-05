@@ -28,6 +28,17 @@ export function getToken() { return sessionStorage.getItem(TOKEN_KEY); }
 export function isAuthed() { return !!getToken(); }
 
 export function logout() {
+  // Best-effort server revocation of the httpOnly cli_refresh cookie, so a
+  // "logged out" session can't mint a fresh JWT via /auth/refresh. Fire-and-forget
+  // — the UI shouldn't block on it, and local state is cleared regardless.
+  try {
+    const token = getToken();
+    fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).catch(() => {});
+  } catch { /* ignore */ }
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);
   impersonateCompanyId = null;

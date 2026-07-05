@@ -75,5 +75,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "185.180.222.122",
     "time": "2026-07-02 04:06:47 BST"
+  },
+  {
+    "version": "v2.0.0t",
+    "message": "fix(audit): XSS-safe status feed, role+demo-only gating (DemoOnlyNotice), logout revocation, status-aware live bundles",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.216.221.110",
+    "time": "2026-07-05 06:32:43 BST"
   }
 ]

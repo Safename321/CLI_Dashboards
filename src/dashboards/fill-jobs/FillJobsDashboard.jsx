@@ -2,20 +2,37 @@
 // HTML tool; brief §4.3 option b). Interpret a job description into a 9-style
 // ASSET-P profile, then match a 22-candidate pool against it with tolerance
 // bands, fit ranking and radar overlays.
-import { useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { CANDIDATES, CANDIDATE_COLORS, DEFAULT_ASSET, DEFAULT_JOB_META } from '../../data/datasets/fill-jobs.js';
+import { useFillJobsBundle } from '../../lib/liveData.js';
 import { rankCandidates, bandsForScores, scoreText, extractMeta, buildInterpretation } from './logic.js';
 import ChartPanel from './ChartPanel.jsx';
 import RightPanel from './RightPanel.jsx';
 import CandidatePopup from './CandidatePopup.jsx';
 import JobIntake from './JobIntake.jsx';
 
-// Stable candidate color assignment by original array index (legacy colorMap)
-const COLOR_MAP = {};
-CANDIDATES.forEach((c, i) => { COLOR_MAP[c.id] = CANDIDATE_COLORS[i % CANDIDATE_COLORS.length]; });
+// The static demo pool is ONLY for the public demo build (VITE_AUTH_DISABLED).
+// A real tenant sees live data or an explicit instructional state — never demo people.
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 
 export default function FillJobsDashboard() {
+  // Live tenant data (GET /dashboard/fill-jobs-data): real ASI candidate profiles +
+  // real ASSET-P role profiles from CLIRC-synced scores.
+  const { data: live, status } = useFillJobsBundle(!DEMO_BUILD);
+  const candidates = useMemo(
+    () => (DEMO_BUILD
+      ? CANDIDATES
+      : (live?.candidates ?? []).map((c) => ({ ...c, name: c.name || c.email || `Candidate ${c.id}` }))),
+    [live],
+  );
+  const isLive = !DEMO_BUILD && candidates.length > 0;
+  // Stable candidate color assignment by array index (legacy colorMap)
+  const COLOR_MAP = useMemo(() => {
+    const m = {};
+    candidates.forEach((c, i) => { m[c.id] = CANDIDATE_COLORS[i % CANDIDATE_COLORS.length]; });
+    return m;
+  }, [candidates]);
   const [jobs, setJobs] = useState([]);
   const [activeJobId, setActiveJobId] = useState(null);
   const [finalists, setFinalists] = useState(() => new Set());
@@ -40,7 +57,24 @@ export default function FillJobsDashboard() {
     [activeJob],
   );
 
-  const ranked = useMemo(() => rankCandidates(CANDIDATES, asset), [asset]);
+  // Seed the jobs list once from the tenant's real ASSET-P role profiles (if any),
+  // without clobbering jobs the user has already interpreted from a description.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !live?.roles?.length) return;
+    seededRef.current = true;
+    const seeded = live.roles.map((r) => ({
+      id: `role-${r.id}`,
+      title: r.title,
+      loc: '',
+      text: '',
+      scores: r.scores,
+    }));
+    setJobs((js) => (js.length ? js : seeded));
+    setActiveJobId((cur) => cur ?? seeded[0]?.id ?? null);
+  }, [live]);
+
+  const ranked = useMemo(() => rankCandidates(candidates, asset), [candidates, asset]);
   const pool = useMemo(
     () => (finalists.size > 0 ? ranked.filter((c) => finalists.has(c.id)) : ranked),
     [ranked, finalists],
@@ -88,24 +122,68 @@ export default function FillJobsDashboard() {
   const statTop = Math.max(...asset.scores).toFixed(1);
   const statMean = (asset.scores.reduce((a, b) => a + b, 0) / 9).toFixed(2);
 
+  // Real tenant without usable data: explain exactly what to do — never show demo people.
+  if (!DEMO_BUILD && !isLive) {
+    const body = status === 'loading' ? (
+      <p className="text-sm text-muted">Loading your organization's assessment data…</p>
+    ) : status === 'error' ? (
+      <>
+        <p className="text-sm font-semibold text-red-400">Couldn't load your organization's assessment data.</p>
+        <p className="mt-2 text-sm text-muted">
+          Your session may have expired or the backend is unreachable. Refresh the page and sign in again —
+          if it persists, contact your administrator.
+        </p>
+      </>
+    ) : (
+      <>
+        <p className="text-sm font-semibold text-amber-400">No candidate profiles synced yet.</p>
+        <p className="mt-2 text-sm text-muted">Fill Jobs ranks real employees by their CLI assessment scores. To populate it:</p>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-300">
+          <li>Open <span className="font-semibold text-white">Assign CLI Instruments</span> and send the ASI instrument to your employees.</li>
+          <li>Employees complete the assessment via the emailed magic link.</li>
+          <li>Scores sync back automatically — candidates appear here, and completed ASSET-P role profiles appear as selectable positions.</li>
+        </ol>
+      </>
+    );
+    return (
+      <DashboardShell
+        title="Fill Jobs"
+        icon="🎯"
+        subtitle="ASSET-P Position Interpreter — match candidates to roles across 9 Achieving Styles"
+      >
+        <div className="mx-auto mt-10 max-w-xl rounded-xl border border-border bg-panel p-8">{body}</div>
+      </DashboardShell>
+    );
+  }
+
   return (
     <DashboardShell
       title="Fill Jobs"
       icon="🎯"
       subtitle="ASSET-P Position Interpreter — match candidates to roles across 9 Achieving Styles"
       actions={
-        <span className="rounded-full border border-border bg-ink px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-accent">
-          CLI Certified Use Only
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${isLive ? 'border-emerald-500/50 bg-emerald-900/20 text-emerald-400' : 'border-amber-500/50 bg-amber-900/20 text-amber-400'}`}>
+            {isLive ? `Live tenant data · ${candidates.length} candidates` : 'Demo data — public demo build'}
+          </span>
+          <span className="rounded-full border border-border bg-ink px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-accent">
+            CLI Certified Use Only
+          </span>
+        </div>
       }
     >
       <div ref={topRef} className="-m-6">
         {/* Job card */}
         <div className="flex flex-wrap items-center justify-between gap-6 border-b border-border bg-panel px-8 py-4">
           <div>
-            <div className="font-mono text-xl font-bold text-white">{activeJob ? activeJob.title : DEFAULT_JOB_META.title}</div>
+            <div className="font-mono text-xl font-bold text-white">
+              {activeJob ? activeJob.title : (isLive ? 'Select a role below or interpret a job description ↓' : DEFAULT_JOB_META.title)}
+            </div>
             <div className="mt-1 flex flex-wrap gap-5 text-xs text-muted">
-              {[DEFAULT_JOB_META.company, activeJob?.loc || DEFAULT_JOB_META.loc, DEFAULT_JOB_META.grade, DEFAULT_JOB_META.jobId, DEFAULT_JOB_META.posted].map((m) => (
+              {(isLive
+                ? [activeJob?.loc, 'Synced from CLIRC assessments'].filter(Boolean)
+                : [DEFAULT_JOB_META.company, activeJob?.loc || DEFAULT_JOB_META.loc, DEFAULT_JOB_META.grade, DEFAULT_JOB_META.jobId, DEFAULT_JOB_META.posted]
+              ).map((m) => (
                 <span key={m} className="flex items-center gap-1.5">
                   <span className="inline-block h-1 w-1 rounded-full bg-accent" />
                   {m}

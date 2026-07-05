@@ -5,9 +5,10 @@ import { useMemo } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
 import DemoDataBanner from '../components/DemoDataBanner.jsx';
 import { OASIOverlayRadarChart } from '../components/OASIRadar.jsx';
-import { useData } from '../data/DataContext.jsx';
-import { useOrgOasi } from '../lib/liveData.js';
-import { liveOasiScores } from './OrgOASIDashboard.jsx';
+import { useOrgOasiBundle } from '../lib/liveData.js';
+import { liveOasiScores, OasiEmptyState } from './OrgOASIDashboard.jsx';
+
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 import {
   ORG_OASI_SCORES,
   IDEAL_OASI_SCORES,
@@ -50,11 +51,12 @@ const STATE_CARDS = [
 ];
 
 export default function AspirationalOASIDashboard() {
-  const { tenant } = useData();
-  // Current profile from the live cli_v5 org-OASI aggregate; static demo as fallback.
+  // Current profile from the live cli_v5 org-OASI aggregate. Demo build → static demo;
+  // real tenant → live, or an instruction panel (never fabricated demo numbers).
   // Ideal/target stays static (it's the configured goal state, not a measurement).
-  const live = useOrgOasi();
-  const scores = liveOasiScores(live) ?? ORG_OASI_SCORES;
+  const bundle = useOrgOasiBundle(!DEMO_BUILD);
+  const liveScores = DEMO_BUILD ? ORG_OASI_SCORES : liveOasiScores(bundle.data);
+  const scores = liveScores ?? ORG_OASI_SCORES; // shape only; instruction returned below when empty
   const idealScores = IDEAL_OASI_SCORES;
 
   const styleComparison = useMemo(
@@ -67,6 +69,11 @@ export default function AspirationalOASIDashboard() {
       })),
     [scores, idealScores]
   );
+
+  // Real tenant with no usable OASI data: instruct, don't fabricate.
+  if (!DEMO_BUILD && !liveScores) {
+    return <OasiEmptyState status={bundle.status} title="Aspirational OASI" icon="🎯" />;
+  }
 
   return (
     <DashboardShell

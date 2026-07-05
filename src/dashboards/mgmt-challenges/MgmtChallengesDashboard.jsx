@@ -3,10 +3,15 @@
 // Select one of 21 challenge types → variant → add parties (SPGI people DB or
 // custom) → overlay ASI/org-instrument profiles on the Peace Pad radar →
 // behavioral gap analysis → downloadable resolution report.
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { STYLES } from '../shared/StyleRadar.jsx';
 import { PROBLEMS, PARTY_COLORS, PEOPLE_DB } from '../../data/datasets/mgmt-challenges.js';
+import { useFillJobsBundle } from '../../lib/liveData.js';
+
+// Static SPGI people are ONLY for the public demo build (VITE_AUTH_DISABLED).
+// A real tenant sees their own employees (real synced ASI scores) or instructions.
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 import PeacePadPanel from './PeacePadPanel.jsx';
 import ChallengeGrid from './ChallengeGrid.jsx';
 import PartiesSection from './PartiesSection.jsx';
@@ -34,6 +39,30 @@ export default function MgmtChallengesDashboard() {
   const partySeqRef = useRef(0); // unique party-id counter (component-scoped, §4.4)
 
   const selProb = PROBLEMS.find((p) => p.id === selProbId) || null;
+
+  // Live tenant people: real employees with their REAL synced ASI profiles
+  // (GET /dashboard/fill-jobs-data → candidates). Parties added from the live
+  // group carry their actual instrument scores instead of generated ones.
+  const { data: live, status: liveStatus } = useFillJobsBundle(!DEMO_BUILD);
+  const peopleDb = useMemo(() => {
+    if (DEMO_BUILD) return PEOPLE_DB;
+    if (!live?.candidates?.length) return [];
+    return [{
+      name: 'Your Organization — Live ASI Profiles',
+      type: 'individual',
+      people: live.candidates.map((c) => ({
+        name: c.name || c.email || `Employee ${c.id}`,
+        role: c.email || 'Employee',
+        scores: c.scores,
+      })),
+    }];
+  }, [live]);
+  // Instruction shown in the people picker when a real tenant has no live people.
+  const pickerNote = DEMO_BUILD || peopleDb.length ? null
+    : liveStatus === 'loading' ? 'Loading your organization\'s people…'
+    : liveStatus === 'error'
+      ? 'Couldn\'t load your organization\'s people — your session may have expired. Refresh and sign in again.'
+      : 'No employee ASI profiles synced yet. Assign instruments via "Assign CLI Instruments"; once employees complete them, their real profiles appear here. You can still add parties manually below.';
 
   const showBanner = useCallback((msg) => {
     setBanner(msg);
@@ -92,15 +121,17 @@ export default function MgmtChallengesDashboard() {
   const commitPeople = useCallback((keys) => {
     keys.forEach((key) => {
       const [gi, pi] = key.split('-').map(Number);
-      const grp = PEOPLE_DB[gi];
+      const grp = peopleDb[gi];
       const person = grp?.people[pi];
       if (person && !parties.find((p) => p.name === person.name)) {
-        addParty(person.name, person.role, grp.type === 'team' ? 'OASI' : 'ASI', null);
+        // Real synced scores when the person came from the live group; the demo
+        // people have no scores field and keep the generated-profile behavior.
+        addParty(person.name, person.role, grp.type === 'team' ? 'OASI' : 'ASI', person.scores || null);
       }
     });
     setPeopleOpen(false);
     showBanner('Parties added');
-  }, [parties, addParty, showBanner]);
+  }, [peopleDb, parties, addParty, showBanner]);
 
   const saveChallenge = useCallback(() => {
     if (!selProb) { showBanner('Select a challenge type first'); return; }
@@ -240,7 +271,7 @@ export default function MgmtChallengesDashboard() {
         </footer>
       </div>
 
-      {peopleOpen && <PeoplePopup parties={parties} onDone={commitPeople} />}
+      {peopleOpen && <PeoplePopup db={peopleDb} note={pickerNote} parties={parties} onDone={commitPeople} />}
       {faqOpen && <FaqModal onClose={() => setFaqOpen(false)} />}
       {banner && (
         <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-accent bg-panel px-4 py-2 text-sm text-slate-100 shadow-xl">✓ {banner}</div>

@@ -50,14 +50,23 @@ function chime() {
   } catch {}
 }
 
+// Build a <div class=cls> with textContent — never innerHTML — so hostile
+// strings from the public ntfy topic or deploy-log can't inject markup/script.
+function el(cls, text) {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = text;
+  return d;
+}
+
 function addEntry(title, message, time) {
   if (first) { feed.innerHTML = ''; first = false; }
   const d = new Date(time * 1000);
   const div = document.createElement('div');
   div.className = 'entry';
-  div.innerHTML = (title ? '<div class="title">' + title + '</div>' : '') +
-    '<div class="msg">' + message + '</div>' +
-    '<div class="meta">' + d.toLocaleString() + '</div>';
+  if (title) div.appendChild(el('title', title));
+  div.appendChild(el('msg', message));
+  div.appendChild(el('meta', d.toLocaleString()));
   feed.prepend(div);
 
   toast.textContent = title || 'New message';
@@ -90,9 +99,9 @@ fetch('/deploy-log.json').then(r => r.json()).then(entries => {
     if (first) { feed.innerHTML = ''; first = false; }
     const div = document.createElement('div');
     div.className = 'entry';
-    div.innerHTML = '<div class="title">Deploy: ' + e.version + '</div>' +
-      '<div class="msg">' + e.message + '</div>' +
-      '<div class="meta">' + e.deployer + ' &middot; ' + e.ip + ' &middot; ' + e.time + '</div>';
+    div.appendChild(el('title', 'Deploy: ' + (e.version || '')));
+    div.appendChild(el('msg', e.message || ''));
+    div.appendChild(el('meta', (e.deployer || '') + ' · ' + (e.ip || '') + ' · ' + (e.time || '')));
     feed.appendChild(div);
   });
 }).catch(() => {});
