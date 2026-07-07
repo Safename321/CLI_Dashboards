@@ -3,7 +3,11 @@
 import { SPGI_MA_DEALS } from '../../data/datasets/merger-deals.js';
 
 // Visual tier from CLI letter rating: A* emerald, B* cyan, else amber.
-const tierOf = (rating) => (rating.startsWith('A') ? 'A' : rating.startsWith('B') ? 'B' : 'C');
+// Tenant-entered rows may omit fields — default to C-tier rather than crash.
+const tierOf = (rating) => {
+  const r = String(rating ?? '');
+  return r.startsWith('A') ? 'A' : r.startsWith('B') ? 'B' : 'C';
+};
 const TIER = {
   A: { border: 'border-emerald-500/30', chip: 'bg-emerald-900/50 text-emerald-400', box: 'bg-emerald-900/20 border border-emerald-500/30', text: 'text-emerald-400', mark: '✓' },
   B: { border: 'border-cyan-500/30', chip: 'bg-cyan-900/50 text-cyan-400', box: 'bg-cyan-900/20 border border-cyan-500/30', text: 'text-cyan-400', mark: '○' },
@@ -28,7 +32,7 @@ function PerfCell({ label, value, valueClass }) {
 
 function DealCard({ deal }) {
   const tier = TIER[tierOf(deal.rating)];
-  const perf = deal.performance;
+  const perf = deal.performance ?? null;
   return (
     <article className={`overflow-hidden rounded-xl border bg-panel ${tier.border}`}>
       <div className="p-5">
@@ -51,74 +55,103 @@ function DealCard({ deal }) {
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-5 gap-3">
-          <PerfCell label="Revenue Impact" value={perf.revenueImpact} valueClass={perf.revenueImpact.includes('+') ? 'text-emerald-400' : 'text-slate-300'} />
-          <PerfCell label="Margin Impact" value={perf.marginImpact} valueClass={perf.marginImpact.includes('+') ? 'text-emerald-400' : 'text-slate-300'} />
-          <PerfCell
-            label="Integration"
-            value={perf.integrationStatus}
-            valueClass={perf.integrationStatus === 'Complete' ? 'text-emerald-400' : perf.integrationStatus === 'Integrating' ? 'text-amber-400' : 'text-cyan-400'}
-          />
-          <PerfCell label="Synergies" value={perf.synergiesRealized} valueClass={['95%', '100%'].includes(perf.synergiesRealized) ? 'text-emerald-400' : 'text-slate-300'} />
-          <PerfCell
-            label="Retention"
-            value={perf.employeeRetention}
-            valueClass={parseInt(perf.employeeRetention, 10) >= 80 ? 'text-emerald-400' : parseInt(perf.employeeRetention, 10) >= 70 ? 'text-amber-400' : 'text-slate-300'}
-          />
-        </div>
-
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          <div className="rounded-lg bg-slate-700/30 p-3">
-            <div className="mb-1 text-xs font-medium text-cyan-400">Strategic Rationale</div>
-            <div className="text-sm text-slate-300">{deal.rationale}</div>
+        {perf && (
+          <div className="mb-4 grid grid-cols-5 gap-3">
+            <PerfCell label="Revenue Impact" value={perf.revenueImpact ?? '—'} valueClass={String(perf.revenueImpact ?? '').includes('+') ? 'text-emerald-400' : 'text-slate-300'} />
+            <PerfCell label="Margin Impact" value={perf.marginImpact ?? '—'} valueClass={String(perf.marginImpact ?? '').includes('+') ? 'text-emerald-400' : 'text-slate-300'} />
+            <PerfCell
+              label="Integration"
+              value={perf.integrationStatus ?? '—'}
+              valueClass={perf.integrationStatus === 'Complete' ? 'text-emerald-400' : perf.integrationStatus === 'Integrating' ? 'text-amber-400' : 'text-cyan-400'}
+            />
+            <PerfCell label="Synergies" value={perf.synergiesRealized ?? '—'} valueClass={['95%', '100%'].includes(perf.synergiesRealized) ? 'text-emerald-400' : 'text-slate-300'} />
+            <PerfCell
+              label="Retention"
+              value={perf.employeeRetention ?? '—'}
+              valueClass={parseInt(perf.employeeRetention, 10) >= 80 ? 'text-emerald-400' : parseInt(perf.employeeRetention, 10) >= 70 ? 'text-amber-400' : 'text-slate-300'}
+            />
           </div>
-          <div className="rounded-lg bg-slate-700/30 p-3">
-            <div className="mb-1 text-xs font-medium text-cyan-400">Synergy Targets</div>
-            <div className="text-sm text-slate-300">
-              Cost: {deal.synergies.cost} • Revenue: {deal.synergies.revenue} • Timeline: {deal.synergies.timeline}
+        )}
+
+        {(deal.rationale || deal.synergies) && (
+          <div className="mb-4 grid grid-cols-2 gap-4">
+            {deal.rationale && (
+              <div className="rounded-lg bg-slate-700/30 p-3">
+                <div className="mb-1 text-xs font-medium text-cyan-400">Strategic Rationale</div>
+                <div className="text-sm text-slate-300">{deal.rationale}</div>
+              </div>
+            )}
+            {deal.synergies && (
+              <div className="rounded-lg bg-slate-700/30 p-3">
+                <div className="mb-1 text-xs font-medium text-cyan-400">Synergy Targets</div>
+                <div className="text-sm text-slate-300">
+                  Cost: {deal.synergies.cost} • Revenue: {deal.synergies.revenue} • Timeline: {deal.synergies.timeline}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {deal.verdict && (
+          <div className={`rounded-lg p-3 ${tier.box}`}>
+            <div className="flex items-center gap-2">
+              <span className={`text-lg ${tier.text}`}>{tier.mark}</span>
+              <span className={`font-medium ${tier.text}`}>CLI Assessment:</span>
+              <span className="text-slate-300">{deal.verdict}</span>
             </div>
           </div>
-        </div>
-
-        <div className={`rounded-lg p-3 ${tier.box}`}>
-          <div className="flex items-center gap-2">
-            <span className={`text-lg ${tier.text}`}>{tier.mark}</span>
-            <span className={`font-medium ${tier.text}`}>CLI Assessment:</span>
-            <span className="text-slate-300">{deal.verdict}</span>
-          </div>
-        </div>
+        )}
       </div>
     </article>
   );
 }
 
-export default function MergerDealsTab() {
+// deals: per-tenant `maDeals` dataset rows (same shape as SPGI_MA_DEALS);
+// undefined → static demo portfolio. The demo summary stats + performance
+// summary are S&P-specific, so they only render on the demo portfolio.
+export default function MergerDealsTab({ deals }) {
+  const isDemo = deals === undefined;
+  const rows = isDemo ? SPGI_MA_DEALS : deals;
+
+  if (!rows.length) {
+    return (
+      <div className="rounded-xl border border-border bg-panel p-8 text-center">
+        <p className="text-sm font-semibold text-amber-400">No M&A deals entered.</p>
+        <p className="mt-2 text-sm text-muted">Store your deal list in the <span className="font-semibold text-slate-200">maDeals</span> dataset to populate this scorecard.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4">
-        {SUMMARY_STATS.map((s) => (
-          <div key={s.label} className={`rounded-xl border bg-gradient-to-br to-panel p-4 ${s.tint}`}>
-            <div className="text-3xl font-bold">{s.value}</div>
-            <div className="text-sm text-muted">{s.label}</div>
-            <div className="mt-1 text-xs">{s.note}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="rounded-lg border border-border bg-panel/50 p-3">
-        <div className="flex items-center gap-2 text-sm text-muted">
-          <span aria-hidden>📄</span>
-          <span>Data sources: SEC 8-K filings, S&P Global press releases, earnings reports, and financial disclosures</span>
+      {isDemo && (
+        <div className="grid grid-cols-4 gap-4">
+          {SUMMARY_STATS.map((s) => (
+            <div key={s.label} className={`rounded-xl border bg-gradient-to-br to-panel p-4 ${s.tint}`}>
+              <div className="text-3xl font-bold">{s.value}</div>
+              <div className="text-sm text-muted">{s.label}</div>
+              <div className="mt-1 text-xs">{s.note}</div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
+
+      {isDemo && (
+        <div className="rounded-lg border border-border bg-panel/50 p-3">
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <span aria-hidden>📄</span>
+            <span>Data sources: SEC 8-K filings, S&P Global press releases, earnings reports, and financial disclosures</span>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
-        {SPGI_MA_DEALS.map((deal) => (
+        {rows.map((deal) => (
           <DealCard key={deal.id} deal={deal} />
         ))}
       </div>
 
-      <div className="rounded-xl border border-border bg-gradient-to-r from-panel to-ink p-6">
+      {isDemo && <div className="rounded-xl border border-border bg-gradient-to-r from-panel to-ink p-6">
         <h3 className="mb-4 font-semibold text-white">📊 M&A Portfolio Performance Summary</h3>
         <div className="grid grid-cols-3 gap-6">
           <div>
@@ -157,7 +190,7 @@ export default function MergerDealsTab() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

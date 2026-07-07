@@ -8,7 +8,20 @@ import { FinancialKPICard } from '../components/financial.jsx';
 import { generateReport, REPORT_BUTTON_SAYINGS } from '../reports/index.js';
 import { useData, useYearData } from '../data/DataContext.jsx';
 import SwotBubbleChart from './swot/SwotBubbleChart.jsx';
-import { REFERENCE_FACTORS, REFERENCE_ARROWS } from '../data/datasets/swot.js';
+import useSwotData from './swot/useSwotData.js';
+import { openSwotReport } from './swot/report.js';
+import { useDataset } from '../lib/liveData.js';
+import { financialCardsFromKpis } from '../lib/liveKpis.js';
+
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
+
+// Phase 3 (D8): sections that still run on demo narrative carry an explicit
+// tag on real logins until their live sources exist.
+const DemoTag = () => (DEMO_BUILD ? null : (
+  <span className="rounded-full border border-amber-500/40 bg-amber-900/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-400">
+    demo figures
+  </span>
+));
 import {
   EXEC_KPIS,
   FINANCIAL_KPI_CARDS,
@@ -70,8 +83,19 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
   const { data } = useData();
   const latest = useYearData();
 
-  const strategies = useMemo(() => getTriggeredStrategies(EXEC_KPIS), []);
-  const triggeredCount = FINANCIAL_KPI_CARDS.filter((k) => k.trigger).length;
+  // Live tenant sources (D8): SWOT from org-oasi, financial KPIs from the
+  // entered currentKpis dataset. Static demo values remain the fallback and
+  // are tagged as such on real logins.
+  const swot = useSwotData();
+  const storedKpis = useDataset('currentKpis', null);
+  const liveCards = DEMO_BUILD ? null : financialCardsFromKpis(storedKpis);
+  const kpiCards = liveCards ?? FINANCIAL_KPI_CARDS;
+
+  const strategies = useMemo(
+    () => getTriggeredStrategies(liveCards && storedKpis ? storedKpis : EXEC_KPIS),
+    [liveCards, storedKpis],
+  );
+  const triggeredCount = kpiCards.filter((k) => k.trigger).length;
 
   // Outcome (trailing) column from dataset financials — latest vs prior year.
   const outcome = useMemo(() => {
@@ -88,8 +112,23 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
       : null;
   }, [data, latest]);
 
+  // Live logins must never receive the demo narrative report — the button is
+  // disabled until the live factors are ready.
+  const swotReportReady = DEMO_BUILD || (swot.status === 'ready' && swot.isLive);
   const onSwotReport = () => {
     try {
+      if (!DEMO_BUILD) {
+        if (!swotReportReady) return;
+        // Live tenants get the materiality report built from THEIR factors.
+        openSwotReport({
+          factors: swot.factors,
+          title: swot.meta.title,
+          subtitle: swot.meta.subtitle,
+          meta: swot.meta,
+          recommendations: swot.recommendations,
+        });
+        return;
+      }
       generateReport(SWOT_REPORT.tactic, SWOT_REPORT.panelTitle, SWOT_REPORT.evidence, SWOT_REPORT.strategy, null, null, data);
     } catch (err) {
       console.error('[CEOAdvisoryDashboard] SWOT report generation failed:', err);
@@ -119,6 +158,7 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
               <span className="text-xl" aria-hidden>🔔</span>
               <h2 className="font-semibold text-white">What changed since your last login</h2>
               <span className="ml-2 text-xs text-subtle">{changeWindow()}</span>
+              <DemoTag />
             </div>
             <span className="text-xs text-accent">{CHANGE_FEED.length} items</span>
           </div>
@@ -143,12 +183,16 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
               <div>
                 <h2 className="text-lg font-semibold text-white">Strategic SWOT — derived from OASI</h2>
                 <p className="text-xs text-muted">
-                  Behavioral diagnostic translated into strategic position vs. Mobility spin-off, IHS Markit integration, and AI competitive front
+                  {DEMO_BUILD
+                    ? 'Behavioral diagnostic translated into strategic position vs. Mobility spin-off, IHS Markit integration, and AI competitive front'
+                    : 'Behavioral diagnostic translated into strategic position — materiality-bubble read of your live org profile'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">N = 847 · OASI</span>
+              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
+                {swot.status === 'ready' && swot.isLive ? `N = ${swot.meta.respondents} · OASI (live)` : 'N = 847 · OASI'}
+              </span>
               <button
                 onClick={() => onNavigate?.('swot')}
                 className="rounded-full border border-accent/50 px-3 py-1 text-xs font-semibold text-accent hover:bg-accent/10"
@@ -159,19 +203,27 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
             </div>
           </div>
 
-          {/* Materiality-Bubble read (spec §8.2 embedded mode) — the same
-              factors as the quadrant text below, with the three-channel
-              encoding + mandatory legend/caveat baked into the SVG. */}
-          <div className="mb-4 rounded-lg border border-border bg-ink/40 p-3">
-            <SwotBubbleChart
-              factors={REFERENCE_FACTORS}
-              arrows={REFERENCE_ARROWS}
-              onFactorClick={() => onNavigate?.('swot')}
-              className="mx-auto w-full max-w-3xl"
-            />
-          </div>
+          {/* Materiality-Bubble read (spec §8.2 embedded mode) — demo build
+              shows the reference profile; real logins show THEIR live factors
+              (legend + caveat baked into the SVG). */}
+          {swot.status === 'ready' ? (
+            <div className="mb-4 rounded-lg border border-border bg-ink/40 p-3">
+              <SwotBubbleChart
+                factors={swot.factors}
+                arrows={swot.arrows}
+                onFactorClick={() => onNavigate?.('swot')}
+                className="mx-auto w-full max-w-3xl"
+              />
+            </div>
+          ) : (
+            <div className="mb-4 rounded-lg border border-border bg-ink/40 p-6 text-center text-sm text-muted">
+              {swot.status === 'loading' ? 'Loading your organization\'s profile…'
+                : swot.status === 'empty' ? 'No completed assessments yet — assign CLI instruments to generate the materiality read.'
+                : 'Couldn\'t load your organization\'s assessment data.'}
+            </div>
+          )}
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {DEMO_BUILD && <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {SWOT_QUADRANTS.map((q) => {
               const s = QUADRANT_STYLES[q.tone];
               return (
@@ -191,16 +243,19 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
                 </div>
               );
             })}
-          </div>
+          </div>}
 
           <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-ink/60 px-4 py-3">
             <div className="text-xs text-muted">
-              <span className="font-semibold text-slate-200">Full SWOT report</span> — {SWOT_REPORT.tactic.description}
+              <span className="font-semibold text-slate-200">Full SWOT report</span> — {DEMO_BUILD ? SWOT_REPORT.tactic.description : 'materiality-ranked matrix, causal chain and recommendations from your live profile'}
             </div>
             <button
               onClick={onSwotReport}
-              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
-              title="Opens the full SWOT report in a new tab. Use your browser's Print → Save as PDF to keep a copy."
+              disabled={!swotReportReady}
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+              title={swotReportReady
+                ? "Opens the full SWOT report in a new tab. Use your browser's Print → Save as PDF to keep a copy."
+                : 'Available once your organization has completed assessments.'}
             >
               📄 {reportSaying()}
             </button>
@@ -209,7 +264,7 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
 
         <RecommendationPanel
           severity={CEO_KPI_ALERT.severity}
-          title={CEO_KPI_ALERT.title}
+          title={DEMO_BUILD ? CEO_KPI_ALERT.title : `${CEO_KPI_ALERT.title} — demo figures`}
           evidence={CEO_KPI_ALERT.evidence}
           strategy={CEO_KPI_ALERT.strategy}
           tactics={CEO_KPI_ALERT.tactics}
@@ -222,14 +277,17 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
             <div className="flex items-center gap-2">
               <span className="text-2xl" aria-hidden>💰</span>
               <h2 className="text-lg font-semibold text-white">Financial Efficiency KPIs</h2>
+              {liveCards
+                ? <span className="rounded-full border border-emerald-500/40 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-400">live · currentKpis</span>
+                : <DemoTag />}
             </div>
             <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
-              {triggeredCount} of {FINANCIAL_KPI_CARDS.length} KPIs Triggered
+              {triggeredCount} of {kpiCards.length} KPIs Triggered
             </span>
           </div>
 
           <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
-            {FINANCIAL_KPI_CARDS.map((k) => (
+            {kpiCards.map((k) => (
               <FinancialKPICard key={k.label} {...k} />
             ))}
           </div>
@@ -258,6 +316,7 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
             <div className="mb-3 flex items-center gap-2">
               <span className="text-purple-400" aria-hidden>🔮</span>
               <h3 className="text-sm font-semibold uppercase text-purple-400">Predictive (12-24mo)</h3>
+              <DemoTag />
             </div>
             <div className="space-y-2">
               {PREDICTIVE_ROWS.map((r) => (
@@ -273,6 +332,7 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
             <div className="mb-3 flex items-center gap-2">
               <span className="text-accent" aria-hidden>📊</span>
               <h3 className="text-sm font-semibold uppercase text-accent">Diagnostic (Current)</h3>
+              <DemoTag />
             </div>
             <div className="space-y-2">
               {DIAGNOSTIC_ROWS.map((r) => (
@@ -315,14 +375,14 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
         {/* Recommendations + side metrics */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
-            <h2 className="text-lg font-semibold text-white">🎯 AI-Powered Recommendations</h2>
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-white">🎯 AI-Powered Recommendations <DemoTag /></h2>
             {AI_RECOMMENDATIONS.map((r) => (
               <RecommendationCard key={r.title} {...r} />
             ))}
           </div>
           <div className="space-y-4">
             <div className="rounded-xl border border-border bg-panel p-4">
-              <h3 className="mb-3 font-semibold text-white">📊 Key Metrics</h3>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-white">📊 Key Metrics <DemoTag /></h3>
               <div className="space-y-3">
                 {KEY_METRICS.map((m) => (
                   <div key={m.label}>
@@ -340,7 +400,7 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
               </div>
             </div>
             <div className="rounded-xl border border-border bg-panel p-4">
-              <h3 className="mb-3 font-semibold text-white">⚡ Attention Required</h3>
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-white">⚡ Attention Required <DemoTag /></h3>
               <div className="space-y-2">
                 {ATTENTION_ITEMS.map((a) => (
                   <div

@@ -4,7 +4,7 @@
 // useData() itself (panels normally render inside DataProvider — the hook
 // call is guarded so the component still works without a provider).
 import { useState } from 'react';
-import { useData } from '../data/DataContext.jsx';
+import { useDataMaybe } from '../data/DataContext.jsx';
 import {
   generateReport,
   getReportQuestions,
@@ -141,13 +141,10 @@ export default function RecommendationPanel({ severity, title, evidence, strateg
   const [modalTactic, setModalTactic] = useState(null);
 
   // Dataset for report financials: prop wins, context is the fallback.
-  let ctxData = null;
-  try {
-    ctxData = useData().data; // eslint-disable-line react-hooks/rules-of-hooks -- unconditional call, guarded against missing provider
-  } catch {
-    ctxData = null; // rendered outside DataProvider — rely on reportData prop
-  }
-  const data = reportData ?? ctxData;
+  // useDataMaybe never throws (null outside a DataProvider), so the hook is
+  // genuinely unconditional — no try/catch around a hook call.
+  const ctx = useDataMaybe();
+  const data = reportData ?? ctx?.data ?? null;
 
   const c = SEVERITY_STYLES[severity] || SEVERITY_STYLES.info;
 

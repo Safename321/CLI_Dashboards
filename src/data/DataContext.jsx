@@ -59,6 +59,12 @@ export function useData() {
   return ctx;
 }
 
+// Non-throwing variant for components that may render outside a DataProvider
+// (e.g. RecommendationPanel in isolated views/tests) — returns null instead.
+export function useDataMaybe() {
+  return useContext(DataContext);
+}
+
 // Convenience: financials for a given year (falls back to latest available).
 export function useYearData(year) {
   const { data } = useData();

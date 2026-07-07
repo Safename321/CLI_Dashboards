@@ -47,12 +47,10 @@ const ROLE_GATED = { super: ['super'], hris: ['admin', 'super'] };
 // conditional-hooks pitfall. [title, icon] per view id.
 const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 const DEMO_ONLY = {
-  'board-packet': ['Board Directors', '📋'],
   'customer-health': ['Customer Health', '❤️'],
   'early-warning': ['Early Warning KPIs', '⚡'],
   'scenario-modeling': ['Scenario Modeling', '🔮'],
   'investor-behavior': ['Investor Behavior', '📈'],
-  merger: ['Post Merger Updates', '🤝'],
   'employee-leading': ['Employee Leading', '👥'],
   'merger-integration': ['Post Merger Integration', '🔄'],
 };
