@@ -96,5 +96,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-07 13:59:19 BST"
+  },
+  {
+    "version": "v2.0.0w",
+    "message": "fix(hiring): job close uses EXPIRED (legacy status enum), ASCII-safe deploy messages",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 17:17:08 BST"
   }
 ]

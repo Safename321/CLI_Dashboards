@@ -252,7 +252,8 @@ function JobCard({ job, onChanged }) {
 
 function JobActions({ job, onChanged }) {
   const [busy, setBusy] = useState(false);
-  const closed = job.status?.toUpperCase() === 'CLOSED';
+  // Legacy jobs.status enum: ACTIVE / EXPIRED / DRAFT (no CLOSED value).
+  const closed = job.status?.toUpperCase() !== 'ACTIVE';
 
   const call = async (method, path, body) => {
     setBusy(true);
@@ -272,7 +273,7 @@ function JobActions({ job, onChanged }) {
       <button
         disabled={busy}
         className={btn}
-        onClick={() => call('PATCH', `/dashboard/jobs/${job.id}`, { status: closed ? 'ACTIVE' : 'CLOSED' })}
+        onClick={() => call('PATCH', `/dashboard/jobs/${job.id}`, { status: closed ? 'ACTIVE' : 'EXPIRED' })}
       >
         {closed ? 'Reopen' : 'Close'}
       </button>
