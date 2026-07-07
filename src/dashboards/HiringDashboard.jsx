@@ -7,16 +7,16 @@
 //
 // The public demo build (VITE_AUTH_DISABLED) keeps the legacy demo pipeline view
 // (v1.24L App.jsx 8467–8522); a real company login only ever sees live data.
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import DashboardShell from '../components/DashboardShell.jsx';
 import { MetricCard, Panel } from '../components/primitives.jsx';
 import RecommendationPanel from '../components/RecommendationPanel.jsx';
 import { FinancialKPICard } from '../components/financial.jsx';
 import { StatTile } from './employee-leading/parts.jsx';
 import StyleRadar, { STYLE_POINT_COLORS } from './shared/StyleRadar.jsx';
-import { calcFit, calcR2, fitLabel, bandsForScores } from './fill-jobs/logic.js';
+import { calcFit, calcR2, fitLabel, bandsForScores, scoreText } from './fill-jobs/logic.js';
 import { CANDIDATE_COLORS } from '../data/datasets/fill-jobs.js';
-import { useHiring } from '../lib/liveData.js';
+import { dashFetch } from '../lib/auth.js';
 
 const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 
@@ -42,7 +42,84 @@ function fmtDate(d) {
   return Number.isNaN(t.getTime()) ? String(d).slice(0, 10) : t.toLocaleDateString();
 }
 
-function JobCard({ job }) {
+// ── Post a Job (Phase-2b) ────────────────────────────────────────────────────
+
+const EMPTY_FORM = { title: '', dept: '', location: '', salary: '', positions: 1, deadline: '', description: '' };
+
+function PostJobForm({ onCreated, onCancel }) {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [deriveAsset, setDeriveAsset] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.title.trim()) { setError('Title is required.'); return; }
+    setBusy(true);
+    setError('');
+    const payload = {
+      ...form,
+      title: form.title.trim(),
+      positions: Number(form.positions) || 1,
+      status: 'ACTIVE',
+    };
+    // Reuse the fill-jobs interpreter so the posted role has an ASSET target
+    // (fit ranking needs one); admins refine later via the fill-jobs tool.
+    if (deriveAsset && form.description.trim()) {
+      payload.asset = scoreText(form.description);
+    }
+    try {
+      const res = await dashFetch('/dashboard/jobs', { method: 'POST', body: JSON.stringify(payload) });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || `Failed (${res.status})`);
+      onCreated();
+    } catch (err) {
+      setError(err.message || 'Failed to post the job.');
+      setBusy(false);
+    }
+  };
+
+  const field = 'w-full rounded-md border border-border bg-ink px-3 py-2 text-sm text-slate-100 placeholder:text-subtle focus:border-accent focus:outline-none';
+
+  return (
+    <Panel title="📮 Post a Job" right={
+      <button onClick={onCancel} className="text-xs text-muted hover:text-slate-200">✕ Cancel</button>
+    }>
+      <form onSubmit={submit} className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <input className={field} placeholder="Job title *" value={form.title} onChange={set('title')} required />
+          <input className={field} placeholder="Department" value={form.dept} onChange={set('dept')} />
+          <input className={field} placeholder="Location" value={form.location} onChange={set('location')} />
+          <input className={field} placeholder="Salary (e.g. $90k–$110k)" value={form.salary} onChange={set('salary')} />
+          <input className={field} type="number" min="1" placeholder="Positions" value={form.positions} onChange={set('positions')} />
+          <input className={field} placeholder="Deadline (e.g. 2026-08-31)" value={form.deadline} onChange={set('deadline')} />
+        </div>
+        <textarea
+          className={`${field} min-h-[120px]`}
+          placeholder="Job description — responsibilities, requirements, context. Used to derive the ASSET profile."
+          value={form.description}
+          onChange={set('description')}
+        />
+        <label className="flex items-center gap-2 text-xs text-muted">
+          <input type="checkbox" checked={deriveAsset} onChange={(e) => setDeriveAsset(e.target.checked)} />
+          Derive the ASSET achieving-styles target from the description (CLI fill-jobs methodology)
+        </label>
+        {error && <p className="text-xs font-semibold text-red-400">{error}</p>}
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+        >
+          {busy ? 'Posting…' : 'Post job'}
+        </button>
+      </form>
+    </Panel>
+  );
+}
+
+function JobCard({ job, onChanged }) {
   const hasTarget = job.asset?.some((v) => v > 0);
   const bands = useMemo(() => (hasTarget ? bandsForScores(job.asset) : null), [job.asset, hasTarget]);
   const [showRadar, setShowRadar] = useState(false);
@@ -74,6 +151,7 @@ function JobCard({ job }) {
           {[job.dept, job.location, job.positions ? `${job.positions} position${job.positions > 1 ? 's' : ''}` : null, job.deadline ? `Deadline ${job.deadline}` : null]
             .filter(Boolean)
             .map((m) => <span key={m}>{m}</span>)}
+          <JobActions job={job} onChanged={onChanged} />
         </div>
       }
     >
@@ -172,8 +250,69 @@ function JobCard({ job }) {
   );
 }
 
+function JobActions({ job, onChanged }) {
+  const [busy, setBusy] = useState(false);
+  const closed = job.status?.toUpperCase() === 'CLOSED';
+
+  const call = async (method, path, body) => {
+    setBusy(true);
+    try {
+      const res = await dashFetch(path, { method, ...(body ? { body: JSON.stringify(body) } : {}) });
+      if (!res.ok) throw new Error(`Failed (${res.status})`);
+      onChanged();
+    } catch {
+      setBusy(false);
+    }
+  };
+
+  const btn = 'rounded-md border border-border bg-ink px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:border-accent disabled:opacity-40';
+
+  return (
+    <span className="ml-2 flex items-center gap-1.5">
+      <button
+        disabled={busy}
+        className={btn}
+        onClick={() => call('PATCH', `/dashboard/jobs/${job.id}`, { status: closed ? 'ACTIVE' : 'CLOSED' })}
+      >
+        {closed ? 'Reopen' : 'Close'}
+      </button>
+      <button
+        disabled={busy}
+        className={`${btn} hover:border-red-500 hover:text-red-400`}
+        onClick={() => {
+          if (window.confirm(`Delete "${job.title}" and its ${job.applicants?.length ?? 0} application(s)? This cannot be undone.`)) {
+            call('DELETE', `/dashboard/jobs/${job.id}`);
+          }
+        }}
+      >
+        Delete
+      </button>
+    </span>
+  );
+}
+
 function LiveHiring() {
-  const { data, status } = useHiring(true);
+  // Manual fetch (not the cached live-data hooks) so posting/closing/deleting
+  // a job can refresh the pipeline immediately.
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState('loading');
+  const [showForm, setShowForm] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await dashFetch('/dashboard/hiring');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setData(await res.json());
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const refresh = useCallback(() => { setShowForm(false); load(); }, [load]);
+
   const jobs = data?.jobs ?? [];
 
   const totals = useMemo(() => {
@@ -199,32 +338,54 @@ function LiveHiring() {
         </p>
       </>
     );
-  } else if (jobs.length === 0) {
-    body = (
-      <>
-        <p className="text-sm font-semibold text-amber-400">No open positions yet.</p>
-        <p className="mt-2 text-sm text-muted">
-          When your organization posts positions, they appear here — and employees apply or express
-          interest from the CLI mobile app. Applicants are matched to each role's ASSET profile
-          automatically.
-        </p>
-      </>
-    );
   }
 
   if (body) {
     return <div className="mx-auto mt-10 max-w-xl rounded-xl border border-border bg-panel p-8">{body}</div>;
   }
 
+  if (jobs.length === 0) {
+    return (
+      <div className="mx-auto mt-10 max-w-2xl space-y-4">
+        {showForm ? (
+          <PostJobForm onCreated={refresh} onCancel={() => setShowForm(false)} />
+        ) : (
+          <div className="rounded-xl border border-border bg-panel p-8">
+            <p className="text-sm font-semibold text-amber-400">No open positions yet.</p>
+            <p className="mt-2 text-sm text-muted">
+              Post your first position below — employees then apply or express interest from the CLI
+              mobile app, and applicants are matched to the role's ASSET profile automatically.
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+            >
+              + Post a Job
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile value={totals.jobs} label="Open positions" tone="slate" center />
-        <StatTile value={totals.applicants} label="App applicants" tone="slate" center />
-        <StatTile value={totals.applied} label="Applied" tone="emerald" center />
-        <StatTile value={totals.interested} label="Interested" tone="amber" center />
+      <div className="flex items-start gap-4">
+        <div className="grid flex-1 grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatTile value={totals.jobs} label="Open positions" tone="slate" center />
+          <StatTile value={totals.applicants} label="App applicants" tone="slate" center />
+          <StatTile value={totals.applied} label="Applied" tone="emerald" center />
+          <StatTile value={totals.interested} label="Interested" tone="amber" center />
+        </div>
+        <button
+          onClick={() => setShowForm((s) => !s)}
+          className="shrink-0 rounded-md bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+        >
+          {showForm ? '✕ Cancel' : '+ Post a Job'}
+        </button>
       </div>
-      {jobs.map((j) => <JobCard key={j.id} job={j} />)}
+      {showForm && <PostJobForm onCreated={refresh} onCancel={() => setShowForm(false)} />}
+      {jobs.map((j) => <JobCard key={j.id} job={j} onChanged={load} />)}
       <p className="text-[11px] italic text-subtle">
         Applicant pool = employees who applied via the CLI mobile app. Fit compares each applicant's
         ASI profile to the role's ASSET target (CLI fill-jobs methodology).

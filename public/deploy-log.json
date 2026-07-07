@@ -89,5 +89,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-05 22:57:47 BST"
+  },
+  {
+    "version": "v2.0.0v",
+    "message": "feat(hiring): Phase-2b — Post a Job form (ASSET from description), close/reopen + delete job actions, mutation-aware pipeline refresh",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 13:59:19 BST"
   }
 ]
