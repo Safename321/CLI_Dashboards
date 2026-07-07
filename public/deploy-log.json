@@ -57,7 +57,7 @@
   },
   {
     "version": "v2.0.0q",
-    "message": "v2.0.0p full deployment — all 3 targets",
+    "message": "v2.0.0p full deployment - all 3 targets",
     "deployer": "safename321",
     "ip": "38.15.231.204",
     "time": "2026-06-17 16:28:09 EDT"
@@ -85,14 +85,14 @@
   },
   {
     "version": "v2.0.0u",
-    "message": "feat(hiring): live tenant hiring pipeline — /dashboard/hiring wired, applicant status badges + ASI fit, demo view kept for demo build",
+    "message": "feat(hiring): live tenant hiring pipeline - /dashboard/hiring wired, applicant status badges + ASI fit, demo view kept for demo build",
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-05 22:57:47 BST"
   },
   {
     "version": "v2.0.0v",
-    "message": "feat(hiring): Phase-2b — Post a Job form (ASSET from description), close/reopen + delete job actions, mutation-aware pipeline refresh",
+    "message": "feat(hiring): Phase-2b - Post a Job form (ASSET from description), close/reopen + delete job actions, mutation-aware pipeline refresh",
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-07 13:59:19 BST"

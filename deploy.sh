@@ -5,6 +5,9 @@ set -e
 
 cd "$(dirname "$0")"
 MSG="${1:-Update}"
+# Force ASCII: non-ASCII bytes (em dashes etc.) turn the ntfy notification into
+# an attachment.txt and mojibake the deploy log on Windows/Git Bash.
+MSG=$(printf '%s' "$MSG" | iconv -f UTF-8 -t ASCII//TRANSLIT 2>/dev/null || printf '%s' "$MSG" | tr -cd '\11\12\15\40-\176')
 NTFY_TOPIC="https://ntfy.sh/clidash-3dd4654f0f939b8cc5"
 REPO="Safename321/CLI_Dashboards"
 DROPLET_HOST="161.35.118.231"
