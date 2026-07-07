@@ -7,6 +7,8 @@ import { TrendBadge, RecommendationCard } from '../components/shared-cards.jsx';
 import { FinancialKPICard } from '../components/financial.jsx';
 import { generateReport, REPORT_BUTTON_SAYINGS } from '../reports/index.js';
 import { useData, useYearData } from '../data/DataContext.jsx';
+import SwotBubbleChart from './swot/SwotBubbleChart.jsx';
+import { REFERENCE_FACTORS, REFERENCE_ARROWS } from '../data/datasets/swot.js';
 import {
   EXEC_KPIS,
   FINANCIAL_KPI_CARDS,
@@ -145,7 +147,28 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
                 </p>
               </div>
             </div>
-            <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">N = 847 · OASI</span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">N = 847 · OASI</span>
+              <button
+                onClick={() => onNavigate?.('swot')}
+                className="rounded-full border border-accent/50 px-3 py-1 text-xs font-semibold text-accent hover:bg-accent/10"
+                title="Open the interactive Materiality-Bubble SWOT (size = materiality, fill = confidence)"
+              >
+                💠 Open full view →
+              </button>
+            </div>
+          </div>
+
+          {/* Materiality-Bubble read (spec §8.2 embedded mode) — the same
+              factors as the quadrant text below, with the three-channel
+              encoding + mandatory legend/caveat baked into the SVG. */}
+          <div className="mb-4 rounded-lg border border-border bg-ink/40 p-3">
+            <SwotBubbleChart
+              factors={REFERENCE_FACTORS}
+              arrows={REFERENCE_ARROWS}
+              onFactorClick={() => onNavigate?.('swot')}
+              className="mx-auto w-full max-w-3xl"
+            />
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

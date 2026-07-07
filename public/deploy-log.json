@@ -103,5 +103,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-07 17:17:08 BST"
+  },
+  {
+    "version": "v2.0.0x",
+    "message": "feat(swot): Strategic SWOT materiality-bubble dashboard - standalone view + CEO Advisory embed, live org-oasi ingestion, full report, spec acceptance tests",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 20:38:19 BST"
   }
 ]

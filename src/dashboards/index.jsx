@@ -27,6 +27,7 @@ import AboutCLIDashboard from './AboutCLIDashboard.jsx';
 import HelpDashboard from './help/HelpDashboard.jsx';
 import FurtherReadingDashboard from './FurtherReadingDashboard.jsx';
 import FillJobsDashboard from './fill-jobs/FillJobsDashboard.jsx';
+import SwotMaterialityDashboard from './swot/SwotMaterialityDashboard.jsx';
 import MgmtChallengesDashboard from './mgmt-challenges/MgmtChallengesDashboard.jsx';
 import SuperAdminConsole from './SuperAdminConsole.jsx';
 import HRISImportPanel from './HRISImportPanel.jsx';
@@ -80,6 +81,7 @@ const PORTED = {
   'meeting-prep': MeetingPrepDashboard,
   'tenant-config': TenantConfigDashboard,
   'fill-jobs': FillJobsDashboard,
+  swot: SwotMaterialityDashboard,
   'mgmt-challenges': MgmtChallengesDashboard,
   'about-cli': AboutCLIDashboard,
   help: HelpDashboard,

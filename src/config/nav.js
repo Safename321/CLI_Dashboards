@@ -8,6 +8,7 @@ export const NAV_SECTIONS = [
     descriptor: 'Top-level synthesis',
     items: [
       { id: 'ceo-advisory', label: 'CEO Advisory', icon: '🎯', alerts: 3 },
+      { id: 'swot', label: 'Strategic SWOT', icon: '💠' },
       { id: 'meeting-prep', label: 'Meeting Prep', icon: '📅', alerts: 1 },
       { id: 'merger', label: 'Post Merger Updates', icon: '🤝' },
       { id: 'board-packet', label: 'Board Directors', icon: '📋' },
