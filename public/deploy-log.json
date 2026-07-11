@@ -152,5 +152,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-11 23:26:22 BST"
+  },
+  {
+    "version": "v2.0.1c",
+    "message": "feat(d6): customer-health tenant-real - employee-perceived customer signal from app check-in Section-8 fields (product/support/value/competitor/retention), un-gate; CRM-style demo view kept for demo build",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-12 00:05:20 BST"
   }
 ]

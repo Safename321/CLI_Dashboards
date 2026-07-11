@@ -124,6 +124,8 @@ export const useOrgOasiBundle  = (enabled = true) => useLiveBundle('orgOasiBundl
 export const useMetricsTimeseries = (enabled = true) => useLiveBundle('metricsTimeseries', '/dashboard/metrics-timeseries', enabled);
 // Phase 3 (D4) cohort split → { overall, acquired, legacy, untagged, tagged }
 export const useCohortMetrics = (enabled = true) => useLiveBundle('cohortMetrics', '/dashboard/cohort-metrics', enabled);
+// Phase 3 (D6) employee-perceived customer signal → { responses, metrics, competitiveGap }
+export const useCustomerHealth = (enabled = true) => useLiveBundle('customerHealth', '/dashboard/customer-health', enabled);
 // (hiring intentionally has no cached hook — HiringDashboard fetches directly so
 // posting/closing/deleting a job can refresh the pipeline immediately)
 

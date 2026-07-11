@@ -47,7 +47,6 @@ const ROLE_GATED = { super: ['super'], hris: ['admin', 'super'] };
 // conditional-hooks pitfall. [title, icon] per view id.
 const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 const DEMO_ONLY = {
-  'customer-health': ['Customer Health', '❤️'],
   'scenario-modeling': ['Scenario Modeling', '🔮'],
 };
 
