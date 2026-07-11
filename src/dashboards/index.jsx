@@ -48,10 +48,8 @@ const ROLE_GATED = { super: ['super'], hris: ['admin', 'super'] };
 const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 const DEMO_ONLY = {
   'customer-health': ['Customer Health', '❤️'],
-  'early-warning': ['Early Warning KPIs', '⚡'],
   'scenario-modeling': ['Scenario Modeling', '🔮'],
   'investor-behavior': ['Investor Behavior', '📈'],
-  'employee-leading': ['Employee Leading', '👥'],
   'merger-integration': ['Post Merger Integration', '🔄'],
 };
 

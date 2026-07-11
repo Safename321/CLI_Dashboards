@@ -13,6 +13,12 @@ import {
 import { ExecutiveSummaryTab, RetentionRiskTab, KeyTalentTab } from './SummaryTabs.jsx';
 import { ManagerQualityTab, CustomerImpactTab } from './ImpactTabs.jsx';
 import { CultureVoiceTab, FrictionPointsTab } from './CultureTabs.jsx';
+import LeadingIndicators from '../shared/LeadingIndicators.jsx';
+
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
+const DemoTag = () => (DEMO_BUILD ? null : (
+  <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-900/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-400">demo figures</span>
+));
 
 // status → accent border color (per legacy MetricCard status prop)
 const STATUS_ACCENT = { good: '#10b981', warning: '#f59e0b', danger: '#ef4444' };
@@ -42,9 +48,12 @@ export default function EmployeeLeadingDashboard() {
       onTab={setTab}
     >
       <div className="space-y-6">
+        {/* Live tenant leading indicators (D3) — real login only. */}
+        {!DEMO_BUILD && <LeadingIndicators title="Live Leading Indicators" />}
+
         <RecommendationPanel
           severity="critical"
-          title="Attrition Risk: 23 Employees"
+          title={DEMO_BUILD ? 'Attrition Risk: 23 Employees' : 'Attrition Risk (demo figures)'}
           evidence={['$4.2M replacement cost', '68% in Operations']}
           strategy="Implement targeted retention program."
           tactics={[
@@ -52,6 +61,9 @@ export default function EmployeeLeadingDashboard() {
           ]}
         />
 
+        {!DEMO_BUILD && (
+          <div className="flex items-center text-xs text-muted">Benchmark tiles and deep-dive tabs below use illustrative figures<DemoTag /></div>
+        )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {EMPLOYEE_LEADING_METRICS.map((m) => (
             <MetricCard

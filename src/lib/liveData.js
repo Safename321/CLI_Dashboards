@@ -120,6 +120,8 @@ function useLiveBundle(key, path, enabled = true) {
 
 export const useFillJobsBundle = (enabled = true) => useLiveBundle('fillJobsBundle', '/dashboard/fill-jobs-data', enabled);
 export const useOrgOasiBundle  = (enabled = true) => useLiveBundle('orgOasiBundle',  '/dashboard/org-oasi',       enabled);
+// Phase 3 (D3) time-series → { series, indicators, seeded }
+export const useMetricsTimeseries = (enabled = true) => useLiveBundle('metricsTimeseries', '/dashboard/metrics-timeseries', enabled);
 // (hiring intentionally has no cached hook — HiringDashboard fetches directly so
 // posting/closing/deleting a job can refresh the pipeline immediately)
 

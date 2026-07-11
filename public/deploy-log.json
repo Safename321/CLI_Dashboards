@@ -117,5 +117,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-07 21:58:48 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "feat(d3): employee-leading + early-warning tenant-real - live leading indicators from metrics-timeseries (attrition/sentiment/participation trends + sparklines), un-gate both, demo-figure tags",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 20:46:17 BST"
   }
 ]

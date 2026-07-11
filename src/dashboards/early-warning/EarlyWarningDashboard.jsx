@@ -9,6 +9,12 @@ import RecommendationPanel from '../../components/RecommendationPanel.jsx';
 import BreachForecastPanel from './BreachForecastPanel.jsx';
 import { FinancialWarnings, WorkingCapitalWarnings, PeopleWarnings, RevenueImpactPanel } from './WarningSections.jsx';
 import ScenarioTesterModal from './ScenarioTesterModal.jsx';
+import LeadingIndicators from '../shared/LeadingIndicators.jsx';
+
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
+const DemoTag = () => (DEMO_BUILD ? null : (
+  <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-900/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-400">demo figures</span>
+));
 
 export default function EarlyWarningDashboard({ onMetricClick }) {
   const [scenarioOpen, setScenarioOpen] = useState(false);
@@ -29,13 +35,19 @@ export default function EarlyWarningDashboard({ onMetricClick }) {
       }
     >
       <div className="space-y-6">
+        {/* Live tenant early-warning signals (D3) — real login only. */}
+        {!DEMO_BUILD && <LeadingIndicators title="Live Early-Warning Signals" />}
+
         <RecommendationPanel
-          title={EW_RECOMMENDATION.title}
+          title={DEMO_BUILD ? EW_RECOMMENDATION.title : `${EW_RECOMMENDATION.title} — demo figures`}
           evidence={EW_RECOMMENDATION.evidence}
           strategy={EW_RECOMMENDATION.strategy}
           tactics={EW_RECOMMENDATION.tactics}
         />
 
+        {!DEMO_BUILD && (
+          <div className="flex items-center text-xs text-muted">Financial / working-capital forecast panels below use illustrative figures<DemoTag /></div>
+        )}
         <BreachForecastPanel />
         <FinancialWarnings />
         <WorkingCapitalWarnings />
