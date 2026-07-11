@@ -32,9 +32,9 @@ vercel --prod --yes --force
 # 2b. Droplet — git pull + rebuild + restart
 echo "Deploying to droplet ${DROPLET_HOST}..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build"
+  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
 ssh -f -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "kill \$(ps aux | grep 'node cli-proxy-server/server.js' | grep -v grep | awk '{print \$2}') 2>/dev/null || true; sleep 1; cd ${DROPLET_PATH} && nohup node cli-proxy-server/server.js > /root/cli-dash-webserver.log 2>&1 &"
+  "pkill -f 'cli-proxy-server' 2>/dev/null || true; pkill -f 'http.server 8000' 2>/dev/null || true; sleep 1; cd /root/www && nohup python3 -m http.server 8000 > /root/cli-dash-webserver.log 2>&1 &"
 echo "Droplet deployed."
 
 # 2c. GitHub Pages

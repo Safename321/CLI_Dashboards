@@ -138,5 +138,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-11 22:14:24 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "E2: excise dead Express proxy (cli-proxy-server + Neon/Drizzle/express deps + vercel /api route + 4 proxy tests); droplet now serves static via python http.server; connectors use authed Laravel /data",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 22:35:20 BST"
   }
 ]

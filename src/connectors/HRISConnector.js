@@ -1,12 +1,11 @@
 // Domain: hris — Workday / BambooHR (customer OAuth) + mock.
 import { BaseConnector } from './BaseConnector.js';
 
-// Talks to the JWT-protected /api/workday on cli-proxy-server. Two modes:
-//  - staged/CSV (default): no customer Workday creds needed; the server returns
-//    clearly-labelled data (payload.source: 'staged' | 'csv').
-//  - live (Phase 2 gate): when the customer's tenantUrl + OAuth accessToken are
-//    configured they're forwarded; until the server's Workday API client exists
-//    it acknowledges them in payload.meta.liveReason and still serves staged/CSV.
+// NOTE (post-E2): the standalone Express proxy was excised. Real HRIS import
+// runs server-side in Laravel (app/Services/Hris + /dashboard/hris routes,
+// encrypted per-tenant creds). This frontend connector has no live backend
+// route, so it degrades to its mock/staged payload — kept for the registry
+// shape until the connector layer is repointed at /dashboard/hris.
 // requiresOAuth stays true: REAL Workday data needs customer OAuth/ISU creds.
 export class WorkdayConnector extends BaseConnector {
   static domain = 'hris';

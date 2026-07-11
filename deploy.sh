@@ -96,13 +96,15 @@ else
   echo "Vercel CLI not authenticated — skipping CLI deploys (gamma still auto-deploys from the AllRepo push)."
 fi
 
-# 9b. Deploy to DigitalOcean droplet
+# 9b. Deploy to DigitalOcean droplet (static — the Express proxy was excised in
+# E2; the SPA has no client-side routing, so a plain static server suffices and
+# connectors call the authed Laravel /data proxy on app.cardinalfund.com).
 echo "Deploying to droplet ${DROPLET_HOST}..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build"
-# Restart the server — use -f flag on ssh to background the nohup command and return immediately
+  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
+# Restart the static server — python3 http.server serves dist/ under /CLI_Dashboards/ on :8000.
 ssh -f -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "kill \$(ps aux | grep 'node cli-proxy-server/server.js' | grep -v grep | awk '{print \$2}') 2>/dev/null || true; sleep 1; cd ${DROPLET_PATH} && nohup node cli-proxy-server/server.js > /root/cli-dash-webserver.log 2>&1 &"
+  "pkill -f 'cli-proxy-server' 2>/dev/null || true; pkill -f 'http.server 8000' 2>/dev/null || true; sleep 1; cd /root/www && nohup python3 -m http.server 8000 > /root/cli-dash-webserver.log 2>&1 &"
 echo "Droplet deployed."
 
 # 9c. Deploy to GitHub Pages (needs separate build with /CLI_Dashboards/ base)
