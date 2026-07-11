@@ -7,21 +7,29 @@ export class AlphaVantageConnector extends BaseConnector {
   static isMock = false;
 
   async _fetch() {
-    const proxyBase = this.config.proxyBase || '';
     const ticker = this.config.ticker || 'SPGI';
-    const res = await fetch(`${proxyBase}/api/alphavantage?ticker=${ticker}`);
-    if (!res.ok) throw new Error(`Alpha Vantage proxy error ${res.status}`);
-    const data = await res.json();
+    // E1: authed Laravel proxy. /data/markets returns the raw Alpha Vantage
+    // GLOBAL_QUOTE object; the 52-week range comes from the OVERVIEW function
+    // via /data/alphavantage (best-effort — quota-heavy, nulls on failure).
+    const quote = await this._data('markets', { symbol: ticker });
+    let week52High = null;
+    let week52Low = null;
+    try {
+      const overview = await this._data('alphavantage', { function: 'OVERVIEW', symbol: ticker });
+      week52High = overview?.['52WeekHigh'] != null ? Number(overview['52WeekHigh']) : null;
+      week52Low = overview?.['52WeekLow'] != null ? Number(overview['52WeekLow']) : null;
+    } catch { /* overview optional */ }
+    const num = (k) => (quote?.[k] != null ? Number(String(quote[k]).replace('%', '')) : null);
     return {
       source: 'Alpha Vantage',
       ticker,
-      price: data.price,
-      change: data.change,
-      changePercent: data.changePercent,
-      volume: data.volume,
-      week52High: data.week52High,
-      week52Low: data.week52Low,
-      asOf: data.asOf || null,
+      price: num('05. price'),
+      change: num('09. change'),
+      changePercent: num('10. change percent'),
+      volume: num('06. volume'),
+      week52High,
+      week52Low,
+      asOf: quote?.['07. latest trading day'] ?? null,
     };
   }
 }

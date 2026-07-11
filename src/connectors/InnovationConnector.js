@@ -7,18 +7,25 @@ export class USPTOPatentsConnector extends BaseConnector {
   static isMock = false;
 
   async _fetch() {
-    const proxyBase = this.config.proxyBase || '';
     const company = this.config.companyName || 'S&P Global';
-    const res = await fetch(`${proxyBase}/api/uspto?assignee=${encodeURIComponent(company)}`);
-    if (!res.ok) throw new Error(`USPTO proxy error ${res.status}`);
-    const data = await res.json();
+    // E1: authed Laravel proxy. /data/uspto passes q through to the
+    // PatentsView Search API — q is a JSON query, assignee-organization match.
+    const q = JSON.stringify({ _contains: { 'assignees.assignee_organization': company } });
+    const data = await this._data('uspto', { q });
+    const patents = data?.patents || [];
+    const yearAgo = new Date(Date.now() - 365 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const recent = patents.filter((p) => (p.patent_date || '') >= yearAgo);
     return {
       source: 'USPTO PatentsView',
       company,
-      totalPatents: data.total || 0,
-      patentsLast12mo: data.last12mo || 0,
-      patentsLast12moYoY: data.yoy ?? null,
-      recentFilings: data.recent || [],
+      totalPatents: data?.total_hits ?? patents.length,
+      patentsLast12mo: recent.length,
+      patentsLast12moYoY: null,   // needs a second-year window — not derivable from one page
+      recentFilings: patents.slice(0, 10).map((p) => ({
+        title: p.patent_title,
+        filedAt: p.patent_date,
+        id: p.patent_id,
+      })),
     };
   }
 }

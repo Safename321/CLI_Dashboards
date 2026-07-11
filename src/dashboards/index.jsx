@@ -50,7 +50,6 @@ const DEMO_ONLY = {
   'customer-health': ['Customer Health', '❤️'],
   'scenario-modeling': ['Scenario Modeling', '🔮'],
   'investor-behavior': ['Investor Behavior', '📈'],
-  'merger-integration': ['Post Merger Integration', '🔄'],
 };
 
 const PORTED = {

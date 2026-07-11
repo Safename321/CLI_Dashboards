@@ -9,17 +9,23 @@ export class SECEdgarFinancialConnector extends BaseConnector {
   async _fetch() {
     const cik = this.config.cik || '0000064040';
     const ticker = this.config.ticker || 'SPGI';
-    const proxyBase = this.config.proxyBase || '';
-    const res = await fetch(`${proxyBase}/api/sec-data?cik=${cik}&ticker=${ticker}`);
-    if (!res.ok) throw new Error(`SEC proxy error ${res.status}`);
-    const data = await res.json();
+    // E1: authed Laravel proxy (GET /api/data/sec) — raw SEC submissions JSON.
+    const data = await this._data('sec', { cik });
+    const recent = data?.filings?.recent || {};
+    const filings = (recent.form || []).slice(0, 12).map((form, i) => ({
+      form,
+      filed: recent.filingDate?.[i] ?? null,
+      accession: recent.accessionNumber?.[i] ?? null,
+      description: recent.primaryDocDescription?.[i] ?? null,
+    }));
     return {
       source: 'SEC EDGAR',
       ticker,
       cik,
-      financials: data.financials || {},
-      asOf: data.asOf || null,
-      filings: data.filings || [],
+      entityName: data?.name ?? null,
+      financials: {},                 // submissions feed carries filings, not statements
+      asOf: filings[0]?.filed ?? null,
+      filings,
     };
   }
 }

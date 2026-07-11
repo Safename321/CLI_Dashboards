@@ -10,11 +10,9 @@ export class GDELTNewsConnector extends BaseConnector {
 
   async _fetch() {
     const company = this.config.companyName || 'S&P Global';
-    const proxyBase = this.config.proxyBase || '';
-    const res = await fetch(`${proxyBase}/api/gdelt?query=${encodeURIComponent(`"${company}"`)}&timespan=7d`);
-    if (!res.ok) throw new Error(`GDELT proxy error ${res.status}`);
-    const data = await res.json();
-    const articles = data.articles || [];
+    // E1: authed Laravel proxy — raw GDELT ArtList payload.
+    const data = await this._data('gdelt', { query: `"${company}"` });
+    const articles = data?.articles || [];
     const tones = articles.map((a) => a.tone).filter((t) => typeof t === 'number');
     const avgTone = tones.length ? tones.reduce((a, b) => a + b, 0) / tones.length : 0;
     const sentimentScore = Math.max(0, Math.min(10, (avgTone + 10) / 2));
@@ -41,16 +39,15 @@ export class GoogleNewsRSSConnector extends BaseConnector {
 
   async _fetch() {
     const company = this.config.companyName || 'S&P Global';
-    const proxyBase = this.config.proxyBase || '';
-    const res = await fetch(`${proxyBase}/api/google-news?q=${encodeURIComponent(company)}`);
-    if (!res.ok) throw new Error(`Google News proxy error ${res.status}`);
-    const data = await res.json();
+    // E1: authed Laravel proxy — /data/news returns the parsed RSS item list.
+    const data = await this._data('news', { q: company });
+    const items = Array.isArray(data) ? data : (data?.items || []);
     return {
       source: 'Google News RSS',
       company,
-      volume: data.items?.length || 0,
+      volume: items.length,
       sentimentScore: null,
-      topHeadlines: (data.items || []).slice(0, 10).map((i) => ({ title: i.title, url: i.link, publishedAt: i.pubDate, source: i.source })),
+      topHeadlines: items.slice(0, 10).map((i) => ({ title: i.title, url: i.link, publishedAt: i.pubDate, source: i.source })),
     };
   }
 }

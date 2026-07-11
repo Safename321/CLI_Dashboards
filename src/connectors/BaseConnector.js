@@ -5,7 +5,7 @@
 // No silent failures (§4.5): every failed fetch records lastError and still
 // returns the last-known payload as stalePayload so the UI can surface both.
 
-import { API_BASE } from '../lib/auth.js';
+import { API_BASE, dashFetch } from '../lib/auth.js';
 
 const STORAGE_PREFIX = 'cli_connector_v2__';
 const SCHEMA_VERSION = 2;
@@ -89,7 +89,7 @@ export class BaseConnector {
         return await this._fetch();
       } catch (err) {
         lastErr = err;
-        const fatal = err.message && /requires|missing|in config|apiKey|unauthorized/i.test(err.message);
+        const fatal = err.message && /requires|missing|in config|apiKey|unauthorized|unavailable|not configured/i.test(err.message);
         if (fatal || attempt === this.maxRetries) break;
         await this.clock.sleep(this.retryBaseMs * 2 ** attempt);
       }
@@ -129,6 +129,29 @@ export class BaseConnector {
         staleAt: this.lastSuccessAt,
       };
     }
+  }
+
+  /**
+   * E1: authed transport to the Laravel data proxy (GET /api/data/{source}).
+   * Sends the session JWT via dashFetch, unwraps the proxy envelope
+   * { source, available, data|note } and returns the raw upstream `data`.
+   * Throws on !available with the proxy's note — "unavailable"/"missing"
+   * notes match the fatal-error regex in _fetchWithRetry, so config problems
+   * fail fast to the stale/mock path instead of burning retries.
+   */
+  async _data(source, params = {}) {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ''),
+    ).toString();
+    const res = await dashFetch(`/data/${source}${qs ? `?${qs}` : ''}`, { method: 'GET' });
+    if (!res.ok) {
+      throw new Error(`${source} proxy error ${res.status}${res.status === 401 ? ' (unauthorized — sign in required)' : ''}`);
+    }
+    const env = await res.json();
+    if (!env || env.available !== true) {
+      throw new Error(`${source} unavailable: ${env?.note || 'degraded upstream'}`);
+    }
+    return env.data;
   }
 
   async _fetch() {
