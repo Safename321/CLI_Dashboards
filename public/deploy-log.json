@@ -145,5 +145,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-11 22:35:20 BST"
+  },
+  {
+    "version": "v2.0.1b",
+    "message": "fix(deploy): droplet static serve via setsid (survives ssh close) + version bump to 2.0.1 with z-rollover so release tags stop colliding",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 23:26:22 BST"
   }
 ]

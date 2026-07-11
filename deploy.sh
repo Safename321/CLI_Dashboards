@@ -25,9 +25,16 @@ npx vitest run --reporter=dot
 echo "Building..."
 npx vite build
 
-# 3. Bump build letter
+# 3. Bump build letter — roll the patch version when the letter saturates at 'z'
+# (a→b … y→z, then z → patch+1 letter 'a'), so tags/releases never collide again.
 CURRENT=$(node -p "require('./package.json').buildLetter")
-NEXT=$(echo "$CURRENT" | tr 'a-y' 'b-z')
+if [ "$CURRENT" = "z" ]; then
+  NEWVER=$(node -p "const [a,b,c]=require('./package.json').version.split('.'); [a,b,(+c+1)].join('.')")
+  NEXT="a"
+  sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"$NEWVER\"/" package.json
+else
+  NEXT=$(echo "$CURRENT" | tr 'a-y' 'b-z')
+fi
 sed -i "s/\"buildLetter\": \"$CURRENT\"/\"buildLetter\": \"$NEXT\"/" package.json
 VERSION=$(node -p "'v'+require('./package.json').version+require('./package.json').buildLetter")
 echo "Version: $VERSION"
@@ -102,9 +109,12 @@ fi
 echo "Deploying to droplet ${DROPLET_HOST}..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
   "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
-# Restart the static server — python3 http.server serves dist/ under /CLI_Dashboards/ on :8000.
-ssh -f -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "pkill -f 'cli-proxy-server' 2>/dev/null || true; pkill -f 'http.server 8000' 2>/dev/null || true; sleep 1; cd /root/www && nohup python3 -m http.server 8000 > /root/cli-dash-webserver.log 2>&1 &"
+# Restart the static server — python3 http.server serves dist/ under /CLI_Dashboards/
+# on :8000. Use setsid (not bare nohup&) so the process fully detaches into its
+# own session and survives the closing SSH channel — a plain `ssh -f ... &` did
+# NOT keep python alive (E2 droplet outage 2026-07-12).
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
+  "pkill -f 'cli-proxy-server' 2>/dev/null || true; pkill -f 'http.server 8000' 2>/dev/null || true; sleep 1; setsid python3 -m http.server 8000 --directory /root/www >/root/cli-dash-webserver.log 2>&1 </dev/null & disown 2>/dev/null || true; sleep 2; ss -tlnp | grep -q ':8000' && echo 'droplet: static server up on :8000' || echo 'droplet: WARNING :8000 not listening'"
 echo "Droplet deployed."
 
 # 9c. Deploy to GitHub Pages (needs separate build with /CLI_Dashboards/ base)

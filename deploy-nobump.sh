@@ -33,8 +33,8 @@ vercel --prod --yes --force
 echo "Deploying to droplet ${DROPLET_HOST}..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
   "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
-ssh -f -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "pkill -f 'cli-proxy-server' 2>/dev/null || true; pkill -f 'http.server 8000' 2>/dev/null || true; sleep 1; cd /root/www && nohup python3 -m http.server 8000 > /root/cli-dash-webserver.log 2>&1 &"
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
+  "pkill -f 'cli-proxy-server' 2>/dev/null || true; pkill -f 'http.server 8000' 2>/dev/null || true; sleep 1; setsid python3 -m http.server 8000 --directory /root/www >/root/cli-dash-webserver.log 2>&1 </dev/null & disown 2>/dev/null || true; sleep 2; ss -tlnp | grep -q ':8000' && echo 'droplet: static server up' || echo 'droplet: WARNING :8000 not listening'"
 echo "Droplet deployed."
 
 # 2c. GitHub Pages
