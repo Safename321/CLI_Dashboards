@@ -10,8 +10,26 @@ import ShareholdersSection from './ShareholdersSection.jsx';
 import GovernanceSection from './GovernanceSection.jsx';
 import ProductsSection from './ProductsSection.jsx';
 import CapitalSection from './CapitalSection.jsx';
+import LiveInvestorBehavior from './LiveInvestorBehavior.jsx';
+
+const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 
 export default function InvestorBehaviorDashboard() {
+  // Phase 3 (D5): real logins get the live view — tenant ticker/CIK through
+  // the authed /data proxy + entered shareholders dataset. Demo build keeps
+  // the narrative S&P sections below.
+  if (!DEMO_BUILD) {
+    return (
+      <DashboardShell
+        title="Investor Behavior"
+        icon="📈"
+        subtitle="Market signals for your organization — quotes, filings, and shareholder composition"
+      >
+        <LiveInvestorBehavior />
+      </DashboardShell>
+    );
+  }
+
   return (
     <DashboardShell
       title="Investor Behavior"

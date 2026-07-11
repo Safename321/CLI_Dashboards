@@ -49,7 +49,6 @@ const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 const DEMO_ONLY = {
   'customer-health': ['Customer Health', '❤️'],
   'scenario-modeling': ['Scenario Modeling', '🔮'],
-  'investor-behavior': ['Investor Behavior', '📈'],
 };
 
 const PORTED = {

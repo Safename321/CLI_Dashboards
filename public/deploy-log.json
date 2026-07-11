@@ -131,5 +131,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-07-11 22:06:27 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "feat(d5): investor-behavior tenant-real - live SEC filings + market quote via authed /data proxy from companyProfile ticker/cik, entered shareholders dataset, un-gate",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 22:14:24 BST"
   }
 ]
