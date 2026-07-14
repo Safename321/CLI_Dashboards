@@ -166,5 +166,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "37.19.200.2",
     "time": "2026-07-14 19:07:29 BST"
+  },
+  {
+    "version": "v2.0.1e",
+    "message": "super console: Add-user email checkbox + tenant-config HRIS panel dedup",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.125.235.22",
+    "time": "2026-07-14 20:45:54 BST"
   }
 ]
