@@ -406,6 +406,7 @@ function EmployeePanel({ company, onChanged }) {
   const [creating, setCreating] = useState(false);
   const [lastCreated, setLastCreated] = useState(null);
   const [form, setForm] = useState({ firstname: '', lastname: '', email: '', designation: '' });
+  const [createSendEmail, setCreateSendEmail] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importText, setImportText] = useState('');
   const [importSendEmail, setImportSendEmail] = useState(true);
@@ -434,9 +435,10 @@ function EmployeePanel({ company, onChanged }) {
           lastname: form.lastname,
           email: form.email,
           designation: form.designation || undefined,
+          sendEmail: createSendEmail,
         }),
       });
-      setLastCreated({ email: form.email, tempPassword: res.tempPassword, questionnairesLinked: res.questionnairesLinked });
+      setLastCreated({ email: form.email, tempPassword: res.tempPassword, emailed: res.emailed, questionnairesLinked: res.questionnairesLinked });
       setForm({ firstname: '', lastname: '', email: '', designation: '' });
       setCreating(false);
       await load();
@@ -489,10 +491,12 @@ function EmployeePanel({ company, onChanged }) {
 
       {error && <ErrorBox>{error}</ErrorBox>}
 
-      {lastCreated && lastCreated.tempPassword && (
+      {lastCreated && (lastCreated.tempPassword || lastCreated.emailed) && (
         <WarnBox>
-          Created <strong>{lastCreated.email}</strong> — temp password: <code className="select-all">{lastCreated.tempPassword}</code>
-          {' '}(shown once — share it with the user now)
+          Created <strong>{lastCreated.email}</strong>
+          {lastCreated.emailed
+            ? <> — invite email with the temp password sent</>
+            : <> — temp password: <code className="select-all">{lastCreated.tempPassword}</code> (shown once — share it with the user now)</>}
           {lastCreated.questionnairesLinked > 0 && <> · linked {lastCreated.questionnairesLinked} existing questionnaire(s)</>}
         </WarnBox>
       )}
@@ -507,8 +511,14 @@ function EmployeePanel({ company, onChanged }) {
             <button type="submit" className={BTN}>Create</button>
             <button type="button" className={BTN_GHOST} onClick={() => setCreating(false)}>Cancel</button>
           </div>
+          <div className="mt-2 flex items-center gap-2.5">
+            <label className="flex items-center gap-1.5 text-xs text-slate-400">
+              <input type="checkbox" checked={createSendEmail} onChange={(e) => setCreateSendEmail(e.target.checked)} />
+              Email the user their temp password
+            </label>
+          </div>
           <div className="mt-1.5 text-xs text-slate-500">
-            A temp password is generated and shown once. The user signs in with it in the mobile app.
+            A temp password is generated. When emailing is off it is shown once here; the user signs in with it in the mobile app.
           </div>
         </form>
       )}
