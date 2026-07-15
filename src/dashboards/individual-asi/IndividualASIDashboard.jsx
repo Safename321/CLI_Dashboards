@@ -29,13 +29,26 @@ const buildLiveRoster = (rows) => {
     email: r.email || '',
     firstName: r.firstname || '',
     lastName: r.lastname || '',
+    // Grouping key: raw job title, blanks bucketed as "Unspecified".
+    _group: (r.designation || '').trim() || 'Unspecified',
   }));
+  // Group employees by designation into subgroups so a large tenant roster isn't one
+  // flat list — the renderer already supports subgroups (it just showed "All Employees"
+  // before). The subgroup label reuses the existing `seniority` field.
+  const byGroup = new Map();
+  employees.forEach((e) => {
+    if (!byGroup.has(e._group)) byGroup.set(e._group, []);
+    byGroup.get(e._group).push(e);
+  });
+  const subgroups = [...byGroup.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([label, emps]) => ({ seniority: `${label} (${emps.length})`, employees: emps }));
   return {
     company: {
       title: 'Company Roster',
       icon: '👥',
       count: employees.length,
-      subgroups: [{ seniority: 'All Employees', employees }],
+      subgroups,
     },
   };
 };
@@ -148,7 +161,7 @@ export default function IndividualASIDashboard({ preSelection = null }) {
       const res = await assignInstruments({ assignments: rows, sendEmails: true, groupLabel: 'Dashboard assignment' });
       setShowConfirmModal(false);
       setInstrumentState({});
-      setSendOk(`Assigned to ${res.stubsCreated ?? rows.length} employee${rows.length === 1 ? '' : 's'}${res.emailsQueued ? ` · ${res.emailsQueued} invite email(s) queued` : ''}.`);
+      setSendOk(`Assigned to ${res.stubsCreated ?? rows.length} employee${rows.length === 1 ? '' : 's'}${res.emailsQueued ? ` · ${res.emailsQueued} invite email(s) sending in the background` : ''}.`);
     } catch (e) {
       setSendError(e.message || 'Assignment failed. Check your connection and try again.');
     } finally {

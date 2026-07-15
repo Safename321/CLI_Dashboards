@@ -173,5 +173,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.125.235.22",
     "time": "2026-07-14 20:45:54 BST"
+  },
+  {
+    "version": "v2.0.1f",
+    "message": "assign-cli roster grouped by designation + invite emails send in background",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-15 06:05:06 BST"
   }
 ]
