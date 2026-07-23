@@ -9,6 +9,11 @@ import InstrumentCheckbox from './InstrumentCheckbox.jsx';
 import ConfirmationModal from './ConfirmationModal.jsx';
 import { ExpandableSection } from './RosterSections.jsx';
 import EmployeeCard from './EmployeeCard.jsx';
+import FocalSetupPanel from './FocalSetupPanel.jsx';
+
+// Instrument keys that make an employee a 360 FOCAL (needs gender + evaluators).
+const FOCAL_KEYS = ['360', 'a360'];
+const isFocalRow = (chosen) => chosen.some((k) => FOCAL_KEYS.includes(k));
 
 // Static demo roster is for the public onboarding demo only. A real company login
 // shows its own employees, or instructions to onboard them — never demo people.
@@ -82,6 +87,9 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
   const [sendOk, setSendOk] = useState('');
+  // Per-focal 360 config, keyed by the same instrumentState key (empId or `search-<idx>`):
+  //   { [key]: { gender: 'M'|'F', evaluatorIds: string[] } }
+  const [focalConfig, setFocalConfig] = useState({});
 
   // Source the roster from the live /dashboard/roster endpoint, falling back to the
   // static demo roster when it's empty (unseeded tenant / fetch unavailable).
@@ -133,6 +141,8 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   const handleSend = async () => {
     // One assignment row per selected employee, carrying the checked instruments.
     const rows = [];
+    let focalIncomplete = false;
+    let evaluatorTotal = 0;
     Object.entries(instrumentState).forEach(([key, insts]) => {
       const chosen = Object.entries(insts || {}).filter(([, v]) => v).map(([k]) => k);
       if (!chosen.length) return;
@@ -149,6 +159,24 @@ export default function IndividualASIDashboard({ preSelection = null }) {
         return; // demo roster row has no id/email — can't dispatch
       }
       if (emp.designation) row.designation = emp.designation;
+
+      // 360 / a-360 focal: attach gender + evaluators picked from the roster.
+      if (isFocalRow(chosen)) {
+        const cfg = focalConfig[key] || {};
+        row.gender = cfg.gender || 'M';
+        const evalEmps = (cfg.evaluatorIds || [])
+          .map((id) => allEmployees.find((e) => e.empId === id) || searchResults.find((e) => e.empId === id))
+          .filter(Boolean);
+        row.evaluators = evalEmps
+          .map((e) => ({
+            firstName: e.firstName || (e.name || '').split(' ')[0] || 'Unknown',
+            lastName: e.lastName || (e.name || '').split(' ').slice(1).join(' ') || '-',
+            email: e.email,
+          }))
+          .filter((e) => e.email);
+        if (!cfg.gender || row.evaluators.length === 0) focalIncomplete = true;
+        evaluatorTotal += row.evaluators.length;
+      }
       rows.push(row);
     });
 
@@ -156,12 +184,17 @@ export default function IndividualASIDashboard({ preSelection = null }) {
       setSendError('Select at least one employee (with an email) and one instrument. The demo roster has no emails — sign in to a real tenant to dispatch.');
       return;
     }
+    if (focalIncomplete) {
+      setSendError('Each 360 assignment needs a focal gender and at least one evaluator (with an email) selected from the roster.');
+      return;
+    }
     setSending(true); setSendError(''); setSendOk('');
     try {
       const res = await assignInstruments({ assignments: rows, sendEmails: true, groupLabel: 'Dashboard assignment' });
       setShowConfirmModal(false);
       setInstrumentState({});
-      setSendOk(`Assigned to ${res.stubsCreated ?? rows.length} employee${rows.length === 1 ? '' : 's'}${res.emailsQueued ? ` · ${res.emailsQueued} invite email(s) sending in the background` : ''}.`);
+      setFocalConfig({});
+      setSendOk(`Assigned to ${res.stubsCreated ?? rows.length} employee${rows.length === 1 ? '' : 's'}${res.emailsQueued ? ` · ${res.emailsQueued} invite email(s) sending in the background` : ''}${evaluatorTotal ? ` · incl. ${evaluatorTotal} 360 evaluator invite(s)` : ''}.`);
     } catch (e) {
       setSendError(e.message || 'Assignment failed. Check your connection and try again.');
     } finally {
@@ -176,6 +209,14 @@ export default function IndividualASIDashboard({ preSelection = null }) {
       (emp) => emp.name.toLowerCase().includes(q) || emp.designation.toLowerCase().includes(q)
     );
   }, [searchQuery, allEmployees]);
+
+  // instrumentState keys whose checked instruments make the employee a 360 focal.
+  const focalKeys = useMemo(
+    () => Object.entries(instrumentState)
+      .filter(([, insts]) => isFocalRow(Object.entries(insts || {}).filter(([, v]) => v).map(([k]) => k)))
+      .map(([key]) => key),
+    [instrumentState]
+  );
 
   const totalEmployees = Object.values(roster).reduce((sum, section) => sum + section.count, 0);
 
@@ -309,6 +350,31 @@ export default function IndividualASIDashboard({ preSelection = null }) {
                 onInstrumentChange={handleInstrumentChange}
               />
             ))}
+          </div>
+        )}
+
+        {/* 360 / a-360 focal setup — one panel per selected focal (gender + evaluators) */}
+        {focalKeys.length > 0 && (
+          <div className="rounded-xl bg-panel p-4">
+            <div className="mb-1 text-lg font-semibold text-white">360 Focal Setup</div>
+            <div className="mb-3 text-sm text-muted">
+              Each employee assigned a 360 or a-360 needs a gender and evaluators picked from your roster.
+            </div>
+            <div className="space-y-4">
+              {focalKeys.map((key) => {
+                const focal = resolveEmp(key);
+                if (!focal) return null;
+                return (
+                  <FocalSetupPanel
+                    key={key}
+                    focal={focal}
+                    roster={allEmployees}
+                    value={focalConfig[key]}
+                    onChange={(next) => setFocalConfig((prev) => ({ ...prev, [key]: next }))}
+                  />
+                );
+              })}
+            </div>
           </div>
         )}
 
