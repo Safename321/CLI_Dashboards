@@ -187,5 +187,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "155.117.189.61",
     "time": "2026-07-24 05:03:00 BST"
+  },
+  {
+    "version": "v2.0.1h",
+    "message": "Publish v2.0.1h baseline before SWOT frontend edits",
+    "deployer": "Nahin-sajjad",
+    "ip": "79.127.154.21",
+    "time": "2026-08-03 18:46:45 BST"
   }
 ]
