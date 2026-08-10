@@ -1,5 +1,6 @@
 // Fill Jobs — right panel: position style requirements (ranked score chips),
 // channel tolerance key and the candidate pool table with fit/r² ranking.
+import { useMemo, useState } from 'react';
 import { STYLES, STYLE_ABBR, STYLES_FULL } from '../shared/StyleRadar.jsx';
 import { BAND_KEY } from '../../data/datasets/fill-jobs.js';
 import { fitLabel, cellLevel } from './logic.js';
@@ -11,6 +12,19 @@ const FIT_BADGE = {
   weak: 'bg-red-500/15 text-red-400',
 };
 const CELL_COLOR = { high: '#4ade80', mid: '#3b82f6', base: '#cbd5e1' };
+
+// Sortable candidate-pool columns. `dir` is the direction the FIRST click sorts
+// (fit ascends — lower is a better match; scores/r²/mean descend — higher first).
+// `get` pulls the sort key from a candidate row.
+const POOL_COLUMNS = [
+  { key: 'name', label: 'Candidate', align: 'left', dir: 'asc', type: 'str', get: (c) => (c.name || '').toLowerCase() },
+  { key: 'fit', label: 'FIT', align: 'center', dir: 'asc', type: 'num', get: (c) => c.fit },
+  { key: 'r2', label: 'r²', align: 'center', dir: 'desc', type: 'num', title: 'R-squared: candidate vs job profile', get: (c) => parseFloat(c.r2) || 0 },
+  ...STYLE_ABBR.map((a, i) => ({ key: `s${i}`, label: a, align: 'right', dir: 'desc', type: 'num', title: STYLES_FULL[i], get: (c) => c.scores?.[i] ?? 0 })),
+  { key: 'mean', label: 'Mean', align: 'right', dir: 'desc', type: 'num', get: (c) => parseFloat(c.mean) || 0 },
+];
+const ALIGN_CLS = { left: 'text-left', center: 'text-center', right: 'text-right' };
+const JUSTIFY_CLS = { left: 'justify-start', center: 'justify-center', right: 'justify-end' };
 
 // Ranked score chips — also reused by the job display area in JobIntake.
 export function ScoresGrid({ scores }) {
@@ -35,6 +49,25 @@ export function ScoresGrid({ scores }) {
 
 export default function RightPanel({ asset, pool, dashChecked, onToggle, colorMap }) {
   const bestId = pool.reduce((acc, c) => (acc === null || c.fit < acc.fit ? c : acc), null)?.id;
+
+  // Click a column header to sort by it; click again to flip direction.
+  // Default (sort.key === null) keeps the incoming fit ranking.
+  const [sort, setSort] = useState({ key: null, dir: 'asc' });
+  const onSort = (key, defDir) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: defDir }));
+
+  const rows = useMemo(() => {
+    if (!sort.key) return pool;
+    const col = POOL_COLUMNS.find((c) => c.key === sort.key);
+    if (!col) return pool;
+    const out = [...pool].sort((a, b) => {
+      const av = col.get(a);
+      const bv = col.get(b);
+      const cmp = col.type === 'str' ? String(av).localeCompare(String(bv)) : av - bv;
+      return sort.dir === 'asc' ? cmp : -cmp;
+    });
+    return out;
+  }, [pool, sort]);
 
   return (
     <div className="overflow-y-auto bg-ink p-6">
@@ -65,17 +98,30 @@ export default function RightPanel({ asset, pool, dashChecked, onToggle, colorMa
           <thead>
             <tr className="bg-panel text-left text-[11px] font-semibold text-sky-300">
               <th className="w-8 px-2 py-2" aria-label="Overlay" />
-              <th className="px-2 py-2">Candidate</th>
-              <th className="px-2 py-2 text-center">FIT</th>
-              <th className="px-2 py-2 text-center" title="R-squared: candidate vs job profile">r²</th>
-              {STYLE_ABBR.map((a, i) => (
-                <th key={a} className="px-2 py-2 text-right" title={STYLES_FULL[i]}>{a}</th>
-              ))}
-              <th className="px-2 py-2 text-right">Mean</th>
+              {POOL_COLUMNS.map((col) => {
+                const active = sort.key === col.key;
+                return (
+                  <th
+                    key={col.key}
+                    className={`px-2 py-2 ${ALIGN_CLS[col.align]}`}
+                    title={col.title}
+                    aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onSort(col.key, col.dir)}
+                      className={`flex w-full items-center gap-1 ${JUSTIFY_CLS[col.align]} hover:text-white ${active ? 'text-white' : ''}`}
+                    >
+                      <span>{col.label}</span>
+                      <span className="text-[9px] opacity-70" aria-hidden="true">{active ? (sort.dir === 'asc' ? '▲' : '▼') : '↕'}</span>
+                    </button>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {pool.map((c) => {
+            {rows.map((c) => {
               const fl = fitLabel(c.fit);
               const isChk = dashChecked.has(c.id);
               const isBest = c.id === bestId;

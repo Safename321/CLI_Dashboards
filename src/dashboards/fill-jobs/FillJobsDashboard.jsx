@@ -227,16 +227,21 @@ export default function FillJobsDashboard() {
           <span className="text-[11px] italic text-muted">Scores derived from job description via CLI ASSET methodology</span>
         </div>
 
-        {/* Main layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-[440px_1fr]">
-          <ChartPanel
-            asset={asset}
-            overlays={ranked.filter((c) => dashChecked.has(c.id)).map((c) => ({ ...c, color: COLOR_MAP[c.id] }))}
-            jobs={jobs}
-            activeJobId={activeJobId}
-            onActivateJob={activateJob}
-            onFillPosition={fillThisPosition}
-          />
+        {/* Main layout. The middle panel sticks to the top of the scroll area so
+            it stays in view while the (taller) candidate pool scrolls past it —
+            xl only, where the two columns exist; self-start lets it stick within
+            the grid row instead of stretching to the pool's height. */}
+        <div className="grid grid-cols-1 xl:grid-cols-[440px_1fr] xl:items-start">
+          <div className="xl:sticky xl:top-0 xl:self-start xl:max-h-[calc(100vh-1.25rem)] xl:overflow-y-auto">
+            <ChartPanel
+              asset={asset}
+              overlays={ranked.filter((c) => dashChecked.has(c.id)).map((c) => ({ ...c, color: COLOR_MAP[c.id] }))}
+              jobs={jobs}
+              activeJobId={activeJobId}
+              onActivateJob={activateJob}
+              onFillPosition={fillThisPosition}
+            />
+          </div>
           <RightPanel asset={asset} pool={pool} dashChecked={dashChecked} onToggle={toggleDash} colorMap={COLOR_MAP} />
         </div>
 

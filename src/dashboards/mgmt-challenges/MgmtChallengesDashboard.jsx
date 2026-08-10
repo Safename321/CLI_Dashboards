@@ -207,18 +207,23 @@ export default function MgmtChallengesDashboard() {
         </div>
 
         {/* Main */}
-        <div className="grid grid-cols-1 xl:grid-cols-[400px_1fr]">
-          <PeacePadPanel
-            selProb={selProb}
-            selSub={selSub}
-            fields={fields}
-            parties={parties}
-            overlaid={overlaid}
-            instrOverlays={instrOverlays}
-            onToggleInstr={toggleInstr}
-            activeChallenges={activeChallenges}
-            onSelectChallenge={(id) => { const p = PROBLEMS.find((x) => x.id === id); if (p) selectProb(p); }}
-          />
+        {/* The peace-pad (middle) sticks to the top of the scroll area so it stays
+            in view while the challenge/parties column scrolls past — xl only;
+            self-start lets it stick within the row instead of stretching. */}
+        <div className="grid grid-cols-1 xl:grid-cols-[400px_1fr] xl:items-start">
+          <div className="xl:sticky xl:top-0 xl:self-start xl:max-h-[calc(100vh-1.25rem)] xl:overflow-y-auto">
+            <PeacePadPanel
+              selProb={selProb}
+              selSub={selSub}
+              fields={fields}
+              parties={parties}
+              overlaid={overlaid}
+              instrOverlays={instrOverlays}
+              onToggleInstr={toggleInstr}
+              activeChallenges={activeChallenges}
+              onSelectChallenge={(id) => { const p = PROBLEMS.find((x) => x.id === id); if (p) selectProb(p); }}
+            />
+          </div>
           <div className="overflow-y-auto p-6">
             <ChallengeGrid selProb={selProb} selSub={selSub} onSelectProb={selectProb} onSelectSub={setSelSub} fields={fields} onFields={setFields} />
             {selProb && (
