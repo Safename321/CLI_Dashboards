@@ -12,6 +12,11 @@ const VB_H = 620;
 const CHART_H = 470;          // quadrant field; legend strip below
 const MAX_RADIUS = 56;
 const PAD = 10;               // bubble padding inside a quadrant
+// axis-label gutters (2026-08 request: label the 2×2 axes). The chart field is
+// shifted right/down by these so the Internal/External (rows) and Helpful/Harmful
+// (columns) dimension labels sit in the margins and export with the SVG.
+const AX_L = 22;
+const AX_T = 20;
 
 const QUADRANT_POS = {
   strength:    { x: 0,        y: 0,           w: VB_W / 2, h: CHART_H / 2 },
@@ -125,10 +130,10 @@ export default function SwotBubbleChart({
 
   return (
     <svg
-      viewBox={`0 0 ${VB_W} ${VB_H}`}
+      viewBox={`0 0 ${VB_W + AX_L} ${VB_H + AX_T}`}
       className={className}
       role="img"
-      aria-label="Materiality-bubble SWOT chart"
+      aria-label="Materiality-bubble SWOT chart. Columns: helpful (left) to harmful (right). Rows: internal/measured (top) to external/inferred (bottom)."
     >
       <defs>
         {/* §2.3 — inferred readings hatch (verbatim from the spec) */}
@@ -140,6 +145,16 @@ export default function SwotBubbleChart({
         </marker>
       </defs>
 
+      {/* 2×2 axis labels — columns = helpful→harmful, rows = internal→external.
+          Drawn in the outer gutters, before the field is translated into place. */}
+      <g fill="#8899aa" fontSize="8.5" fontWeight="700" letterSpacing="1.2" style={{ textTransform: 'uppercase' }}>
+        <text x={AX_L + VB_W * 0.25} y={13} textAnchor="middle">Helpful</text>
+        <text x={AX_L + VB_W * 0.75} y={13} textAnchor="middle">Harmful</text>
+        <text transform={`translate(13 ${AX_T + CHART_H * 0.25}) rotate(-90)`} textAnchor="middle">Internal · measured</text>
+        <text transform={`translate(13 ${AX_T + CHART_H * 0.75}) rotate(-90)`} textAnchor="middle">External · inferred</text>
+      </g>
+
+      <g transform={`translate(${AX_L} ${AX_T})`}>
       {/* quadrant dividers (§9: 0.5px, low opacity) */}
       <line x1={VB_W / 2} y1="0" x2={VB_W / 2} y2={CHART_H} stroke="#64748b" strokeWidth="0.5" opacity="0.4" />
       <line x1="0" y1={CHART_H / 2} x2={VB_W} y2={CHART_H / 2} stroke="#64748b" strokeWidth="0.5" opacity="0.4" />
@@ -266,6 +281,7 @@ export default function SwotBubbleChart({
           </text>
         </g>
       )}
+      </g>
     </svg>
   );
 }

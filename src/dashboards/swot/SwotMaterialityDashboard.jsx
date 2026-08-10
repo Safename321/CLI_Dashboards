@@ -10,6 +10,7 @@ import { useMemo, useRef, useState } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { Panel } from '../../components/primitives.jsx';
 import SwotBubbleChart from './SwotBubbleChart.jsx';
+import SwotAnalysis from './SwotAnalysis.jsx';
 import { rankFactors, classifyEvidence, buildExecSummary } from './logic.js';
 import { openSwotReport } from './report.js';
 import useSwotData from './useSwotData.js';
@@ -160,14 +161,18 @@ export default function SwotMaterialityDashboard() {
         <div ref={wrapRef} className="relative">
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div ref={svgWrapRef} className="rounded-xl border border-border bg-panel p-4">
-              <SwotBubbleChart
-                factors={data.factors}
-                arrows={data.arrows}
-                onFactorClick={setSelected}
-                onFactorHover={onFactorHover}
-                highlightId={selected?.id ?? null}
-                className="w-full"
-              />
+              {/* chart rendered at 70% width (2026-08 request: reduce SWOT chart
+                  size 30%); centered, leaving breathing room around it */}
+              <div className="mx-auto" style={{ maxWidth: '70%' }}>
+                <SwotBubbleChart
+                  factors={data.factors}
+                  arrows={data.arrows}
+                  onFactorClick={setSelected}
+                  onFactorHover={onFactorHover}
+                  highlightId={selected?.id ?? null}
+                  className="w-full"
+                />
+              </div>
             </div>
             <div className="space-y-4">
               {selected ? (
@@ -197,6 +202,10 @@ export default function SwotMaterialityDashboard() {
                 </ul>
               </Panel>
             </div>
+          </div>
+
+          <div className="mt-6">
+            <SwotAnalysis ranked={ranked} recommendations={data.recommendations} />
           </div>
 
           {hover?.factor && (
