@@ -145,6 +145,7 @@ export default function SwotMaterialityDashboard() {
           <button
             onClick={() => openSwotReport({
               factors: data.factors,
+              arrows: data.arrows,
               title: data.meta.title,
               subtitle: data.meta.subtitle,
               meta: data.meta,

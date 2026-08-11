@@ -2,8 +2,11 @@
 // Ported from v1.20/v1.22 generateSWOTFullReport (App.jsx:808) and
 // parameterized: exec summary + rankings are generated from the factors
 // instead of a hardcoded narrative. Opens in a new tab (print → save as PDF).
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { rankFactors, classifyEvidence, buildExecSummary, STANDING_CAVEAT } from './logic.js';
 import { QUADRANT_META } from '../../data/datasets/swot.js';
+import SwotBubbleChart from './SwotBubbleChart.jsx';
 
 const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -11,7 +14,7 @@ const esc = (s) => String(s ?? '')
 
 const QUAD_CLS = { strength: 's', weakness: 'w', opportunity: 'o', threat: 't' };
 
-export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recommendations = [] }) {
+export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recommendations = [], arrows = [] }) {
   const ranked = rankFactors(factors);
   const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const year = new Date().getFullYear();
@@ -41,6 +44,10 @@ export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recom
   html += '.rec h4{margin:0 0 6px 0;color:#1a365d;font-size:14px}.rec p{margin:3px 0;font-size:12.5px}';
   html += '.exec{background:#1a365d;color:#fff;padding:18px 22px;border-radius:8px;margin:18px 0;font-size:13px;line-height:1.6}';
   html += '.caveat{background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;font-size:12px;color:#78350f;margin:18px 0}';
+  // Dark panel for the embedded materiality-bubble chart — its labels/legend are
+  // light-on-dark, and print-color-adjust keeps the background when saving to PDF.
+  html += '.swotchart{background:#0b1220;border-radius:8px;padding:16px;margin:14px 0;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}';
+  html += '.swotchart svg{width:100%;height:auto;max-width:720px;display:block;margin:0 auto}';
   html += '.footer{margin-top:36px;padding-top:14px;border-top:1px solid #cbd5e1;font-size:11px;color:#64748b;display:flex;justify-content:space-between}';
   html += '@media print{.swot{break-inside:avoid}}';
   html += '</style></head><body>';
@@ -57,6 +64,15 @@ export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recom
   html += '<div class="meta">' + metaBits + '</div>';
 
   html += '<div class="exec"><b>Executive summary.</b> ' + esc(buildExecSummary(ranked)) + '</div>';
+
+  // The actual materiality-bubble diagram, embedded as SVG (2026-08 request —
+  // the report must carry the real chart, not a text translation of it). The
+  // chart renders its own legend + standing caveat inside the SVG.
+  const chartSvg = renderToStaticMarkup(
+    createElement(SwotBubbleChart, { factors, arrows, showArrows: arrows.length > 0, showLegend: true }),
+  );
+  html += '<h2>Materiality-Bubble Chart</h2>';
+  html += '<div class="swotchart">' + chartSvg + '</div>';
 
   // Score table — firm factors only (they carry real ASI scores).
   const firm = ranked.filter((f) => classifyEvidence(f) === 'firm' && f.asiScore != null);

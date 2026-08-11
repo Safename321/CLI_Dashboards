@@ -201,5 +201,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-08-11 00:03:08 BST"
+  },
+  {
+    "version": "v2.0.1j",
+    "message": "CEO Advisory: remove duplicate Full SWOT report button (kept only on Strategic SWOT dashboard). SWOT PDF report now embeds the actual materiality-bubble diagram (SVG with legend) instead of a text-only matrix. Adds report smoke test; vitest JSX set to automatic runtime.",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-11 12:12:28 BST"
   }
 ]

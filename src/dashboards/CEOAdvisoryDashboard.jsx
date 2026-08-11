@@ -5,11 +5,9 @@ import DashboardShell from '../components/DashboardShell.jsx';
 import RecommendationPanel from '../components/RecommendationPanel.jsx';
 import { TrendBadge, RecommendationCard } from '../components/shared-cards.jsx';
 import { FinancialKPICard } from '../components/financial.jsx';
-import { generateReport, REPORT_BUTTON_SAYINGS } from '../reports/index.js';
 import { useData, useYearData } from '../data/DataContext.jsx';
 import SwotBubbleChart from './swot/SwotBubbleChart.jsx';
 import useSwotData from './swot/useSwotData.js';
-import { openSwotReport } from './swot/report.js';
 import { useDataset } from '../lib/liveData.js';
 import { financialCardsFromKpis } from '../lib/liveKpis.js';
 
@@ -28,7 +26,6 @@ import {
   STRATEGY_CARDS,
   CHANGE_FEED,
   SWOT_QUADRANTS,
-  SWOT_REPORT,
   CEO_KPI_ALERT,
   PREDICTIVE_ROWS,
   DIAGNOSTIC_ROWS,
@@ -48,10 +45,8 @@ function getTriggeredStrategies(kpis) {
   return s;
 }
 
-const reportSaying = () => {
-  const list = Array.isArray(REPORT_BUTTON_SAYINGS) && REPORT_BUTTON_SAYINGS.length ? REPORT_BUTTON_SAYINGS : ['Generate Report'];
-  return list[Math.floor(Date.now() / 1000) % list.length];
-};
+// The SWOT report button moved to the dedicated Strategic SWOT dashboard (2026-08)
+// to remove the duplicate across the top two CEO dashboards.
 
 // "Yesterday → now" window label for the change feed.
 function changeWindow() {
@@ -112,28 +107,7 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
       : null;
   }, [data, latest]);
 
-  // Live logins must never receive the demo narrative report — the button is
-  // disabled until the live factors are ready.
-  const swotReportReady = DEMO_BUILD || (swot.status === 'ready' && swot.isLive);
-  const onSwotReport = () => {
-    try {
-      if (!DEMO_BUILD) {
-        if (!swotReportReady) return;
-        // Live tenants get the materiality report built from THEIR factors.
-        openSwotReport({
-          factors: swot.factors,
-          title: swot.meta.title,
-          subtitle: swot.meta.subtitle,
-          meta: swot.meta,
-          recommendations: swot.recommendations,
-        });
-        return;
-      }
-      generateReport(SWOT_REPORT.tactic, SWOT_REPORT.panelTitle, SWOT_REPORT.evidence, SWOT_REPORT.strategy, null, null, data);
-    } catch (err) {
-      console.error('[CEOAdvisoryDashboard] SWOT report generation failed:', err);
-    }
-  };
+  // SWOT report generation now lives only on the Strategic SWOT dashboard.
 
   return (
     <DashboardShell
@@ -245,21 +219,9 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
             })}
           </div>}
 
-          <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-ink/60 px-4 py-3">
-            <div className="text-xs text-muted">
-              <span className="font-semibold text-slate-200">Full SWOT report</span> — {DEMO_BUILD ? SWOT_REPORT.tactic.description : 'materiality-ranked matrix, causal chain and recommendations from your live profile'}
-            </div>
-            <button
-              onClick={onSwotReport}
-              disabled={!swotReportReady}
-              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
-              title={swotReportReady
-                ? "Opens the full SWOT report in a new tab. Use your browser's Print → Save as PDF to keep a copy."
-                : 'Available once your organization has completed assessments.'}
-            >
-              📄 {reportSaying()}
-            </button>
-          </div>
+          {/* Full-SWOT-report button intentionally removed here — it lives on the
+              dedicated Strategic SWOT dashboard to avoid the duplicate (2026-08).
+              The materiality chart above deep-links there on click. */}
         </section>
 
         <RecommendationPanel
