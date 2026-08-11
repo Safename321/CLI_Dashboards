@@ -38,6 +38,44 @@ function lerpColor(hexA, hexB, t) {
   return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
+// --- Label fitting: keep every label INSIDE its bubble (wrap + scale). ------
+// Rough width of a bold sans string at a given font size (~0.58em per char).
+function textWidth(s, fs) { return s.length * fs * 0.58; }
+
+// Greedy word-wrap into lines that each fit maxW. Over-long single words (e.g.
+// "Post-integration") are additionally split after hyphens so they still fit.
+function wrapWords(label, fs, maxW) {
+  const tokens = label.split(/\s+/).flatMap((w) => (w.length > 11 ? w.split(/(?<=-)/) : [w]));
+  const lines = [];
+  let cur = '';
+  for (const t of tokens) {
+    const trial = cur ? `${cur} ${t}` : t;
+    if (!cur || textWidth(trial, fs) <= maxW) cur = trial;
+    else { lines.push(cur); cur = t; }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// Fit a label (+ optional score line) inside a circle of the given radius:
+// wrap to lines and shrink the font until the block fits the chord width and
+// the vertical budget. Always returns something drawable (min 6px).
+function fitLabel(label, radius, hasScore) {
+  const maxW = radius * 1.72;      // usable chord width across the circle
+  const vBudget = radius * 1.7;    // usable vertical height
+  let fs = Math.min(12, Math.max(6, radius * 0.34));
+  for (let i = 0; i < 9 && fs >= 6; i++) {
+    const lines = wrapWords(label, fs, maxW);
+    const widest = Math.max(...lines.map((l) => textWidth(l, fs)));
+    const lh = fs * 1.05;
+    const blockH = lines.length * lh + (hasScore ? fs * 0.95 : 0);
+    if (widest <= maxW && blockH <= vBudget) return { lines, fs, lh };
+    fs -= 0.8;
+  }
+  const f6 = Math.max(6, fs);
+  return { lines: wrapWords(label, f6, maxW), fs: f6, lh: f6 * 1.05 };
+}
+
 // §2.2 — one ramp per quadrant, interpolated by relative materiality;
 // relational-set root causes in Weaknesses use the distinct orange sub-ramp.
 function bubbleColor(f, maxM) {
@@ -199,10 +237,15 @@ export default function SwotBubbleChart({
         const color = bubbleColor(f, maxM);
         const inferred = classifyEvidence(f) === 'inferred';
         const dim = highlightId && highlightId !== f.id;
-        const labelInside = f.radius > 30;
         const inkOn = textColorFor(color);
-        // keep labels inside the viewBox even for edge-hugging bubbles
-        const lx = Math.max(48, Math.min(VB_W - 48, f.cx));
+        // Fit the whole label (+ score) INSIDE the circle: wrap to lines and
+        // scale the font down until it fits. Block is vertically centered.
+        const hasScore = f.asiScore != null;
+        const { lines, fs, lh } = fitLabel(f.label, f.radius, hasScore);
+        const scoreFs = Math.max(6, fs * 0.8);
+        const blockH = lines.length * lh + (hasScore ? scoreFs * 1.05 : 0);
+        const firstBaseline = f.cy - blockH / 2 + fs * 0.9;
+        const haloW = Math.max(1.2, fs * 0.22);
         return (
           <g
             key={f.id}
@@ -219,19 +262,17 @@ export default function SwotBubbleChart({
               <circle cx={f.cx} cy={f.cy} r={f.radius} fill="url(#inferred-hatch)"
                 stroke="none" color={color} />
             )}
-            <text x={labelInside ? lx : f.cx} y={labelInside ? f.cy - 2 : f.cy + f.radius + 11}
-              fontSize={labelInside ? 11 : 9.5} fontWeight="700" textAnchor="middle"
-              fill={labelInside ? inkOn : '#cbd5e1'}
-              paintOrder="stroke" stroke={labelInside && inkOn === '#0f172a' ? 'none' : '#0b1220'} strokeWidth="2.5" strokeLinejoin="round">
-              {f.label}
+            <text textAnchor="middle" fontWeight="700" fill={inkOn}
+              paintOrder="stroke" stroke={inkOn === '#0f172a' ? 'none' : '#0b1220'} strokeWidth={haloW} strokeLinejoin="round">
+              {lines.map((ln, li) => (
+                <tspan key={li} x={f.cx} y={firstBaseline + li * lh} fontSize={fs}>{ln}</tspan>
+              ))}
+              {hasScore && (
+                <tspan x={f.cx} y={firstBaseline + lines.length * lh + scoreFs * 0.1} fontSize={scoreFs} fillOpacity="0.85">
+                  {f.asiScore.toFixed(2)}{f.overReliance ? ' ▲' : ''}
+                </tspan>
+              )}
             </text>
-            {f.asiScore != null && (
-              <text x={labelInside ? lx : f.cx} y={labelInside ? f.cy + 11 : f.cy + f.radius + 21}
-                fontSize="8.5" textAnchor="middle"
-                fill={labelInside ? inkOn : '#8899aa'} opacity={labelInside ? 0.85 : 1}>
-                {f.asiScore.toFixed(2)}{f.overReliance ? ' ▲over' : ''}
-              </text>
-            )}
           </g>
         );
       })}
