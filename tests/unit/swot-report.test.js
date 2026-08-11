@@ -27,6 +27,14 @@ describe('SWOT report — embedded diagram', () => {
     expect(html).toContain('Strategic Recommendations');
   });
 
+  it('embeds the strategic analysis (vectors, TOWS, best practices, managerial)', () => {
+    expect(html).toContain('Strategic Analysis');
+    expect(html).toContain('Every vector, in detail');
+    expect(html).toContain('Most effective strategies from this position');
+    expect(html).toContain('Best practices');
+    expect(html).toContain('Managerial strategy');
+  });
+
   it('renders without throwing when no arrows are supplied', () => {
     expect(() => buildSwotReportHtml({ factors: REFERENCE_FACTORS, title: 't', subtitle: 's' })).not.toThrow();
   });

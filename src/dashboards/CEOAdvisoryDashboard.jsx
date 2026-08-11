@@ -6,8 +6,6 @@ import RecommendationPanel from '../components/RecommendationPanel.jsx';
 import { TrendBadge, RecommendationCard } from '../components/shared-cards.jsx';
 import { FinancialKPICard } from '../components/financial.jsx';
 import { useData, useYearData } from '../data/DataContext.jsx';
-import SwotBubbleChart from './swot/SwotBubbleChart.jsx';
-import useSwotData from './swot/useSwotData.js';
 import { useDataset } from '../lib/liveData.js';
 import { financialCardsFromKpis } from '../lib/liveKpis.js';
 
@@ -25,7 +23,6 @@ import {
   FINANCIAL_KPI_CARDS,
   STRATEGY_CARDS,
   CHANGE_FEED,
-  SWOT_QUADRANTS,
   CEO_KPI_ALERT,
   PREDICTIVE_ROWS,
   DIAGNOSTIC_ROWS,
@@ -63,13 +60,6 @@ const SEV_STYLES = {
   green: 'border-emerald-500/40 bg-emerald-900/15',
 };
 
-const QUADRANT_STYLES = {
-  emerald: { box: 'bg-emerald-900/20 border-emerald-500/40', head: 'text-emerald-400', tag: 'text-emerald-400/60', em: 'text-emerald-300' },
-  red: { box: 'bg-red-900/20 border-red-500/40', head: 'text-red-400', tag: 'text-red-400/60', em: 'text-red-300' },
-  blue: { box: 'bg-blue-900/20 border-blue-500/40', head: 'text-blue-300', tag: 'text-blue-300/60', em: 'text-blue-200' },
-  amber: { box: 'bg-amber-900/20 border-amber-500/40', head: 'text-amber-300', tag: 'text-amber-300/60', em: 'text-amber-200' },
-};
-
 const strategyCardTone = (count) =>
   count >= 3 ? 'bg-red-900/30 border-red-500' : count >= 2 ? 'bg-amber-900/30 border-amber-500' : 'bg-panel border-border';
 const strategyCountTone = (count) => (count >= 3 ? 'text-red-400' : count >= 2 ? 'text-amber-400' : 'text-muted');
@@ -81,7 +71,6 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
   // Live tenant sources (D8): SWOT from org-oasi, financial KPIs from the
   // entered currentKpis dataset. Static demo values remain the fallback and
   // are tagged as such on real logins.
-  const swot = useSwotData();
   const storedKpis = useDataset('currentKpis', null);
   const liveCards = DEMO_BUILD ? null : financialCardsFromKpis(storedKpis);
   const kpiCards = liveCards ?? FINANCIAL_KPI_CARDS;
@@ -149,80 +138,9 @@ export default function CEOAdvisoryDashboard({ onNavigate, onMetricClick }) {
           </div>
         </section>
 
-        {/* Strategic SWOT — derived from OASI */}
-        <section className="rounded-xl border border-border bg-gradient-to-br from-panel to-ink p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl" aria-hidden>🎯</span>
-              <div>
-                <h2 className="text-lg font-semibold text-white">Strategic SWOT — derived from OASI</h2>
-                <p className="text-xs text-muted">
-                  {DEMO_BUILD
-                    ? 'Behavioral diagnostic translated into strategic position vs. Mobility spin-off, IHS Markit integration, and AI competitive front'
-                    : 'Behavioral diagnostic translated into strategic position — materiality-bubble read of your live org profile'}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
-                {swot.status === 'ready' && swot.isLive ? `N = ${swot.meta.respondents} · OASI (live)` : 'N = 847 · OASI'}
-              </span>
-              <button
-                onClick={() => onNavigate?.('swot')}
-                className="rounded-full border border-accent/50 px-3 py-1 text-xs font-semibold text-accent hover:bg-accent/10"
-                title="Open the interactive Materiality-Bubble SWOT (size = materiality, fill = confidence)"
-              >
-                💠 Open full view →
-              </button>
-            </div>
-          </div>
-
-          {/* Materiality-Bubble read (spec §8.2 embedded mode) — demo build
-              shows the reference profile; real logins show THEIR live factors
-              (legend + caveat baked into the SVG). */}
-          {swot.status === 'ready' ? (
-            <div className="mb-4 rounded-lg border border-border bg-ink/40 p-3">
-              <SwotBubbleChart
-                factors={swot.factors}
-                arrows={swot.arrows}
-                onFactorClick={() => onNavigate?.('swot')}
-                className="mx-auto w-full max-w-3xl"
-              />
-            </div>
-          ) : (
-            <div className="mb-4 rounded-lg border border-border bg-ink/40 p-6 text-center text-sm text-muted">
-              {swot.status === 'loading' ? 'Loading your organization\'s profile…'
-                : swot.status === 'empty' ? 'No completed assessments yet — assign CLI instruments to generate the materiality read.'
-                : 'Couldn\'t load your organization\'s assessment data.'}
-            </div>
-          )}
-
-          {DEMO_BUILD && <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {SWOT_QUADRANTS.map((q) => {
-              const s = QUADRANT_STYLES[q.tone];
-              return (
-                <div key={q.key} className={`rounded-lg border p-4 ${s.box}`}>
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className={`text-sm font-bold uppercase tracking-wide ${s.head}`}>{q.title}</span>
-                    <span className={`text-xs ${s.tag}`}>{q.tag}</span>
-                  </div>
-                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-slate-200">
-                    {q.items.map((item, i) => (
-                      <li key={i}>
-                        {item.em && <span className={`font-semibold ${s.em}`}>{item.em}</span>}
-                        {item.text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>}
-
-          {/* Full-SWOT-report button intentionally removed here — it lives on the
-              dedicated Strategic SWOT dashboard to avoid the duplicate (2026-08).
-              The materiality chart above deep-links there on click. */}
-        </section>
+        {/* Strategic SWOT section removed from CEO Advisory (2026-08): it was
+            identical to the dedicated "Strategic SWOT" dashboard. The full
+            interactive chart + PDF report (with strategic analysis) live there. */}
 
         <RecommendationPanel
           severity={CEO_KPI_ALERT.severity}

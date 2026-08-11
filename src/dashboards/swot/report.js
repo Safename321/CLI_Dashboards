@@ -5,6 +5,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { rankFactors, classifyEvidence, buildExecSummary, STANDING_CAVEAT } from './logic.js';
+import { buildSwotAnalysis } from './analysis.js';
 import { QUADRANT_META } from '../../data/datasets/swot.js';
 import SwotBubbleChart from './SwotBubbleChart.jsx';
 
@@ -13,6 +14,42 @@ const esc = (s) => String(s ?? '')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 const QUAD_CLS = { strength: 's', weakness: 'w', opportunity: 'o', threat: 't' };
+
+// Strategic-analysis section for the report — same generator as the on-page
+// analysis: vector-by-vector reading, TOWS strategies for this position, best
+// practices, managerial advice, each with expected-results timelines.
+function buildAnalysisHtml(ranked, recommendations) {
+  const a = buildSwotAnalysis(ranked, recommendations);
+  const hz = (h) => `<span class="hz hz-${h.band}">${esc(h.band)} · ${esc(h.eta)}</span>`;
+  let s = '<h2>Strategic Analysis</h2>';
+
+  s += '<h3>Every vector, in detail</h3>';
+  for (const q of ['strength', 'weakness', 'opportunity', 'threat']) {
+    const items = a.vectors[q];
+    if (!items.length) continue;
+    s += '<div class="ql">' + esc(QUADRANT_META[q].title) + '</div>';
+    for (const e of items) {
+      s += '<div class="vec"><div class="vh">' + esc(e.factor.label)
+        + ' <span class="mono">(materiality ' + e.factor.materiality.toFixed(1) + ')</span> ' + hz(e.horizon) + '</div>'
+        + '<p><b>What it means.</b> ' + esc(e.implication) + '</p>'
+        + '<p><b>Best practice.</b> ' + esc(e.bestPractice) + '</p>'
+        + '<p class="note"><i>Expect results in ' + esc(e.horizon.eta) + ' — ' + esc(e.horizon.note) + '.</i></p></div>';
+    }
+  }
+
+  s += '<h3>Most effective strategies from this position</h3>';
+  for (const t of a.tows) {
+    s += '<div class="rec"><h4>' + esc(t.label) + ' <span class="mono">· ' + esc(t.urgency) + '</span></h4>'
+      + '<p>' + esc(t.play) + '</p><p class="note"><b>Horizon:</b> ' + esc(t.horizon) + '</p></div>';
+  }
+
+  s += '<h3>Best practices</h3><ul class="an">';
+  for (const b of a.bestPractices) s += '<li>' + esc(b) + '</li>';
+  s += '</ul><h3>Managerial strategy &amp; sequencing</h3><ul class="an">';
+  for (const m of a.managerial) s += '<li>' + esc(m) + '</li>';
+  s += '</ul>';
+  return s;
+}
 
 export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recommendations = [], arrows = [] }) {
   const ranked = rankFactors(factors);
@@ -48,6 +85,16 @@ export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recom
   // light-on-dark, and print-color-adjust keeps the background when saving to PDF.
   html += '.swotchart{background:#0b1220;border-radius:8px;padding:16px;margin:14px 0;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}';
   html += '.swotchart svg{width:100%;height:auto;max-width:720px;display:block;margin:0 auto}';
+  // Strategic-analysis blocks
+  html += 'h3{color:#2E5090;font-size:15px;margin:22px 0 8px}';
+  html += '.ql{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#475569;margin:12px 0 4px}';
+  html += '.vec{border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px;margin:8px 0;page-break-inside:avoid}';
+  html += '.vec .vh{font-weight:700;font-size:13px;color:#1e293b;margin-bottom:3px}';
+  html += '.vec p{margin:4px 0;font-size:12px}.vec .note{color:#64748b}';
+  html += '.hz{font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px;white-space:nowrap}';
+  html += '.hz-Structural{background:#fef2f2;color:#b91c1c}.hz-Developmental{background:#fffbeb;color:#b45309}.hz-Tactical{background:#ecfdf5;color:#047857}';
+  html += '.mono{font-weight:400;color:#64748b;font-size:11px}';
+  html += 'ul.an li{font-size:12.5px;margin-bottom:6px}';
   html += '.footer{margin-top:36px;padding-top:14px;border-top:1px solid #cbd5e1;font-size:11px;color:#64748b;display:flex;justify-content:space-between}';
   html += '@media print{.swot{break-inside:avoid}}';
   html += '</style></head><body>';
@@ -141,6 +188,9 @@ export function buildSwotReportHtml({ factors, title, subtitle, meta = {}, recom
             + (r.linkage ? '<b>Business linkage:</b> ' + esc(r.linkage) : '') + '</p></div>';
     });
   }
+
+  // Strategic analysis — the same reading shown on the dashboard, embedded here.
+  html += buildAnalysisHtml(ranked, recommendations);
 
   // §10 standing caveat — ships with every output.
   html += '<div class="caveat"><b>Reading this analysis.</b> ' + esc(STANDING_CAVEAT) + '</div>';

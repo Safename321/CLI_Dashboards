@@ -1,6 +1,7 @@
 // Standard dashboard frame: title/subtitle/alert header + optional tab strip.
 // Every dashboard renders inside this so headers never get re-implemented.
 import { Tabs } from './primitives.jsx';
+import UserStamp from './UserStamp.jsx';
 
 export default function DashboardShell({ title, subtitle, icon, alerts, actions, tabs, activeTab, onTab, children }) {
   return (
@@ -16,7 +17,12 @@ export default function DashboardShell({ title, subtitle, icon, alerts, actions,
           </h1>
           {subtitle && <p className="mt-0.5 text-sm text-muted">{subtitle}</p>}
         </div>
-        {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        {/* Top-right corner: signed-in user's name, company + location, and a
+            live timestamp; per-dashboard actions sit just beneath it. */}
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <UserStamp />
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </div>
       </header>
 
       {tabs && tabs.length > 0 && (
