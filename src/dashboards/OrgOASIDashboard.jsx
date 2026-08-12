@@ -10,6 +10,7 @@ import {
   OASI_KEY_FINDINGS,
   OASI_INSTRUMENT_DATA,
 } from '../data/datasets/oasi-scores.js';
+import { generateOASIExplainerReport } from '../reports/index.js';
 
 // Static demo scores only ship in the public demo build; a real tenant sees live
 // OASI data or an explicit instruction — never fabricated S&P numbers.
@@ -149,7 +150,13 @@ export default function OrgOASIDashboard() {
               {GAP_TASKS.map((t) => (
                 <div key={t.label} className="flex items-center justify-between rounded bg-slate-700/50 px-2 py-1">
                   <span className="text-xs text-slate-300">{t.label}</span>
-                  <button className="ml-2 text-xs text-cyan-400 underline hover:text-cyan-300">Create {t.deliverable}</button>
+                  <button
+                    onClick={() => generateOASIExplainerReport()}
+                    className="ml-2 text-xs text-cyan-400 underline hover:text-cyan-300"
+                    title={`Open the OASI framework report to build the ${t.deliverable}`}
+                  >
+                    Create {t.deliverable}
+                  </button>
                 </div>
               ))}
             </div>

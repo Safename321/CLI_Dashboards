@@ -20,21 +20,31 @@ import { MockCustomerHealthConnector } from './CustomerHealthConnector.js';
 export function buildDefaultRegistry(tenant = {}, auth = {}) {
   const reg = new ConnectorRegistry();
   const tenantId = tenant.id || 'spgi';
-  const companyName = tenant.companyName || 'S&P Global';
-  const ticker = tenant.ticker || 'SPGI';
+  // Flex to whoever the client is — never fall back to S&P's identity. A private
+  // or fictitious client has no ticker/CIK; connectors key off its own name.
+  const companyName = tenant.companyName || tenant.name || 'This company';
+  const ticker = tenant.ticker || null;
+  const cik = tenant.cik || null;
   const common = { tenantId };
 
-  // Real SEC connector for tenants with a ticker; mock otherwise.
-  if (tenant.hasLiveData && ticker) {
-    reg.register(new SECEdgarFinancialConnector({ ...common, cik: '0000064040', ticker, refreshMinutes: 60 * 24 }), 'sec');
+  // Real SEC EDGAR filings ONLY for a genuine public company — one that carries
+  // its OWN ticker AND CIK. Everyone else (private/fictitious/demo tenants) gets
+  // the mock financial connector, which returns numbers keyed to their own name
+  // instead of coming back empty or, worse, serving S&P's filings under a
+  // hard-wired CIK. Previously every tenant defaulted to ticker "SPGI" + CIK
+  // 0000064040, so a fictitious company's "Update Data" pulled S&P and its own
+  // financials read empty (the SEC submissions feed has filings, not statements).
+  if (tenant.hasLiveData && ticker && cik) {
+    reg.register(new SECEdgarFinancialConnector({ ...common, cik, ticker, refreshMinutes: 60 * 24 }), 'sec');
   } else {
-    reg.register(new MockFinancialConnector({ ...common, ticker, refreshMinutes: 60 * 24 }), 'financial-mock');
+    reg.register(new MockFinancialConnector({ ...common, ticker: ticker || 'DEMO', companyName, refreshMinutes: 60 * 24 }), 'financial-mock');
   }
 
-  reg.register(new MockSocialSentimentConnector({ ...common, companyName, hashtags: [`#${ticker}`], refreshMinutes: 60 }), 'social-mock');
+  const socialTag = ticker ? `#${ticker}` : `#${companyName.replace(/\s+/g, '')}`;
+  reg.register(new MockSocialSentimentConnector({ ...common, companyName, hashtags: [socialTag], refreshMinutes: 60 }), 'social-mock');
   reg.register(new MockNewsConnector({ ...common, companyName, refreshMinutes: 60 }), 'news-mock');
   reg.register(new MockMacroConnector({ ...common, refreshMinutes: 60 * 24 }), 'macro-mock');
-  reg.register(new MockMarketsConnector({ ...common, ticker, refreshMinutes: 15 }), 'markets-mock');
+  reg.register(new MockMarketsConnector({ ...common, ticker: ticker || 'DEMO', refreshMinutes: 15 }), 'markets-mock');
   reg.register(new MockInnovationConnector({ ...common, companyName, refreshMinutes: 7 * 24 * 60 }), 'innovation-mock');
   reg.register(new MockOwnedSocialConnector({ ...common, pageName: `${companyName} Official`, refreshMinutes: 60 }), 'owned-social-mock');
   reg.register(new MockCultureConnector({ ...common, employerName: companyName, refreshMinutes: 24 * 60 }), 'culture-mock');

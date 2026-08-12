@@ -12,7 +12,7 @@ export const TENANTS = {
     hasLiveData: false, emptyState: true,
   },
   spgi: {
-    id: 'spgi', companyName: 'S&P Global', ticker: 'SPGI',
+    id: 'spgi', companyName: 'S&P Global', ticker: 'SPGI', cik: '0000064040',
     sidebarSubtitle: 'demo for S&P Global', accentColor: '#E00000',
     hasLiveData: true, emptyState: false,
   },

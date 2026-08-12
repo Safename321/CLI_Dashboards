@@ -363,8 +363,12 @@ export default function BoardPacketDashboard() {
             📥 {reportSaying()}
           </button>
           {DEMO_BUILD && (
-            <button className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-500" title="PPT export coming soon">
-              📊 Export PPT
+            <button
+              disabled
+              className="cursor-not-allowed rounded-lg bg-cyan-600/40 px-4 py-2 text-sm font-medium text-white/60"
+              title="PPT export is not available yet — use the HTML download and Print to PDF"
+            >
+              📊 Export PPT (soon)
             </button>
           )}
         </div>

@@ -95,9 +95,6 @@ export default function ExternalDashboard({ yearData, selectedYear }) {
                 </div>
               </div>
             </div>
-            <button type="button" className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500">
-              View Crisis Details →
-            </button>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[

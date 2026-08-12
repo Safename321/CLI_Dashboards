@@ -222,5 +222,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-08-11 22:55:39 BST"
+  },
+  {
+    "version": "v2.0.1m",
+    "message": "CEO Advisory fixes: Update Data now flexes to any client - real SEC filings only for a public company with its own ticker+CIK, everyone else gets mock financials keyed to their own name (was hard-wired to S&P ticker SPGI + CIK 0000064040, so fictitious companies got empty numbers). Fix dead buttons found in demo QA: OrgOASI Create-deliverable buttons open the OASI report, redundant External crisis button removed, Board Packet Export-PPT clearly disabled.",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-12 19:29:41 BST"
   }
 ]
