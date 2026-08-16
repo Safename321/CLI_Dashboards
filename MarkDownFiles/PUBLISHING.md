@@ -152,3 +152,37 @@ With a title:
 ```bash
 curl -H "Title: Build complete" -d "All tests passed" https://ntfy.sh/clidash-3dd4654f0f939b8cc5
 ```
+
+## Notes for AI agents doing a redeploy (avoid repeating a slow first pass)
+
+These are the specific things that cost time the first time an agent ran this
+process (2026-08-16). Check them up front instead of rediscovering them.
+
+1. **Don't trust chat-stated version numbers — verify against all three sources
+   and read the FULL tail of each, not just the first few entries returned:**
+   `package.json` (`version` + `buildLetter`), `public/deploy-log.json` (append-only,
+   the *last* entry is authoritative — a partial/truncated read of this file looks
+   identical to a genuinely older log and will silently report a stale version),
+   and `git tag` / GitHub releases. All three should agree.
+2. **`deploy-nobump.sh` exists for exactly "redeploy the current version to all
+   targets without creating a new version."** Don't reach for `deploy.sh` (which
+   always bumps `buildLetter`) if the goal is to re-push what's already tagged —
+   e.g. because a prior run's ntfy notification showed a failure/alert and you
+   want to retry the same version.
+3. **Check for existing credentials on the machine before assuming a redeploy
+   isn't possible.** `npx vercel whoami` (should return `pblumen-8648`) and the
+   presence of `~/.ssh/id_cli` mean a full redeploy (Vercel + droplet + GitHub
+   Pages) is usually already possible without asking the user for anything —
+   only a fresh clone + `npm install` is needed first.
+4. **`ntfy.sh` anonymous topics only retain messages for ~12 hours.** If you
+   need to confirm what a specific deploy's notification said, check
+   `https://ntfy.sh/clidash-3dd4654f0f939b8cc5/json?poll=1&since=all` (via
+   `curl`, not a browser-rendering fetch tool) soon after the deploy — older
+   notifications are simply gone, not archived anywhere else.
+5. **The live SPA pages (gamma, v200n, droplet, GitHub Pages) are client-rendered
+   React — a tool that only converts static HTML to text (no JS execution) will
+   never see the on-page version string.** To confirm what's actually live,
+   read `public/deploy-log.json` from the deployed host (e.g.
+   `https://cli-dashboards-gamma.vercel.app/deploy-log.json`) or check the
+   Vercel deployment list (`npx vercel ls cli-dashboards`), not the rendered
+   page.
