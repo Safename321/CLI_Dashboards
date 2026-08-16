@@ -34,7 +34,9 @@ The ntfy notification is no longer a final script step that can be skipped — i
 is sent from a bash `EXIT` trap (`on_exit`) in both `deploy.sh` and
 `deploy-nobump.sh`, so **every run notifies, automatically**:
 
-- **Success** → `Deployed vX.Y.Zl` (rocket tag) with version, message, deployer, targets.
+- **Success** → `Deployed vX.Y.Zl` (rocket tag) with version, message, deployer, and
+  all four host targets: Vercel gamma, Vercel v200n, the DigitalOcean droplet, and
+  GitHub Pages.
 - **Failure/abort** (any `set -e` exit, Ctrl-C, crash) → `Deploy FAILED …`
   (rotating_light tag) naming the **step** that died (`tests`, `build`,
   `commit-push`, `github-release`, `vercel`, `droplet`, `gh-pages`, …) and the
