@@ -16,6 +16,7 @@ A reference for writing short, high-altitude outreach that reads as a peer, not 
 8. **One embedded link, max — framed as sharing a story, not selling.** And only where a URL won't read as spam. Omit URLs from cold connection *invites* (they can dampen acceptance); fine in a message after connect.
 9. **Match the reader's sophistication and prose; never youthen the voice.** British spelling for British readers, economist's vocabulary for financiers, strategist's frame ("where to play / how to win") for strategists.
 10. **Name the objection to your own claim once, then turn it** (Goodhart/Campbell). Pre-empting the "once a measure becomes a target it distorts" critique separates you from every vendor in the feed. Use once, well.
+11. **Never ask for what isn't certain to be granted — state the value instead.** A cold note that asks for a meeting, a call, or "twenty minutes" invites a no: the reader hasn't yet decided you're worth the time, so requesting it is asking a stranger for a favor. Replace the ask with the reader's payoff, asserted in the second person — not "I'd value comparing notes," but **"You'll value seeing [the specific thing they get]."** The touch *presents an opportunity*; it never *requests* one. Reserve the ask for a warm reply, where a yes is already likely. (Corollary: strike "I'd value…," "I'd welcome…," "would love to…," "I'd value your read/time" from all cold copy — every one of them hands the reader an easy decline.)
 
 ---
 
@@ -79,5 +80,21 @@ A reference for writing short, high-altitude outreach that reads as a peer, not 
 
 ---
 
-**Time: 2026-07-30 01:49 EDT** (anchor-incremented estimate; session anchor 8:36 PM EST; external clock unreachable from sandbox — re-anchor anytime)
-**CLI:Online | Vercel:Online | GitHub:Online | Droplet:Unverified** · Connective Leadership Institute
+## Worked example — the value-forward connection note (no ask)
+
+**Target:** Raj Subramaniam, CEO, FedEx (engineer by training; leads ~500,000 people; FedEx's founding creed is *People-Service-Profit*, with People first).
+
+> Raj — FedEx was built on People-Service-Profit, and People comes first. Our app makes it measurable: consolidated workforce feedback from your 500,000 people, straight to you — not filtered up six management layers. You'll value seeing the organization's overall, distilled and examined.
+
+**Which methods it uses:** 1 (mirrors his own creed, "People comes first"), 5 (one payload in his language: consolidated workforce feedback delivered to the CEO), 6 (no filler close), 8 (no link on a cold invite), and above all **11 — no ask.** The note never requests a meeting or his time; it closes on *his* payoff ("You'll value seeing…"), asserting the value of the opportunity rather than begging entry to it.
+
+**The generalized template (rule 11 in practice):**
+
+> [First name] — [their company/creed, mirrored in their own words], and [the value that creed puts first]. Our [product] makes it measurable: [one concrete payload delivered straight to them], not [the friction or filter it removes]. You'll value seeing [the specific outcome they get].
+
+Swap the creed, the payload, and the outcome; keep the shape. The last line is always *the reader's benefit stated as fact*, never a request. If you catch yourself writing "I'd value," "I'd welcome," or "twenty minutes," delete it and finish the sentence from the reader's side of the table.
+
+---
+
+**Time: 2026-08-18 1:16 PM EDT** · Rule 11 (never ask for what isn't certain; state the value) and the value-forward FedEx example added this revision.
+**CLI:Online | Vercel v2.0.1m | GitHub v2.0.1m | Droplet v2.0.1m** · Connective Leadership Institute
