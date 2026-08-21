@@ -8,20 +8,24 @@ The convention for stamping every deliverable and every chat reply with a truste
 
 Every document, file, PDF, image, saved artifact, **and chat reply** carries a timestamp. On files it is a footer line; in chat it closes the reply.
 
+**Any time this file is edited, the update must be posted to GitHub immediately as part of the same task — not batched, not left for later.** If a session cannot push (no GitHub write access available), it must say so explicitly rather than silently leaving the edit unposted.
+
 ---
 
 ## The footer format (current)
 
-Two bold lines. Line 1 is the trusted time; line 2 is per-host live status with a colored dot and each host's own version.
+Two bold lines. Line 1 is the trusted time; line 2 is per-host live status with a colored marker and each host's own version.
 
 ```
 **HH:MM EDT · Day, Mon DD YYYY**
-**🟢 CLI · 🟢 Vercel vX.Y.Zx · 🟢 GitHub vX.Y.Zx · 🟢 Droplet vX.Y.Zx**
+**🟢 CLI · 🟢 Vercel-gamma vX.Y.Zx · 🔴 Vercel-v200n vX.Y.Zx · ⬟ GitHub vX.Y.Zx · 쬟 Droplet vX.Y.Zx**
 ```
 
-- **🟢 = LIVE** (host returned/rendered), **🔴 = dead** (unreachable or error).
+- **🟢 = ONLINE** (host returned/rendered).
+- **🔴 = OFFLINE** (checked and unreachable or erroring).
+- **⬟ (blank) = didn't or couldn't check** - no probe was made, or the probe tool wasn't available. Never guess; a blank marker is always honest about "unknown", not a stand-in for green.
 - **Each host shows its own version** — never a single shared version — because deploys drift between hosts and a lagging host must be visible at a glance. (First observed drift: 2026-08-16, Vercel one build behind Pages/Droplet.)
-- **CLI** = connectiveleadership.com, the marketing site. It has no build string, so it carries a dot only, no version.
+- **CLI** = connectiveleadership.com, the marketing site. It has no build string, so it carries a marker only, no version.
 - Two lines, tight spacing — do not let line 2 wrap to a third line. Shorten labels before adding a wrap.
 
 ---
@@ -42,15 +46,17 @@ Direct `curl` to a time source from the sandbox is blocked (returns `000` / exit
 Per host: **render the page and read the in-page footer**, `vX.Y.Zs · For authorized prospects only`, where the trailing letter tags the host build. The string is client-rendered by JavaScript, so plain HTML fetchers (sandbox `curl`, web-fetch) do **not** see it — the page must be rendered.
 
 - **Preferred:** the Chrome bridge. Navigate a tab to each host and read the footer version with the find tool. This is the only way to reach the **Droplet** (raw IP, TLS/robots block the sandbox fetcher) from a cloud session.
-- Status alone (LIVE/dead, no version) can fall back to the sanctioned web-fetch tool.
+- Status alone (ONLINE/OFFLINE, no version) can fall back to the sanctioned web-fetch tool.
 - Version unreadable → print `v?`, never guess.
+- Couldn't check a host at all (bridge unavailable, tool missing, ran out of time) → leave that host's marker **blank**, don't mark it red or green.
 
 Endpoints:
 
 | Host | URL | Version |
 |------|-----|---------|
 | CLI (marketing) | https://connectiveleadership.com | none (dot only) |
-| Vercel (primary) | https://cli-dashboards-gamma.vercel.app/ | in-page footer |
+| Vercel (gamma) | https://cli-dashboards-gamma.vercel.app/ | in-page footer |
+| Vercel (v200n) | https://cli-dashboards-v200n.vercel.app/ | in-page footer |
 | GitHub Pages | https://safename321.github.io/CLI_Dashboards/ | in-page footer |
 | Droplet | http://161.35.118.231:8000/CLI_Dashboards/ | in-page footer (Chrome bridge only) |
 
@@ -58,8 +64,8 @@ Endpoints:
 
 ## Auto re-probe
 
-A 30-minute re-probe cycle runs via `send_later`: it re-reads time.is and all four hosts through the Chrome bridge, prints the two-line footer, and re-arms itself for another 30 minutes. If the bridge is unavailable it says so in one line and prints `v?` rather than guessing.
+A 30-minute re-probe cycle runs via `send_later`: it re-reads time.is and all five hosts through the Chrome bridge, prints the two-line footer, and re-arms itself for another 30 minutes. If the bridge is unavailable it says so in one line and leaves the affected hosts' markers blank rather than guessing.
 
 ---
 
-*Current stamping reference. When the footer format changes, update this file and leave the playbook Part 1 entries as history.*
+*Current stamping reference. When the footer format changes, update this file, post the update to GitHub, and leave the playbook Part 1 entries as history.*
