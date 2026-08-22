@@ -6,7 +6,7 @@ The convention for stamping every deliverable and every chat reply with a truste
 
 ## The rule
 
-Every document, file, PDF, image, saved artifact, **and chat reply** carries a timestamp. On files it is a footer line; in chat it closes the reply.
+**Every chat reply** — the prompt back to the user — closes with the timestamp. Files, documents, PDFs, images, and saved artifacts do NOT get a footer stamped into their content — a file already carries its own save/modified time, so inserting a duplicate timestamp into the file itself is redundant. The timestamp lives in the chat, not in the deliverable.
 
 **Any time this file is edited, the update must be posted to GitHub immediately as part of the same task — not batched, not left for later.** If a session cannot push (no GitHub write access available), it must say so explicitly rather than silently leaving the edit unposted.
 
@@ -18,12 +18,12 @@ Two bold lines. Line 1 is the trusted time; line 2 is per-host live status with 
 
 ```
 **HH:MM EDT · Day, Mon DD YYYY**
-**🟢 CLI · 🟢 Vercel-gamma vX.Y.Zx · 🔴 Vercel-v200n vX.Y.Zx · ⬟ GitHub vX.Y.Zx · 쬟 Droplet vX.Y.Zx**
+**🟢 CLI · 🟢 Vercel-gamma vX.Y.Zx · 🔴 Vercel-v200n vX.Y.Zx · ⬜ GitHub vX.Y.Zx · ⬜ Droplet vX.Y.Zx**
 ```
 
 - **🟢 = ONLINE** (host returned/rendered).
 - **🔴 = OFFLINE** (checked and unreachable or erroring).
-- **⬟ (blank) = didn't or couldn't check** - no probe was made, or the probe tool wasn't available. Never guess; a blank marker is always honest about "unknown", not a stand-in for green.
+- **⬜ (blank) = didn't or couldn't check** — no probe was made, or the probe tool wasn't available. Never guess; a blank marker is always honest about "unknown," not a stand-in for green.
 - **Each host shows its own version** — never a single shared version — because deploys drift between hosts and a lagging host must be visible at a glance. (First observed drift: 2026-08-16, Vercel one build behind Pages/Droplet.)
 - **CLI** = connectiveleadership.com, the marketing site. It has no build string, so it carries a marker only, no version.
 - Two lines, tight spacing — do not let line 2 wrap to a third line. Shorten labels before adding a wrap.
