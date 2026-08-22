@@ -66,6 +66,10 @@ Endpoints:
 
 A 30-minute re-probe cycle runs via `send_later`: it re-reads time.is and all five hosts through the Chrome bridge, prints the two-line footer, and re-arms itself for another 30 minutes. If the bridge is unavailable it says so in one line and leaves the affected hosts' markers blank rather than guessing.
 
+**This is a specification, not a status report.** Reading the paragraph above does not make it true. Any session that reads this file must, before doing anything else with it: check whether the cycle is actually running right now (list the account's scheduled tasks/Routines and look for it) — and if it is not running, start it in that same turn, before any other work on this file's rule. Only say "the re-probe is in place" after confirming it is active, never on the strength of having read that it should be.
+
+The same standard applies to every other mechanism this file describes as existing: a present-tense description here ("the footer format is X," "the rule is Y") is something to verify and enforce on this read, not a fact already settled by a previous read. A rule in this file that isn't currently being followed is a task, not history.
+
 ---
 
 *Current stamping reference. When the footer format changes, update this file, post the update to GitHub, and leave the playbook Part 1 entries as history.*
