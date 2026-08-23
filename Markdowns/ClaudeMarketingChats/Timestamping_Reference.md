@@ -66,9 +66,9 @@ Endpoints:
 
 A 30-minute re-probe cycle runs via `send_later`: it re-reads time.is and all five hosts through the Chrome bridge, prints the two-line footer, and re-arms itself for another 30 minutes. If the bridge is unavailable it says so in one line and leaves the affected hosts' markers blank rather than guessing.
 
-**This is a specification, not a status report.** Reading the paragraph above does not make it true. Any session that reads this file must, before doing anything else with it: check whether the cycle is actually running right now (list the account's scheduled tasks/Routines and look for it) — and if it is not running, start it in that same turn, before any other work on this file's rule. Only say "the re-probe is in place" after confirming it is active, never on the strength of having read that it should be.
+**This is a specification, not a status report.** Reading the paragraph above does not make it true. A session that reads this file should check whether the cycle is actually running right now (list the account's scheduled tasks/Routines and look for it) before describing it as active, and say plainly if it isn't running rather than assuming it from having read that it should be. Restarting it is a normal thing to do when asked, or as part of whatever task is already at hand — it is not something to stand up unprompted purely because this file was read; creating recurring scheduled infrastructure gets a quick confirmation first, not silent autopilot.
 
-The same standard applies to every other mechanism this file describes as existing: a present-tense description here ("the footer format is X," "the rule is Y") is something to verify and enforce on this read, not a fact already settled by a previous read. A rule in this file that isn't currently being followed is a task, not history.
+The same standard applies to every other mechanism this file describes as existing: a present-tense description here ("the footer format is X," "the rule is Y") is something to verify on this read, not a fact already settled by a previous read.
 
 ---
 
