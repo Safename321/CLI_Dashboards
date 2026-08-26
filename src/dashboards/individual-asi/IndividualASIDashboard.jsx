@@ -10,6 +10,7 @@ import ConfirmationModal from './ConfirmationModal.jsx';
 import { ExpandableSection } from './RosterSections.jsx';
 import EmployeeCard from './EmployeeCard.jsx';
 import FocalSetupPanel from './FocalSetupPanel.jsx';
+import AssignRosterTable from './AssignRosterTable.jsx';
 
 // Instrument keys that make an employee a 360 FOCAL (needs gender + evaluators).
 const FOCAL_KEYS = ['360', 'a360'];
@@ -19,43 +20,26 @@ const isFocalRow = (chosen) => chosen.some((k) => FOCAL_KEYS.includes(k));
 // shows its own employees, or instructions to onboard them — never demo people.
 const DEMO_BUILD = import.meta.env.VITE_AUTH_DISABLED === 'true';
 
-// Build the nested roster shape ({ sectionKey: { title, count, subgroups:[...] } })
-// the view consumes from the live flat roster (/dashboard/roster →
-// [{ id, firstname, lastname, email }]). Returns null when the roster is empty so the
-// caller falls back to the static demo roster (keeps unseeded tenants rendering).
-const buildLiveRoster = (rows) => {
+// Build the FLAT live employee list from /dashboard/roster. ONE group by design
+// (client feedback 2026-08-25: no by-title sections — the table's filter bar
+// narrows by name/title/location/age instead). empId is the stable `live-<id>`
+// key, so selections survive filtering. Returns null when the roster is empty so
+// the caller falls back to the static demo roster / onboarding instruction.
+const buildLiveEmployees = (rows) => {
   if (!Array.isArray(rows) || rows.length === 0) return null;
-  const employees = rows.map((r) => ({
+  return rows.map((r, idx) => ({
     name: [r.firstname, r.lastname].filter(Boolean).join(' ').trim() || r.email || 'Unknown',
-    designation: r.designation || r.email || '',
+    designation: r.designation || '',
     background: r.email || '',
     // Preserved for the assignment payload (POST /assignments needs userId or email).
     userId: r.id ?? r.userId ?? null,
     email: r.email || '',
     firstName: r.firstname || '',
     lastName: r.lastname || '',
-    // Grouping key: raw job title, blanks bucketed as "Unspecified".
-    _group: (r.designation || '').trim() || 'Unspecified',
+    city: r.city || '',
+    age: r.age ?? null,
+    empId: `live-${r.id ?? r.userId ?? idx}`,
   }));
-  // Group employees by designation into subgroups so a large tenant roster isn't one
-  // flat list — the renderer already supports subgroups (it just showed "All Employees"
-  // before). The subgroup label reuses the existing `seniority` field.
-  const byGroup = new Map();
-  employees.forEach((e) => {
-    if (!byGroup.has(e._group)) byGroup.set(e._group, []);
-    byGroup.get(e._group).push(e);
-  });
-  const subgroups = [...byGroup.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([label, emps]) => ({ seniority: `${label} (${emps.length})`, employees: emps }));
-  return {
-    company: {
-      title: 'Company Roster',
-      icon: '👥',
-      count: employees.length,
-      subgroups,
-    },
-  };
 };
 
 // Flat list of every employee with its stable empId ("sectionKey-subIdx-empIdx")
@@ -94,12 +78,15 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   // Source the roster from the live /dashboard/roster endpoint, falling back to the
   // static demo roster when it's empty (unseeded tenant / fetch unavailable).
   const liveRows = useRoster();
-  const liveRoster = useMemo(() => buildLiveRoster(liveRows), [liveRows]);
-  // Demo build → demo roster; real login → live roster, or {} (empty) so we render
-  // an onboarding instruction below instead of demo people.
-  const roster = liveRoster ?? (DEMO_BUILD ? ASI_ROSTER : {});
+  const liveEmployees = useMemo(() => buildLiveEmployees(liveRows), [liveRows]);
+  // Demo build → demo roster; real login → live flat table, or {} (empty) so we
+  // render an onboarding instruction below instead of demo people.
+  const roster = liveEmployees ? {} : (DEMO_BUILD ? ASI_ROSTER : {});
 
-  const allEmployees = useMemo(() => flattenRoster(roster), [roster]);
+  const allEmployees = useMemo(
+    () => liveEmployees ?? flattenRoster(roster),
+    [liveEmployees, roster]
+  );
 
   // Apply mentor deep-link pre-selection: check the instrument for the targeted
   // employees and expand the sections/subgroups that contain them.
@@ -118,6 +105,7 @@ export default function IndividualASIDashboard({ preSelection = null }) {
     setExpanded((prev) => {
       const next = { ...prev };
       ids.forEach((id) => {
+        if (id.startsWith('live-')) return;   // live table has no collapsible sections
         const [sectionKey, subIdx] = id.split('-');
         next[sectionKey] = true;
         next[`${sectionKey}-${subIdx}`] = true;
@@ -218,7 +206,23 @@ export default function IndividualASIDashboard({ preSelection = null }) {
     [instrumentState]
   );
 
-  const totalEmployees = Object.values(roster).reduce((sum, section) => sum + section.count, 0);
+  const totalEmployees = liveEmployees
+    ? liveEmployees.length
+    : Object.values(roster).reduce((sum, section) => sum + section.count, 0);
+
+  // Live-table bulk change: ids are stable `live-<userId>` keys from the table's
+  // currently VISIBLE (filtered) rows. instrumentKey null = every instrument (ALL).
+  const handleTableBulkChange = (ids, instrumentKey, value) => {
+    setInstrumentState((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        next[id] = { ...(next[id] || {}) };
+        if (instrumentKey) next[id][instrumentKey] = value;
+        else INSTRUMENTS.forEach((inst) => { next[id][inst.key] = value; });
+      });
+      return next;
+    });
+  };
 
   const handleBulkInstrumentChange = (instrumentKey, value) => {
     setInstrumentState((prev) => {
@@ -250,7 +254,7 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   );
 
   // Real company login with no employees yet: instruct onboarding, don't show demo people.
-  if (!DEMO_BUILD && !liveRoster) {
+  if (!DEMO_BUILD && !liveEmployees) {
     return (
       <DashboardShell title="Assign CLI Instruments" icon="👤" subtitle="Assign CLI instruments to your employees">
         <div className="mx-auto mt-10 max-w-xl rounded-xl border border-border bg-panel p-8">
@@ -270,10 +274,21 @@ export default function IndividualASIDashboard({ preSelection = null }) {
       title="Assign CLI Instruments"
       icon="👤"
       alerts={2}
-      subtitle={`Assign CLI instruments to key personnel · ${totalEmployees} employees across 3 sections`}
+      subtitle={`Assign CLI instruments to key personnel · ${totalEmployees} employees`}
     >
       <div className="space-y-6">
-        {/* Search */}
+        {/* LIVE tenant: flat filterable table with an always-visible column-select header */}
+        {liveEmployees && (
+          <AssignRosterTable
+            employees={liveEmployees}
+            instrumentState={instrumentState}
+            onInstrumentChange={handleInstrumentChange}
+            onBulkChange={handleTableBulkChange}
+          />
+        )}
+
+        {/* DEMO build: original search + sectioned roster */}
+        {!liveEmployees && (
         <div className="rounded-xl bg-panel p-4">
           <input
             type="text"
@@ -284,9 +299,10 @@ export default function IndividualASIDashboard({ preSelection = null }) {
             className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-cyan-500 focus:outline-none"
           />
         </div>
+        )}
 
         {/* Search results with bulk-select row */}
-        {searchQuery && searchResults.length > 0 && (
+        {!liveEmployees && searchQuery && searchResults.length > 0 && (
           <div className="rounded-xl bg-panel p-4">
             <div className="mb-3 text-sm text-muted">{searchResults.length} results for "{searchQuery}"</div>
 
@@ -336,8 +352,8 @@ export default function IndividualASIDashboard({ preSelection = null }) {
           </div>
         )}
 
-        {/* Roster sections (hidden while searching) */}
-        {!searchQuery && (
+        {/* Roster sections (demo build only, hidden while searching) */}
+        {!liveEmployees && !searchQuery && (
           <div className="space-y-4">
             {Object.entries(roster).map(([key, section]) => (
               <ExpandableSection

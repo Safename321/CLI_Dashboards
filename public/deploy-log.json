@@ -229,5 +229,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.157",
     "time": "2026-08-12 19:29:41 BST"
+  },
+  {
+    "version": "v2.0.1n",
+    "message": "Assign view rework per client feedback: one flat roster (no by-title grouping), always-visible header row with per-instrument column select-alls, three aligned columns, filters for name title location age; roster API adds city+age",
+    "deployer": "Nahin-sajjad",
+    "ip": "72.251.222.11",
+    "time": "2026-08-26 11:27:13 BST"
   }
 ]
