@@ -9,6 +9,7 @@ import {
   PolarRadiusAxis, Radar, Legend,
 } from 'recharts';
 import { generateOASIExplainerReport } from '../reports/index.js';
+import { assetUrl } from '../lib/apiBase.js';
 
 // CLILogo lives in its own module now (shared by sidebar/login/mentor); keep the
 // re-export so existing OASIRadar importers are unaffected.
@@ -94,7 +95,7 @@ export const OASIRadarChart = ({ scores, onExplain = generateOASIExplainerReport
 
         <div className="mt-2 flex items-center gap-3">
           <img
-            src="/cli-wheel.png"
+            src={assetUrl('cli-wheel.png')}
             alt="CLI Achieving Styles wheel"
             className="h-[88px] w-[88px] shrink-0 rounded-lg border border-border bg-white object-contain"
           />

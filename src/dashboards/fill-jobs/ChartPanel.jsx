@@ -1,6 +1,7 @@
 // Fill Jobs — left "draw pad" panel: ASSET radar with tolerance band on a
 // light pad, CLI wheel legend, overlaid-candidate legend and open positions.
 import StyleRadar, { DOMAIN_COLORS, hexRgba } from '../shared/StyleRadar.jsx';
+import { assetUrl } from '../../lib/apiBase.js';
 
 const CLUSTERS = [
   { color: DOMAIN_COLORS.Direct, label: 'DIRECT', styles: 'Intrinsic · Compet. · Power' },
@@ -51,7 +52,7 @@ export default function ChartPanel({ asset, overlays, jobs, activeJobId, onActiv
 
         {/* CLI wheel + cluster legend */}
         <div className="mt-1.5 flex items-center gap-3 rounded-lg border border-[rgba(100,160,220,0.35)] bg-[rgba(100,160,220,0.18)] px-2.5 py-2">
-          <img src="/cli-wheel.png" alt="CLI Achieving Styles wheel" className="h-16 w-16 shrink-0 rounded bg-white object-contain" />
+          <img src={assetUrl('cli-wheel.png')} alt="CLI Achieving Styles wheel" className="h-16 w-16 shrink-0 rounded bg-white object-contain" />
           <div className="flex flex-1 flex-col gap-1.5">
             {CLUSTERS.map((g) => (
               <div key={g.label} className="flex items-center gap-2">
