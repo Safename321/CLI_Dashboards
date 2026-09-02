@@ -16,7 +16,7 @@ import PeacePadPanel from './PeacePadPanel.jsx';
 import ChallengeGrid from './ChallengeGrid.jsx';
 import PartiesSection from './PartiesSection.jsx';
 import AnalysisSection from './AnalysisSection.jsx';
-import PeoplePopup from './PeoplePopup.jsx';
+import PeoplePoolPanel from './PeoplePoolPanel.jsx';
 import FaqModal from './FaqModal.jsx';
 import { generateReport } from './report.js';
 
@@ -31,8 +31,8 @@ export default function MgmtChallengesDashboard() {
   const [instrOverlays, setInstrOverlays] = useState(() => new Set());
   const [saved, setSaved] = useState([]);
   const [activeChallenges, setActiveChallenges] = useState([]);
-  const [peopleOpen, setPeopleOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState(false);
+  const poolRef = useRef(null);   // third-column candidate pool (scroll target)
   const [reportOpts, setReportOpts] = useState({ summary: true, behavioral: true, instruments: true, risks: true, playbook: false, cli: false });
   const [banner, setBanner] = useState('');
   const bannerTimer = useRef(null);
@@ -129,9 +129,15 @@ export default function MgmtChallengesDashboard() {
         addParty(person.name, person.role, grp.type === 'team' ? 'OASI' : 'ASI', person.scores || null);
       }
     });
-    setPeopleOpen(false);
     showBanner('Parties added');
   }, [peopleDb, parties, addParty, showBanner]);
+
+  // Candidate-pool add (third column). Mirrors the old popup's guard: a
+  // challenge type must be selected before parties are attached to it.
+  const addFromPool = useCallback((keys) => {
+    if (!selProb) { showBanner('Select a challenge type first'); return; }
+    commitPeople(keys);
+  }, [selProb, commitPeople, showBanner]);
 
   const saveChallenge = useCallback(() => {
     if (!selProb) { showBanner('Select a challenge type first'); return; }
@@ -199,18 +205,22 @@ export default function MgmtChallengesDashboard() {
         {/* Setup bar */}
         <div className="flex flex-wrap items-center gap-2 border-b border-border bg-panel/60 px-8 py-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Setup</span>
-          <button onClick={() => (selProb ? setPeopleOpen(true) : showBanner('Select a challenge type first'))} className="rounded-md border border-border bg-ink px-3 py-1.5 text-xs font-semibold text-slate-100 hover:border-accent">👥 Involved Parties</button>
+          <button
+            onClick={() => (selProb
+              ? poolRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+              : showBanner('Select a challenge type first'))}
+            className="rounded-md border border-border bg-ink px-3 py-1.5 text-xs font-semibold text-slate-100 hover:border-accent"
+          >👥 Involved Parties →</button>
           <button onClick={() => addParty()} className="rounded-md border border-border bg-ink px-3 py-1.5 text-xs font-semibold text-slate-100 hover:border-accent">+ Custom Party</button>
           <button onClick={overlayAll} className="rounded-md bg-accent/20 px-3 py-1.5 text-xs font-semibold text-accent hover:bg-accent/30">▲ Overlay on Peace Pad</button>
           <button onClick={runReport} className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500">📄 Generate Report</button>
           <span className="text-[11px] italic text-muted">Select a challenge · Add parties · Overlay profiles · Generate report</span>
         </div>
 
-        {/* Main */}
-        {/* The peace-pad (middle) sticks to the top of the scroll area so it stays
-            in view while the challenge/parties column scrolls past — xl only;
-            self-start lets it stick within the row instead of stretching. */}
-        <div className="grid grid-cols-1 xl:grid-cols-[400px_1fr] xl:items-start">
+        {/* Main — THREE columns (client feedback 2026-08-25): Peace Pad | challenge
+            workspace | candidate pool. The pad and pool stick; the middle scrolls.
+            Below xl the columns stack, so the pool appears below the workspace. */}
+        <div className="grid grid-cols-1 xl:grid-cols-[400px_minmax(0,1fr)_340px] xl:items-start">
           <div className="xl:sticky xl:top-0 xl:self-start xl:max-h-[calc(100vh-1.25rem)] xl:overflow-y-auto">
             <PeacePadPanel
               selProb={selProb}
@@ -232,6 +242,9 @@ export default function MgmtChallengesDashboard() {
                 <AnalysisSection selProb={selProb} parties={parties} reportOpts={reportOpts} onReportOpts={setReportOpts} onGenerate={runReport} />
               </>
             )}
+          </div>
+          <div className="xl:sticky xl:top-0 xl:self-start xl:h-[calc(100vh-1.25rem)]">
+            <PeoplePoolPanel ref={poolRef} db={peopleDb} note={pickerNote} parties={parties} onAdd={addFromPool} />
           </div>
         </div>
 
@@ -276,7 +289,6 @@ export default function MgmtChallengesDashboard() {
         </footer>
       </div>
 
-      {peopleOpen && <PeoplePopup db={peopleDb} note={pickerNote} parties={parties} onDone={commitPeople} />}
       {faqOpen && <FaqModal onClose={() => setFaqOpen(false)} />}
       {banner && (
         <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-accent bg-panel px-4 py-2 text-sm text-slate-100 shadow-xl">✓ {banner}</div>
