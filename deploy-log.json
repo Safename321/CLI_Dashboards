@@ -1,0 +1,254 @@
+[
+  {
+    "version": "v2.0.0i",
+    "message": "Test deploy notification system",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 16:21:48 EDT"
+  },
+  {
+    "version": "v2.0.0j",
+    "message": "Live status page with auto-refresh and browser notifications",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 16:24:01 EDT"
+  },
+  {
+    "version": "v2.0.0k",
+    "message": "Add notification chime on new deploy",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 16:25:20 EDT"
+  },
+  {
+    "version": "v2.0.0l",
+    "message": "Live feed via ntfy.sh SSE - real-time messages from any command line",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 19:17:45 EDT"
+  },
+  {
+    "version": "v2.0.0m",
+    "message": "Add zip + GitHub release to deploy pipeline",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 19:22:26 EDT"
+  },
+  {
+    "version": "v2.0.0n",
+    "message": "Fix deploy pipeline and add PUBLISHING.md",
+    "deployer": "safename321",
+    "ip": "185.220.69.91",
+    "time": "2026-06-12 19:24:14 EDT"
+  },
+  {
+    "version": "v2.0.0o",
+    "message": "Add 3-target deploy (Vercel + Droplet + GitHub Pages), fix CORS for Vercel",
+    "deployer": "claude-code",
+    "ip": "local",
+    "time": "2026-06-13"
+  },
+  {
+    "version": "v2.0.0p",
+    "message": "Version bump to 2.0.0p",
+    "deployer": "claude-code",
+    "ip": "local",
+    "time": "2026-06-16"
+  },
+  {
+    "version": "v2.0.0q",
+    "message": "v2.0.0p full deployment - all 3 targets",
+    "deployer": "safename321",
+    "ip": "38.15.231.204",
+    "time": "2026-06-17 16:28:09 EDT"
+  },
+  {
+    "version": "v2.0.0r",
+    "message": "Update docs, fix deploy.sh for MSYS/SPA routing, credential updates",
+    "deployer": "safename321",
+    "ip": "38.15.231.204",
+    "time": "2026-06-17 17:12:03 EDT"
+  },
+  {
+    "version": "v2.0.0s",
+    "message": "Add company Update/Archive/Restore/Delete actions to SuperAdmin console; skip Vercel CLI when unauthenticated",
+    "deployer": "Nahin-sajjad",
+    "ip": "185.180.222.122",
+    "time": "2026-07-02 04:06:47 BST"
+  },
+  {
+    "version": "v2.0.0t",
+    "message": "fix(audit): XSS-safe status feed, role+demo-only gating (DemoOnlyNotice), logout revocation, status-aware live bundles",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.216.221.110",
+    "time": "2026-07-05 06:32:43 BST"
+  },
+  {
+    "version": "v2.0.0u",
+    "message": "feat(hiring): live tenant hiring pipeline - /dashboard/hiring wired, applicant status badges + ASI fit, demo view kept for demo build",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-05 22:57:47 BST"
+  },
+  {
+    "version": "v2.0.0v",
+    "message": "feat(hiring): Phase-2b - Post a Job form (ASSET from description), close/reopen + delete job actions, mutation-aware pipeline refresh",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 13:59:19 BST"
+  },
+  {
+    "version": "v2.0.0w",
+    "message": "fix(hiring): job close uses EXPIRED (legacy status enum), ASCII-safe deploy messages",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 17:17:08 BST"
+  },
+  {
+    "version": "v2.0.0x",
+    "message": "feat(swot): Strategic SWOT materiality-bubble dashboard - standalone view + CEO Advisory embed, live org-oasi ingestion, full report, spec acceptance tests",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 20:38:19 BST"
+  },
+  {
+    "version": "v2.0.0y",
+    "message": "feat(phase3): board-packet + merger + ceo-advisory tenant-real, hardened tenant-data rendering, sonar quality fixes (0 bugs)",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-07 21:58:48 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "feat(d3): employee-leading + early-warning tenant-real - live leading indicators from metrics-timeseries (attrition/sentiment/participation trends + sparklines), un-gate both, demo-figure tags",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 20:46:17 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "feat(e1+d4): connectors on authed /data proxy (dashFetch JWT, envelope handling, raw-shape normalization for sec/fred/bls/markets/uspto/news/gdelt) + post-merger-integration live cohort view (acquired vs legacy), un-gate merger-integration",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 22:06:27 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "feat(d5): investor-behavior tenant-real - live SEC filings + market quote via authed /data proxy from companyProfile ticker/cik, entered shareholders dataset, un-gate",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 22:14:24 BST"
+  },
+  {
+    "version": "v2.0.0z",
+    "message": "E2: excise dead Express proxy (cli-proxy-server + Neon/Drizzle/express deps + vercel /api route + 4 proxy tests); droplet now serves static via python http.server; connectors use authed Laravel /data",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 22:35:20 BST"
+  },
+  {
+    "version": "v2.0.1b",
+    "message": "fix(deploy): droplet static serve via setsid (survives ssh close) + version bump to 2.0.1 with z-rollover so release tags stop colliding",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-11 23:26:22 BST"
+  },
+  {
+    "version": "v2.0.1c",
+    "message": "feat(d6): customer-health tenant-real - employee-perceived customer signal from app check-in Section-8 fields (product/support/value/competitor/retention), un-gate; CRM-style demo view kept for demo build",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-12 00:05:20 BST"
+  },
+  {
+    "version": "v2.0.1d",
+    "message": "super console: Add-user now emails temp password (sendEmail checkbox, default on)",
+    "deployer": "Nahin-sajjad",
+    "ip": "37.19.200.2",
+    "time": "2026-07-14 19:07:29 BST"
+  },
+  {
+    "version": "v2.0.1e",
+    "message": "super console: Add-user email checkbox + tenant-config HRIS panel dedup",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.125.235.22",
+    "time": "2026-07-14 20:45:54 BST"
+  },
+  {
+    "version": "v2.0.1f",
+    "message": "assign-cli roster grouped by designation + invite emails send in background",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-07-15 06:05:06 BST"
+  },
+  {
+    "version": "v2.0.1g",
+    "message": "Ship 360 focal-person assign UI - FocalSetupPanel gender plus roster evaluators",
+    "deployer": "Nahin-sajjad",
+    "ip": "155.117.189.61",
+    "time": "2026-07-24 05:03:00 BST"
+  },
+  {
+    "version": "v2.0.1h",
+    "message": "Publish v2.0.1h baseline before SWOT frontend edits",
+    "deployer": "Nahin-sajjad",
+    "ip": "79.127.154.21",
+    "time": "2026-08-03 18:46:45 BST"
+  },
+  {
+    "version": "v2.0.1i",
+    "message": "Fill Jobs sortable candidate pool (click any column header) + sticky middle column on Fill Jobs and Management Challenges so it stays in view while the right column scrolls",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-11 00:03:08 BST"
+  },
+  {
+    "version": "v2.0.1j",
+    "message": "CEO Advisory: remove duplicate Full SWOT report button (kept only on Strategic SWOT dashboard). SWOT PDF report now embeds the actual materiality-bubble diagram (SVG with legend) instead of a text-only matrix. Adds report smoke test; vitest JSX set to automatic runtime.",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-11 12:12:28 BST"
+  },
+  {
+    "version": "v2.0.1k",
+    "message": "SWOT diagram: keep every bubble label inside its circle - wrap multi-word labels onto lines and scale the font to fit; score line centered inside too",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-11 22:25:47 BST"
+  },
+  {
+    "version": "v2.0.1l",
+    "message": "Remove duplicate SWOT section from CEO Advisory (lives on Strategic SWOT). SWOT PDF report now embeds the full strategic analysis (vectors, TOWS strategies, best practices, managerial advice, timelines). Add signed-in user name + company + location (browser timezone) + live timestamp to the dashboard header top-right.",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-11 22:55:39 BST"
+  },
+  {
+    "version": "v2.0.1m",
+    "message": "CEO Advisory fixes: Update Data now flexes to any client - real SEC filings only for a public company with its own ticker+CIK, everyone else gets mock financials keyed to their own name (was hard-wired to S&P ticker SPGI + CIK 0000064040, so fictitious companies got empty numbers). Fix dead buttons found in demo QA: OrgOASI Create-deliverable buttons open the OASI report, redundant External crisis button removed, Board Packet Export-PPT clearly disabled.",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.157",
+    "time": "2026-08-12 19:29:41 BST"
+  },
+  {
+    "version": "v2.0.1n",
+    "message": "Assign view rework per client feedback: one flat roster (no by-title grouping), always-visible header row with per-instrument column select-alls, three aligned columns, filters for name title location age; roster API adds city+age",
+    "deployer": "Nahin-sajjad",
+    "ip": "72.251.222.11",
+    "time": "2026-08-26 11:27:13 BST"
+  },
+  {
+    "version": "v2.0.1o",
+    "message": "Update",
+    "deployer": "Nahin-sajjad",
+    "ip": "72.251.222.9",
+    "time": "2026-09-03 21:03:01 BST"
+  },
+  {
+    "version": "v2.0.1p",
+    "message": "Update",
+    "deployer": "Nahin-sajjad",
+    "ip": "72.251.222.9",
+    "time": "2026-09-03 21:24:07 BST"
+  }
+]
