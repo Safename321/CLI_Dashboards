@@ -33,7 +33,9 @@ export default function MgmtChallengesDashboard() {
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [faqOpen, setFaqOpen] = useState(false);
   const poolRef = useRef(null);   // third-column candidate pool (scroll target)
-  const [reportOpts, setReportOpts] = useState({ summary: true, behavioral: true, instruments: true, risks: true, playbook: false, cli: false });
+  // All sections on by default — v1.24L always included the playbook + CLI
+  // perspective, and defaulting them off made v2 reports read as truncated.
+  const [reportOpts, setReportOpts] = useState({ summary: true, behavioral: true, instruments: true, risks: true, playbook: true, cli: true });
   const [banner, setBanner] = useState('');
   const bannerTimer = useRef(null);
   const partySeqRef = useRef(0); // unique party-id counter (component-scoped, §4.4)
