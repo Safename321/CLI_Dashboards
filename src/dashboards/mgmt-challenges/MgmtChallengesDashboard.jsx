@@ -132,11 +132,12 @@ export default function MgmtChallengesDashboard() {
     showBanner('Parties added');
   }, [peopleDb, parties, addParty, showBanner]);
 
-  // Candidate-pool add (third column). Mirrors the old popup's guard: a
-  // challenge type must be selected before parties are attached to it.
+  // Candidate-pool add (third column). Parties are independent of the challenge
+  // (same as + Custom Party), so never reject the add — when no challenge is
+  // chosen yet, nudge toward picking one instead of silently dropping the pick.
   const addFromPool = useCallback((keys) => {
-    if (!selProb) { showBanner('Select a challenge type first'); return; }
     commitPeople(keys);
+    if (!selProb) showBanner('Parties added — now select a challenge type');
   }, [selProb, commitPeople, showBanner]);
 
   const saveChallenge = useCallback(() => {
@@ -206,9 +207,7 @@ export default function MgmtChallengesDashboard() {
         <div className="flex flex-wrap items-center gap-2 border-b border-border bg-panel/60 px-8 py-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-accent">Setup</span>
           <button
-            onClick={() => (selProb
-              ? poolRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-              : showBanner('Select a challenge type first'))}
+            onClick={() => poolRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
             className="rounded-md border border-border bg-ink px-3 py-1.5 text-xs font-semibold text-slate-100 hover:border-accent"
           >👥 Involved Parties →</button>
           <button onClick={() => addParty()} className="rounded-md border border-border bg-ink px-3 py-1.5 text-xs font-semibold text-slate-100 hover:border-accent">+ Custom Party</button>
@@ -236,11 +235,14 @@ export default function MgmtChallengesDashboard() {
           </div>
           <div className="overflow-y-auto p-6">
             <ChallengeGrid selProb={selProb} selSub={selSub} onSelectProb={selectProb} onSelectSub={setSelSub} fields={fields} onFields={setFields} />
+            {/* Parties exist independently of the challenge (pool adds, + Custom
+                Party), so the editor shows whenever there are parties — hiding
+                them until a challenge is picked made pool adds look like no-ops. */}
+            {(selProb || parties.length > 0) && (
+              <PartiesSection parties={parties} overlaid={overlaid} onToggleOverlay={toggleOverlay} onAddParty={() => addParty()} onRemoveParty={removeParty} onUpdateParty={updateParty} onUpdateScore={updateScore} />
+            )}
             {selProb && (
-              <>
-                <PartiesSection parties={parties} overlaid={overlaid} onToggleOverlay={toggleOverlay} onAddParty={() => addParty()} onRemoveParty={removeParty} onUpdateParty={updateParty} onUpdateScore={updateScore} />
-                <AnalysisSection selProb={selProb} parties={parties} reportOpts={reportOpts} onReportOpts={setReportOpts} onGenerate={runReport} />
-              </>
+              <AnalysisSection selProb={selProb} parties={parties} reportOpts={reportOpts} onReportOpts={setReportOpts} onGenerate={runReport} />
             )}
           </div>
           <div className="xl:sticky xl:top-0 xl:self-start xl:h-[calc(100vh-1.25rem)]">
