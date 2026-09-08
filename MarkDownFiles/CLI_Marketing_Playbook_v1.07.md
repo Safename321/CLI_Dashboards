@@ -424,3 +424,61 @@ Not "buy" or "evaluate" — **"is there someone on your side who reviews or pres
 **CLI:Online | Vercel:Online v2.0.0r | GitHub:Online v2.0.1g | Droplet:Online v2.0.1g** *(Vercel one patch stale)*
 
 *Updated (v1.07) · Connective Leadership Institute*
+
+
+## Part 15 — CLI Website Citation Method & Site Anchor Map (added 2026-09-08)
+
+### When a comment cites the CLI site or the Achieving Styles model
+
+This applies when a post genuinely touches leadership, followership, team/cross-specialty collaboration, hiring/fit, or AI-and-judgment — situations where a specific, real CLI concept legitimately extends the poster's own point. It is an option, not a default: most comments still don't need a CLI citation at all, and CLI is only named/linked when the user has directed it for that comment (per the existing "CLI never appears by name by default" register rule).
+
+**The method, in order:**
+
+1. **Find the real gap first** (per Part 9's "gap inside the post vs. imported frame" test). The Achieving Styles/site citation is a way to *name* a gap that's already there — never a device for forcing CLI into a post that doesn't have one.
+2. **Cite Achieving Styles by name only when a specific style genuinely matches specific behavior described in the post** (e.g., a poster crediting a colleague and centering an outside expert maps to Collaborative/Contributory in the Relational set — see the table below). Never say "Achieving Styles" generically without naming the actual style engaged.
+3. **Hashtag-cite people the original post itself names** (co-authors, colleagues, guests thanked in the post) — inline, first mention, in the same style the post's own hashtags use (e.g. "Dr. Arun Sanyal #ArunSanyal"). Only tag people already named in the source post; do not invent tags for people not mentioned.
+4. **Embed the CLI URL in-sentence, naturally** — never as a tacked-on "(Related read: connectiveleadership.com)" parenthetical at the end. It should read as part of the sentence's own claim, e.g. "...the translation layer we spend our time in at connectiveleadership.com/#how."
+5. **Pick the anchor that matches the comment's specific closing claim, not a default.** Use the anchor map below. `#science` is for citing the Achieving Styles framework itself; most comments' actual punchline maps to a different, more specific section (see map). Re-derive if the site has changed since 2026-09-08 (method below).
+6. **AI's fallibility for diagnosing management/leadership challenges** is a legitimate, non-forced insight axis when the source post itself raises AI, diagnostics, or data tools — the contrast (AI reads the clinical/technical signal; it doesn't read the human/organizational one) is CLI's real thesis, not an imported frame, *as long as the post already put AI or data-diagnostics on the table*.
+7. **Followership** is a legitimate companion concept to leadership when the post describes accomplished specialists/leaders being asked to adopt someone else's frame — the challenge is getting people who already lead their own domains to follow, which is a followership problem, not an authority problem.
+8. Tone rules from Part 6/Register rules still apply in full: no comparing the poster against their own quoted source, credit the poster for surfacing what they surfaced, generous engagement register throughout.
+
+### Verified site anchor map (connectiveleadership.com, captured 2026-09-08)
+
+Derived from the live page's raw HTML (`<nav class="nav-links">`), not the markdown-converted version — WebFetch's HTML→markdown conversion drops `href` attributes on this site, so anchors must be pulled from raw source (`curl` the page, `grep -oE 'href="#[a-zA-Z0-9_-]+"'` or search for `id="..."` attributes) or confirmed by the user directly from their browser's address bar. Re-verify before using if the site has had a redesign since this date.
+
+| Anchor | Nav label | What's actually on the page |
+|---|---|---|
+| `#reframe` | Why | Core pitch: strategists/CFOs tell you the plan and the numbers; neither tells you if the org is behaviorally capable of executing. |
+| `#how` | Method | "The Translation Layer" — CLI measures behavioral leading indicators (conflict, work behaviors) and translates them into the financial results a CFO already reports. Use for execution/translation/behavioral-diagnosis claims. |
+| `#quantified-shot` | Quantified | Product visual example ("Aspirational OASI"). |
+| `#solutions` | Solutions | Decision-specific offerings, e.g. CEO Succession / board readiness (OASI). |
+| `#platform` | Platform | The 29-dashboard product; AI Mentor built into every screen; mobile app for continuous signal. Use for platform/measurement-tool claims. |
+| `#hiring` | Hiring | "Fill Jobs" — scores candidates against a role's Achieving Styles profile for fit. Use for hiring/succession/role-fit posts. |
+| `#briefingRoom` | Newsletter | Nav label says "Newsletter" but the section's real id/title is **Briefing Room** — one briefing per industry, 96 briefings across 24 industries, 40 years of data. (Note: this is the real live version of the "Briefing Room" concept discussed in an earlier session — unrelated to anything built in this chat.) |
+| `#mentor` | AI Mentor | CLI's own AI advisory feature. Use when the AI-fallibility point needs a concrete CLI counter-example (CLI's own AI tool works inside the behavioral framework, not instead of it). |
+| `#app` | Employee App | Anonymous employee-signal channel, aggregated to department level. |
+| `#scenario` | Hypotheticals | Scenario-testing tool. |
+| `#science` | Science | The Achieving Styles framework itself — nine styles in three sets. Use only when citing the framework directly, not as a default catch-all. |
+| `#watch` | Watch | Four short films with Jean Lipman-Blumen and the CLI team. |
+| `#about` | About | Team bios. |
+| `#demo` | Demo | Request-a-demo form. |
+
+### The nine Achieving Styles (verbatim from the live Science section, sourced to *The Connective Edge*, Jean Lipman-Blumen, Jossey-Bass 1996, research on 5,000+ leaders)
+
+**Direct set** — confronting tasks individually and directly:
+- *Intrinsic* — looks within for motivation and standards; satisfaction from mastering a challenging task autonomously.
+- *Competitive* — satisfaction from performing better than anyone else; turns situations into contests to stay motivated.
+- *Power* — likes being in charge of the agenda, task, events, people, and resources; excels at coordinating and organizing.
+
+**Relational set** — group tasks, helping others reach their goals:
+- *Collaborative* — enjoys accomplishing a task by doing it with others; energized by teamwork rather than working in isolation.
+- *Contributory* — likes to work behind the scenes to help others accomplish their tasks; satisfaction from enabling others' success.
+- *Vicarious* — derives real accomplishment from others' success, through mentoring and support without direct participation.
+
+**Instrumental set** — self and networks as instruments:
+- *Entrusting* — makes others feel counted on; empowers through confident delegation.
+- *Social* — accomplishes things by involving other people — networking and leveraging others' talents and connections.
+- *Personal* — uses personality, intelligence, wit, humor, and charm as instruments for success and persuasion.
+
+Use the specific style name that matches the behavior described in the post being commented on — never all nine, never a generic "Achieving Styles" reference without naming which one(s) apply.
