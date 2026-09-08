@@ -239,6 +239,7 @@ Then turn it: that's an argument for measuring *carefully*, not for leaving it t
 - Never youthen the voice; the people-analytics guild is data-serious and prose-serious.
 - CLI never appears by name — the profile headline is the only funnel, which is honest and enough.
 - **Softer tone on the author's own page (added 2026-09-08).** A sharp observation posted as a comment under someone's own name should read as generous engagement, not a challenge to their credibility. Keep the analytical gap-finding, keep the specific numbers and quotes, but soften phrasing that could land as accusatory or "gotcha" — e.g. prefer "the number that answers the post's own question" over language that implies the author got it wrong. The sharpness stays in the observation; the tone around it doesn't need to.
+- **Credit the poster, don't rank them against their source (added 2026-09-08).** When a comment engages with a quote or stat the poster surfaced, don't frame it as the source outshining the poster (e.g., "a sharper diagnosis than the post itself"). Instead, credit the poster for surfacing it — "I connected with [the quote] the moment I read it — thanks for pulling that into the post, [name]" — and let the substance of the observation carry the sharpness on its own. The goal is generous engagement with what the poster chose to highlight, not a comparison of who said it better.
 
 ---
 
