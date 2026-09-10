@@ -503,3 +503,16 @@ Use the specific style name that matches the behavior described in the post bein
 First draft quoted a single line from his most recent post ("the hard part is being accountable for a change you cannot yet prove"). Not wrong because it was a quote — wrong because it cherry-picked one post when a more precise, better-supported commonality existed across several. Scanning his last few posts turned up a recurring thesis, not a one-off line — reinvention as an operating-model and workforce-judgment problem, not a technology problem — showing up in different words across multiple posts ("spend a dollar on AI and two on the people, the process, and the change management"; "everyone changes the technology, fewer change how the work gets done"). The pattern was the more accurate finding here, so the composition followed the pattern rather than any single quote. Had his single most recent line actually been the sharpest, most precise statement of the overlap, quoting it would have been the right call instead.
 
 Final note (189 characters): "Your throughline across recent posts — that reinvention lives in the operating model and workforce judgment, not the technology — is the exact territory I work in. Would welcome connecting."
+
+### Correction (2026-09-10): sentence construction, and a 300-character variant
+
+**Prefer a flowing "that" relative clause over an em-dash-bracketed quote insertion.** Original draft: "Your line — surveys 'point you in a direction,' but the report gives you 'data to act on' — is exactly the shift..." User's edit: "Your line that surveys 'point you in a direction,' but the report gives you 'data to act on' is exactly the shift..." Same content, one fewer interruption — the em-dash pair reads as an aside bolted onto the sentence; "that" folds the quoted material into the sentence's own grammar. Prefer the "that" construction going forward.
+
+**A 300-character variant is also a standard ask** — same method (search, quote/paraphrase/fact matched to what's found, no salutation), just more room to develop the point. Don't default to the tightest possible version when 300 is available; use the extra room to name the source (e.g., the report by name) rather than padding.
+
+### Worked example (Wes Burke, Care.com, 2026-09-10)
+
+Found in his own post: "Employee surveys, for example, can certainly point you in a direction. But Care.com's new Sandwich Generation Report... gives you the data to act on it." A precise, quotable articulation of CLI's own thesis (measurement over sentiment/survey), so quoted directly per the "quote when it precisely fits" rule — not paraphrased.
+
+300-character version, final form: "Your line that surveys 'point you in a direction,' but the Sandwich Generation Report gives you 'data to act on' is exactly the shift from assessment to measurement I work in: behavior over sentiment, numbers a board can act on instead of a survey score. Would welcome connecting."
+
