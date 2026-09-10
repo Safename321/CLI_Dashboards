@@ -410,6 +410,7 @@ Not "buy" or "evaluate" — **"is there someone on your side who reviews or pres
 - **Hisense (live — keep warmest):** "...how 80,000 people actually coordinate across a global manufacturing org — measured as a quantity, not assessed by survey."
 - **Bank of America:** "...how leadership behavior maps to risk and performance — measuring the culture the way the institution measures everything else."
 - **WeWork:** "...how organizations rebuild coordination and trust through a turnaround, where behavior is the thing that either holds or doesn't."
+- **Uber / Dara Khosrowshahi (not yet engaged — hold for after he likes/views/replies, never a first touch):** "...how a platform holds together when the actual experience is delivered by a dozen different partner organizations across a dozen cities — the thing that decides whether 'autonomous everywhere' feels like one brand or a patchwork."
 
 ### Peer-to-principal variant (higher altitude — for CEOs already engaging, e.g. Ravi Kumar)
 > [First name] — good to be connected. Enjoyed our exchange on [topic]; [their specific point] is the thesis most enterprises still haven't priced in. I'm building Connective Leadership Institute into the category standard for measuring organizational behavior — the human layer under exactly the [AI / transformation] you're running at scale. Would value comparing notes as fellow builders.
