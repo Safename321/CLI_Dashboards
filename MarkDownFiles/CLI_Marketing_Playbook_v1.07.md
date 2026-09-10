@@ -482,3 +482,22 @@ Derived from the live page's raw HTML (`<nav class="nav-links">`), not the markd
 - *Personal* — uses personality, intelligence, wit, humor, and charm as instruments for success and persuasion.
 
 Use the specific style name that matches the behavior described in the post being commented on — never all nine, never a generic "Achieving Styles" reference without naming which one(s) apply.
+
+
+## Part 16 — The 200-Character LinkedIn Connection Note Method (added 2026-09-10)
+
+### The method
+
+1. **No salutation.** Never open with the person's name. At 200 characters, a "Hi [Name] —" is wasted budget the message can't afford, and the note reads as a note, not a letter.
+2. **Search their whole profile for genuine common ground — this is a search, not a quote-lookup.** Read the About section, recent posts (plural — look for a pattern across several, not just the most recent one), Experience, Education, and any visible shared connections or groups. The common ground can be: a recurring theme across multiple posts (a thesis they keep returning to), a specific initiative or focus area, a shared institution, industry, or interest — whichever is the most genuine and specific point of overlap between them and CLI's actual work, not necessarily a literal quote from one post. Quoting their own words back to them is *one* way to demonstrate the overlap is real, not the rule itself — don't default to it if a broader pattern (e.g., a throughline across several posts) is the more honest common ground.
+3. **Never fabricate shared background.** Do not assume a shared alma mater, city, or employer from a profile detail unless it's actually confirmed to overlap with the sender's own background. An unverified "fellow [school/city]" reads as hollow at best and gets caught at worst.
+4. **State the overlap, then a soft close.** One sentence naming the specific, genuine point of overlap; one short close ("Would welcome connecting" or similar) — no pitch, no flattery, no "great post."
+5. **Target ~150-190 characters**, leaving margin under the 200 cap rather than writing to the limit and trimming under pressure.
+
+### Worked example (Muqsit Ashraf, Accenture, 2026-09-10)
+
+Rejected approach: quoting a single line from his most recent post ("the hard part is being accountable for a change you cannot yet prove"). Too narrow — one post, cherry-picked.
+
+Correct approach: scanned his last several posts and found a recurring thesis, not a one-off line — reinvention as an operating-model and workforce-judgment problem, not a technology problem, appearing across multiple posts in different words ("spend a dollar on AI and two on the people, the process, and the change management"; "everyone changes the technology, fewer change how the work gets done"). That pattern, not any single quote, is the genuine common ground with CLI's own thesis.
+
+Final note (189 characters): "Your throughline across recent posts — that reinvention lives in the operating model and workforce judgment, not the technology — is the exact territory I work in. Would welcome connecting."
