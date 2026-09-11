@@ -250,5 +250,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "72.251.222.9",
     "time": "2026-09-03 21:24:07 BST"
+  },
+  {
+    "version": "v2.0.1q",
+    "message": "Mgmt Challenges report: match original v1.19a exactly - playbook + CLI perspective off by default, gap table omitted (not explained) when fewer than 2 parties",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.158",
+    "time": "2026-09-11 21:00:45 BST"
   }
 ]

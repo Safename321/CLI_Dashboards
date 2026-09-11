@@ -58,11 +58,8 @@ export function buildReportHtml({ prob, sub, fields, parties, opts }) {
       ).join('');
   }
 
-  if (opts.behavioral && parties.length < 2) {
-    html +=
-      '<h2>Behavioral Gap Analysis</h2>' +
-      '<p style="color:#777;font-style:italic;">Requires at least two involved parties — add a second party (or team) to compare all 9 Achieving Styles and surface friction risks.</p>';
-  }
+  // As in the original v1.19a generator, the gap table is simply omitted when
+  // there are fewer than two parties to compare.
   if (opts.behavioral && parties.length >= 2) {
     const [p1, p2] = parties;
     html +=
