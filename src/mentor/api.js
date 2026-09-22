@@ -21,13 +21,13 @@ const FRIENDLY = {
 /**
  * Send one mentor turn.
  * @param {object} opts
- * @param {string} opts.system            full system prompt (base + active-mode suffix)
+ * @param {string} [opts.mode]            active mentor mode id; the SERVER holds the prompt
  * @param {Array}  opts.messages          chat history INCLUDING the new user message
  * @param {string} [opts.dashboardContext] data snapshot prepended to the final user message only
  * @returns {Promise<{text: string, empty: boolean}>}
  * @throws  Error whose .message is always user-facing (never a raw server string)
  */
-export async function sendMentorMessage({ system, messages, dashboardContext }) {
+export async function sendMentorMessage({ mode, messages, dashboardContext }) {
   const outgoing = messages.map((m, i) =>
     i === messages.length - 1 && m.role === 'user' && dashboardContext
       ? { ...m, content: dashboardContext + m.content }
@@ -38,7 +38,7 @@ export async function sendMentorMessage({ system, messages, dashboardContext }) 
   try {
     res = await dashFetch('/chat', {
       method: 'POST',
-      body: JSON.stringify({ system, messages: outgoing }),
+      body: JSON.stringify({ mode, messages: outgoing }),
     });
   } catch (err) {
     console.error('[mentor/api] network failure reaching /chat:', err);

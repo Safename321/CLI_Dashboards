@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthContext.jsx';
 import { useData } from '../data/DataContext.jsx';
 import { MENTOR_TABS, REPORT_BUTTON_SAYINGS } from '../data/datasets/mentor-content.js';
-import SYSTEM_PROMPT from './system-prompt.md?raw';
 import { sendMentorMessage } from './api.js';
 import renderMentorMessage from './renderMessage.jsx';
 import { buildDashboardContext, getMentorAlerts } from './buildContext.js';
@@ -102,7 +101,12 @@ export default function AIMentor({
     try {
       const { text } = await sendMentorMessage({
         token,
-        system: SYSTEM_PROMPT + (tabConfig.systemPrefix || ''),
+        // The server owns the system prompt now (audit AI-02): we send the MODE and it
+        // decides what that mode means. Sending the prompt itself meant anyone holding a
+        // dashboard token could POST /api/chat with instructions of their own and have
+        // the server run them against our Anthropic key. system-prompt.md and the tab
+        // prefixes stay here for the UI, but backend/config/mentor.php is the authority.
+        mode: activeTab,
         messages: [...history, { role: 'user', content: userContent }],
         dashboardContext,
       });

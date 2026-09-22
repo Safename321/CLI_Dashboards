@@ -85,13 +85,19 @@ DEPLOYER=$(git config user.name 2>/dev/null || echo "unknown")
 IP=$(curl -s ifconfig.me 2>/dev/null || curl -s api.ipify.org 2>/dev/null || echo "unavailable")
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S %Z')
 
-# 5. Append to deploy log
+# 5. Append to deploy log — kept OUT of public/ (audit WEB-06).
+# Everything in public/ is copied verbatim into dist/ and published, so this file
+# served every deployer's username and public IP to anyone who fetched it. The
+# history is still recorded, just not on the internet. public/status.html is gone
+# for the same reason: it exposed the deploy feed and subscribed the browser to a
+# public ntfy topic anyone can post to (and carried the XSS chain from the
+# 2026-07 frontend audit).
 STEP="deploy-log"
 node -e "
 const fs = require('fs');
-const log = JSON.parse(fs.readFileSync('public/deploy-log.json','utf8'));
+const log = JSON.parse(fs.readFileSync('deploy-log.json','utf8'));
 log.push({ version:'$VERSION', message:\`$MSG\`, deployer:'$DEPLOYER', ip:'$IP', time:'$TIMESTAMP' });
-fs.writeFileSync('public/deploy-log.json', JSON.stringify(log, null, 2));
+fs.writeFileSync('deploy-log.json', JSON.stringify(log, null, 2));
 "
 
 # 6. Commit & push
@@ -118,16 +124,22 @@ CREDEOF
 git tag "$VERSION" 2>/dev/null || true
 git push origin "$VERSION" 2>/dev/null || true
 
-RELEASE_JSON=$(curl -s -X POST "https://api.github.com/repos/${REPO}/releases" \
-  -H "Authorization: token $CRED" \
+# The PAT goes to curl over STDIN rather than argv (audit DEPLOY-08): a command line is
+# readable by any other process on this machine for as long as the request runs.
+# `-H @-` tells curl to read the header from standard input.
+RELEASE_JSON=$(printf 'Authorization: token %s' "$CRED" \
+  | curl -s -X POST "https://api.github.com/repos/${REPO}/releases" \
+  -H @- \
   -H "Accept: application/vnd.github+json" \
   -d "{\"tag_name\":\"${VERSION}\",\"name\":\"CLI Dashboards ${VERSION}\",\"body\":\"${MSG}\",\"draft\":false,\"prerelease\":false}")
 RELEASE_ID=$(echo "$RELEASE_JSON" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id" 2>/dev/null || echo "")
 
 if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "undefined" ]; then
   echo "Uploading ${ZIPNAME} to release..."
-  curl -s -X POST "https://uploads.github.com/repos/${REPO}/releases/${RELEASE_ID}/assets?name=${ZIPNAME}" \
-    -H "Authorization: token $CRED" \
+  # Header over stdin here too; --data-binary reads the zip from a file, so stdin is free.
+  printf 'Authorization: token %s' "$CRED" \
+    | curl -s -X POST "https://uploads.github.com/repos/${REPO}/releases/${RELEASE_ID}/assets?name=${ZIPNAME}" \
+    -H @- \
     -H "Content-Type: application/zip" \
     --data-binary "@/tmp/${ZIPNAME}" > /dev/null
   echo "Zip uploaded to GitHub release."
@@ -154,13 +166,13 @@ STEP="droplet"
 # E2; the SPA has no client-side routing, so a plain static server suffices and
 # connectors call the authed Laravel /data proxy on app.cardinalfund.com).
 echo "Deploying to droplet ${DROPLET_HOST}..."
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new root@${DROPLET_HOST} \
   "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
 # Restart the static server via its systemd unit (cli-dash.service: python3
 # http.server on :8000 serving /root/www, Restart=always, enabled at boot).
 # systemd owns the process so it survives the SSH close, crashes and reboots —
 # the earlier bare-nohup/setsid-over-ssh approach flapped (E2 droplet, 2026-07-12).
-ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
+ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new root@${DROPLET_HOST} \
   "systemctl restart cli-dash.service; sleep 2; systemctl is-active cli-dash.service && echo 'droplet: cli-dash active on :8000' || echo 'droplet: WARNING cli-dash not active'"
 echo "Droplet deployed."
 
@@ -196,4 +208,3 @@ echo "Vercel2: ${VERCEL_URL2}"
 echo "Droplet: http://${DROPLET_HOST}:8000/CLI_Dashboards/"
 echo "GitHub:  ${GHPAGES_URL}"
 echo "Release: https://github.com/${REPO}/releases/tag/${VERSION}"
-echo "Status:  ${VERCEL_URL}/status.html"
