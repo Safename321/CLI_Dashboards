@@ -715,29 +715,49 @@ function DataPanel({ company }) {
 // ─── Audit log ───────────────────────────────────────────────────────────────
 function AuditView() {
   const [events, setEvents] = useState([]);
-  const [meta, setMeta] = useState({ total: 0, limit: 100, offset: 0 });
+  const [meta, setMeta] = useState({ total: 0, limit: 100, nextBefore: null });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (offset = 0) => {
+  // The cursor of each page we have shown, oldest entry last. `before` pages forward only,
+  // so going back means remembering where we were rather than subtracting from an offset
+  // (backend PERF-13: offset paging is capped now, and deep pages are refused outright).
+  const [trail, setTrail] = useState([null]);
+
+  const load = useCallback(async (before) => {
     setLoading(true);
     try {
-      const res = await api(`/super/audit?limit=100&offset=${offset}`);
+      const q = before ? `/super/audit?limit=100&before=${before}` : '/super/audit?limit=100';
+      const res = await api(q);
       setEvents(res.events || []);
-      setMeta({ total: res.total ?? 0, limit: res.limit ?? 100, offset: res.offset ?? 0 });
+      setMeta({ total: res.total ?? 0, limit: res.limit ?? 100, nextBefore: res.nextBefore ?? null });
       setError('');
     } catch (e) { setError(e.message); }
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(0); }, [load]);
+  useEffect(() => { load(null); }, [load]);
 
-  const { total, limit, offset } = meta;
+  const older = () => {
+    if (!meta.nextBefore) return;
+    setTrail((t) => [...t, meta.nextBefore]);
+    load(meta.nextBefore);
+  };
+
+  const newer = () => {
+    if (trail.length < 2) return;
+    const back = trail.slice(0, -1);
+    setTrail(back);
+    load(back[back.length - 1]);
+  };
+
+  const { total } = meta;
+  const pageNo = trail.length;
   return (
     <>
       {error && <ErrorBox>{error}</ErrorBox>}
       <div className="my-3 text-xs text-slate-400">
-        {total} event(s) · showing {events.length ? offset + 1 : 0}–{offset + events.length}
+        {total} event(s) · page {pageNo}, showing {events.length}
       </div>
       {loading ? <div className="text-slate-500">Loading…</div> : (
         <table className="w-full border-collapse text-xs">
@@ -763,8 +783,8 @@ function AuditView() {
         </table>
       )}
       <div className="mt-3 flex gap-2">
-        <button className={BTN_GHOST} disabled={offset === 0} onClick={() => load(Math.max(0, offset - limit))}>← Newer</button>
-        <button className={BTN_GHOST} disabled={offset + limit >= total} onClick={() => load(offset + limit)}>Older →</button>
+        <button className={BTN_GHOST} disabled={trail.length < 2} onClick={newer}>← Newer</button>
+        <button className={BTN_GHOST} disabled={!meta.nextBefore} onClick={older}>Older →</button>
       </div>
     </>
   );
