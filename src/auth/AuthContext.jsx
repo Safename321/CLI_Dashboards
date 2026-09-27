@@ -8,7 +8,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { getTenant, tenantFromUser } from '../config/tenants.js';
 import {
-  login as apiLogin, logout as apiLogout, getUser, getToken,
+  login as apiLogin, verifyMfa as apiVerifyMfa, logout as apiLogout, getUser, getToken,
   setImpersonation, getImpersonation,
 } from '../lib/auth.js';
 
@@ -39,13 +39,21 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    const u = await apiLogin(email, password);
+  const signIn = useCallback((u) => {
     setUser(u);
     setTenant(tenantFromUser(u));
     setStatus('authed');
     return u;
   }, []);
+
+  // Resolves to the user, or to { mfaRequired, challenge, sentTo } when the account's role
+  // needs an emailed code first (D3) — the login screen then calls verifyMfa.
+  const login = useCallback(async (email, password) => {
+    const result = await apiLogin(email, password);
+    return result?.mfaRequired ? result : signIn(result);
+  }, [signIn]);
+
+  const verifyMfa = useCallback(async (challenge, code) => signIn(await apiVerifyMfa(challenge, code)), [signIn]);
 
   const logout = useCallback(() => {
     apiLogout();
@@ -74,6 +82,7 @@ export function AuthProvider({ children }) {
     authDisabled: AUTH_DISABLED,
     impersonation,
     login,
+    verifyMfa,
     logout,
     impersonateCompany,
   };

@@ -65,6 +65,33 @@ export async function login(email, password) {
               : (data.error || 'Incorrect email or password');
     throw new Error(msg);
   }
+  // D3: some roles get an emailed code instead of a session. Nothing is stored yet —
+  // the caller collects the code and finishes with verifyMfa().
+  if (data.status === 'mfa_required') {
+    return { mfaRequired: true, challenge: data.challenge, sentTo: data.sentTo };
+  }
+  return storeSession(data);
+}
+
+// Second half of an MFA login: trade the challenge handle + emailed code for a session.
+export async function verifyMfa(challenge, code) {
+  const res = await fetch(`${API_BASE}/auth/mfa/verify`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ challenge, code }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'That code is not right.');
+    // 401/429 mean this challenge is finished; the user has to sign in again.
+    err.restart = res.status === 401 || res.status === 429;
+    throw err;
+  }
+  return storeSession(data);
+}
+
+function storeSession(data) {
   sessionStorage.setItem(TOKEN_KEY, data.token);
   sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
   return data.user;

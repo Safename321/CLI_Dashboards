@@ -7,25 +7,39 @@ import { APP_VERSION_LABEL } from '../config/version.js';
 import { CLILogo } from '../components/CLILogo.jsx';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, verifyMfa } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Set when the account needs the emailed code (D3): { challenge, sentTo }.
+  const [mfa, setMfa] = useState(null);
+  const [code, setCode] = useState('');
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      if (mfa) {
+        await verifyMfa(mfa.challenge, code.trim());
+      } else {
+        const result = await login(email.trim(), password);
+        if (result?.mfaRequired) {
+          setMfa({ challenge: result.challenge, sentTo: result.sentTo });
+          setCode('');
+        }
+      }
     } catch (err) {
+      if (mfa && err.restart) { setMfa(null); setCode(''); }
       setError(err.message || 'Incorrect email or password');
     } finally {
       setLoading(false);
     }
   };
+
+  const restart = () => { setMfa(null); setCode(''); setError(''); };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-ink p-5">
@@ -41,6 +55,28 @@ export default function LoginScreen() {
           Connective Leadership Dashboards · Behavioral intelligence platform
         </p>
 
+        {mfa ? (
+          <>
+            <p className="mb-3 text-sm text-slate-300">
+              We emailed a 6-digit sign-in code to <strong className="text-white">{mfa.sentTo}</strong>. It expires in 10 minutes.
+            </p>
+            <label className="mb-4 block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-300">Sign-in code</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={6}
+                placeholder="123456"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full rounded-md border border-slate-600 bg-ink px-2.5 py-2 text-center text-lg tracking-[0.4em] text-white outline-none focus:border-accent"
+              />
+            </label>
+          </>
+        ) : (
+        <>
         <label className="mb-3 block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-300">Email</span>
           <input
@@ -69,6 +105,8 @@ export default function LoginScreen() {
           <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} className="accent-accent" />
           <span className="text-xs text-muted">Show password</span>
         </label>
+        </>
+        )}
 
         {error && (
           <div className="mb-3 rounded border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs text-red-400" role="alert">
@@ -78,11 +116,17 @@ export default function LoginScreen() {
 
         <button
           type="submit"
-          disabled={loading || !email || !password}
+          disabled={loading || (mfa ? code.length !== 6 : !email || !password)}
           className="w-full rounded-md py-2.5 text-sm font-semibold text-white transition-colors disabled:bg-slate-600 disabled:cursor-default bg-cyan-700 hover:bg-accent"
         >
-          {loading ? 'Checking…' : 'Sign in'}
+          {loading ? 'Checking…' : mfa ? 'Verify code' : 'Sign in'}
         </button>
+
+        {mfa && (
+          <button type="button" onClick={restart} className="mt-3 w-full text-center text-xs text-muted hover:text-white">
+            Didn't get it? Sign in again to send a new code
+          </button>
+        )}
 
         <p className="mb-0 mt-5 text-center text-[11px] text-subtle">
           {APP_VERSION_LABEL} · For authorized prospects only
