@@ -7,7 +7,14 @@
 // so real multi-tenancy stays server-side (data is scoped by the JWT / impersonation header)
 // while v2 keeps its presentation tenant object.
 
-const API_BASE  = import.meta.env.VITE_API_BASE || 'https://app.cardinalfund.com/api';
+// The refresh cookie is SameSite=Strict, so it only travels when the API is on the same
+// registrable domain as the page (D5). On dash.connectiveleadership.com that means the
+// api. alias of the same Laravel app; every other host keeps app.cardinalfund.com.
+const SAME_SITE_API = typeof location !== 'undefined'
+  && /(^|\.)connectiveleadership\.com$/.test(location.hostname)
+  ? 'https://api.connectiveleadership.com/api'
+  : 'https://app.cardinalfund.com/api';
+const API_BASE  = import.meta.env.VITE_API_BASE || SAME_SITE_API;
 const TOKEN_KEY = 'cli_jwt';
 const USER_KEY  = 'cli_user';
 
