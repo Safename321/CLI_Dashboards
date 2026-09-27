@@ -257,5 +257,12 @@
     "deployer": "Nahin-sajjad",
     "ip": "103.55.145.158",
     "time": "2026-09-11 21:00:45 BST"
+  },
+  {
+    "version": "v2.0.1r",
+    "message": "D3 sign-in code step (MFA off until MFA_EMAIL_ROLES set), audit-log cursor paging, R0, D5 host-based API",
+    "deployer": "Nahin-sajjad",
+    "ip": "103.55.145.158",
+    "time": "2026-09-27 17:57:58 BST"
   }
 ]
