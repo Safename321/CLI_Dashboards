@@ -63,7 +63,7 @@ STEP="droplet"
 # 2b. Droplet — git pull + rebuild + restart
 echo "Deploying to droplet ${DROPLET_HOST}..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
-  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
+  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm ci --no-audit --no-fund && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no root@${DROPLET_HOST} \
   "systemctl restart cli-dash.service; sleep 2; systemctl is-active cli-dash.service && echo 'droplet: cli-dash active' || echo 'droplet: WARNING cli-dash not active'"
 echo "Droplet deployed."

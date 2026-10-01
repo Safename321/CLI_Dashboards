@@ -167,7 +167,7 @@ STEP="droplet"
 # connectors call the authed Laravel /data proxy on app.cardinalfund.com).
 echo "Deploying to droplet ${DROPLET_HOST}..."
 ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new root@${DROPLET_HOST} \
-  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm install && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
+  "cd ${DROPLET_PATH} && git pull origin AllRepo && npm ci --no-audit --no-fund && APP_BASE=/CLI_Dashboards/ npx vite build && rm -rf /root/www && mkdir -p /root/www && ln -sfn ${DROPLET_PATH}/dist /root/www/CLI_Dashboards"
 # Restart the static server via its systemd unit (cli-dash.service: python3
 # http.server on :8000 serving /root/www, Restart=always, enabled at boot).
 # systemd owns the process so it survives the SSH close, crashes and reboots —

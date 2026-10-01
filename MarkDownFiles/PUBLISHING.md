@@ -24,7 +24,7 @@ That's it. One command deploys to all 3 targets, creates a GitHub release, and s
 | 8 | **GitHub release** | Creates a tagged release and uploads the zip as an asset |
 | 9a | **Deploy to Vercel (gamma)** | `vercel link --project cli-dashboards && vercel --prod --yes --force` |
 | 9b | **Deploy to Vercel (v200n)** | `vercel link --project cli-dashboards-v2.0.0n && vercel --prod --yes --force` |
-| 9c | **Deploy to Droplet** | SSH: `git pull && npm install && APP_BASE=/CLI_Dashboards/ npx vite build`, then `systemctl restart cli-dash.service` |
+| 9c | **Deploy to Droplet** | SSH: `git pull && npm ci && APP_BASE=/CLI_Dashboards/ npx vite build`, then `systemctl restart cli-dash.service` |
 | 9d | **Deploy to GitHub Pages** | Builds with `--base /CLI_Dashboards/`, copies `404.html` for SPA routing, pushes to `gh-pages` branch |
 | 10 | **Notify (guaranteed)** | ntfy.sh → status page with chime. Sent by an EXIT trap, so it fires on **every** run — success or failure |
 
@@ -92,7 +92,7 @@ nohup/setsid-over-ssh — that flapped (2026-07-12 outage).
 
 **Deployment steps (automated by deploy.sh):**
 1. `git pull origin AllRepo`
-2. `npm install` (full deps, NOT `--production` — vite is needed for build)
+2. `npm ci` (exact lockfile, full deps, NOT `--production` — vite is needed for build)
 3. `APP_BASE=/CLI_Dashboards/ npx vite build`
 4. `ln -sfn /root/CLI_Dashboards/dist /root/www/CLI_Dashboards`
 5. `systemctl restart cli-dash.service` (script verifies `is-active` afterwards)

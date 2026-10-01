@@ -1,0 +1,49 @@
+# Audit DEPLOY-09: the dashboard had no CI at all - every check ran only if someone ran
+# deploy.sh by hand, and deploy.sh builds but never tests. This mirrors the backend's gate:
+# install exactly what the lockfile says, test, build, and fail on a known advisory in what
+# actually ships.
+#
+# It gates; it does not deploy. Publishing stays with deploy.sh (four targets + version bump).
+name: CI
+
+on:
+  push:
+    branches: [AllRepo]
+  pull_request:
+    branches: [AllRepo]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4, pinned 2026-10-01 (DEPLOY-07)
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020   # v4, pinned 2026-10-01 (DEPLOY-07)
+        with:
+          node-version: 24
+          cache: npm
+
+      # DEPLOY-05: `npm ci`, not `npm install` - fails if package.json and the lockfile
+      # disagree instead of quietly resolving something new.
+      - run: npm ci --no-audit --no-fund
+
+      - run: npm test
+
+      - run: npm run build
+
+      # Blocking: advisories in runtime dependencies, i.e. code that reaches a browser.
+      - name: Audit shipped dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      # Report-only: build and test tooling (vite, vitest, postcss) never ships to a
+      # browser, and its fixes are major-version bumps that need their own change.
+      - name: Audit dev tooling (report only)
+        run: npm audit --audit-level=critical || true
