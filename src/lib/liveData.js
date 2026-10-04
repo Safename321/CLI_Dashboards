@@ -2,9 +2,15 @@
 // Ported/adapted from v1.24d. The cache is namespaced by the effective tenant so a
 // SuperAdmin impersonating company A can never be served company B's cached data.
 import { useEffect, useState } from 'react';
-import { dashFetch, getEffectiveTenantKey } from './auth.js';
+import { dashFetch, getEffectiveTenantKey, TENANT_RESET_EVENT } from './auth.js';
 
 const _cache = new Map(); // `${tenant}:${key}` -> payload
+
+// Cleared on logout and on a change of impersonated company (audit WEB-05), so nothing
+// fetched for one session is still held in memory for the next one in the same tab.
+if (typeof window !== 'undefined') {
+  window.addEventListener(TENANT_RESET_EVENT, () => _cache.clear());
+}
 
 // useDataset — tenant-scoped fetch of one named dashboard dataset, with a static fallback.
 //   const merger = useDataset('mergerFeedback', MERGER_FEEDBACK_DATA);

@@ -129,15 +129,25 @@ function TenantsView({ onImpersonate }) {
     catch (e) { setError(e.message); }
   };
 
-  // Permanent cascade purge. Backend requires { confirm: <slug> }; we gate on the slug too.
-  const remove = async (c) => {
-    const typed = window.prompt(
-      `PERMANENT DELETE of "${c.name}".\n\nThis purges its admins, mobile users, assignments, datasets and scores — it cannot be undone.\n\nType the company slug to confirm:\n\n${c.slug}`,
-    );
-    if (typed == null) return;
-    if (typed !== c.slug) { setError(`Delete cancelled: "${typed}" does not match the slug "${c.slug}".`); return; }
-    try { await api(`/super/companies/${c.id}`, { method: 'DELETE', body: JSON.stringify({ confirm: typed }) }); load(); }
-    catch (e) { setError(e.message); }
+  // Permanent cascade purge. The backend requires { confirm: <slug>, password: <your own
+  // password> } (re-authentication, audit LOG-05, backend 78b5bb9). This used to send only
+  // the slug, so every delete was refused. A dialog rather than window.prompt, because a
+  // prompt shows the password in clear text.
+  const [deleting, setDeleting] = useState(null); // { c, slug, password, busy }
+  const remove = (c) => setDeleting({ c, slug: '', password: '', busy: false });
+  const confirmDelete = async (e) => {
+    e.preventDefault();
+    const { c, slug, password } = deleting;
+    if (slug !== c.slug || !password) return;
+    setDeleting({ ...deleting, busy: true });
+    try {
+      await api(`/super/companies/${c.id}`, { method: 'DELETE', body: JSON.stringify({ confirm: slug, password }) });
+      setDeleting(null);
+      load();
+    } catch (err) {
+      setDeleting(null);
+      setError(err.message);
+    }
   };
 
   const badgeClass = (status) => ({
@@ -248,6 +258,32 @@ function TenantsView({ onImpersonate }) {
             {!companies.length && <tr><td className={TD} colSpan={6}><span className="text-slate-500">No companies yet.</span></td></tr>}
           </tbody>
         </table>
+      )}
+
+      {deleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6" role="dialog" aria-modal="true" aria-labelledby="delete-company-title">
+          <form onSubmit={confirmDelete} className="w-full max-w-md rounded-lg border border-red-900 bg-slate-900 p-5 text-sm text-slate-300">
+            <h3 id="delete-company-title" className="text-base font-semibold text-white">Permanently delete “{deleting.c.name}”</h3>
+            <p className="mt-2">This purges its admins, mobile users, assignments, datasets and scores. It cannot be undone.</p>
+            <div className="mt-3 flex flex-col gap-3">
+            <Field label={`Type the slug to confirm: ${deleting.c.slug}`}>
+              <input className={INP} autoFocus autoComplete="off" value={deleting.slug}
+                onChange={(e) => setDeleting({ ...deleting, slug: e.target.value })} />
+            </Field>
+            <Field label="Your password">
+              <input type="password" className={INP} autoComplete="current-password" value={deleting.password}
+                onChange={(e) => setDeleting({ ...deleting, password: e.target.value })} />
+            </Field>
+            </div>
+            <div className="mt-4 flex justify-end gap-3">
+              <button type="button" className={LINK} onClick={() => setDeleting(null)} disabled={deleting.busy}>Cancel</button>
+              <button type="submit" className="rounded bg-red-700 px-3 py-1.5 font-medium text-white hover:bg-red-600 disabled:opacity-40"
+                disabled={deleting.busy || deleting.slug !== deleting.c.slug || !deleting.password}>
+                {deleting.busy ? 'Deleting…' : 'Delete permanently'}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </>
   );

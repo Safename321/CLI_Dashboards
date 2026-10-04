@@ -6,8 +6,7 @@
 // returns the last-known payload as stalePayload so the UI can surface both.
 
 import { API_BASE, dashFetch } from '../lib/auth.js';
-
-const STORAGE_PREFIX = 'cli_connector_v2__';
+import { STORAGE_PREFIX, MEMORY_ONLY_DOMAINS } from '../lib/connectorCache.js';
 const SCHEMA_VERSION = 2;
 
 // Injectable now()/sleep keep retry + staleness deterministic in unit tests.
@@ -29,7 +28,11 @@ export class BaseConnector {
     this.maxRetries = config.maxRetries ?? 3;
     this.retryBaseMs = config.retryBaseMs ?? 500;
     this.clock = config.clock || realClock;
-    this.storage = config.storage ?? (typeof localStorage !== 'undefined' ? localStorage : null);
+    // People and customer-account data never touches disk (audit WEB-05); every other
+    // domain keeps its last payload across reloads so a dead upstream still shows stale data.
+    this.storage = MEMORY_ONLY_DOMAINS.has(this.constructor.domain)
+      ? null
+      : config.storage ?? (typeof localStorage !== 'undefined' ? localStorage : null);
 
     this.lastFetchAt = null;
     this.lastSuccessAt = null;

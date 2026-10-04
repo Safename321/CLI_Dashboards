@@ -18,9 +18,24 @@ const API_BASE  = import.meta.env.VITE_API_BASE || SAME_SITE_API;
 const TOKEN_KEY = 'cli_jwt';
 const USER_KEY  = 'cli_user';
 
+import { clearConnectorCache } from './connectorCache.js';
+
 let impersonateCompanyId = null;   // set by the SuperAdmin console
 
-export function setImpersonation(id) { impersonateCompanyId = id || null; }
+// Audit WEB-05: when whose data is on screen changes (logout, or a super switching the
+// company they impersonate), drop everything cached for the previous one - the connector
+// payloads on disk, and (via this event) liveData's in-memory dataset cache.
+export const TENANT_RESET_EVENT = 'cli:tenant-reset';
+function resetTenantState() {
+  clearConnectorCache();
+  try { window.dispatchEvent(new Event(TENANT_RESET_EVENT)); } catch { /* no window in tests */ }
+}
+
+export function setImpersonation(id) {
+  const next = id || null;
+  if (next !== impersonateCompanyId) resetTenantState();
+  impersonateCompanyId = next;
+}
 export function getImpersonation()   { return impersonateCompanyId; }
 
 // The tenant whose data is in view: impersonated company for a super, else the user's own.
@@ -49,6 +64,7 @@ export function logout() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USER_KEY);
   impersonateCompanyId = null;
+  resetTenantState();
 }
 
 export async function login(email, password) {
