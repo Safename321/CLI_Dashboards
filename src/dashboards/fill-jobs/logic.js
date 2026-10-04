@@ -3,8 +3,23 @@
 import { STYLES, STYLES_FULL, DOMAINS } from '../shared/StyleRadar.jsx';
 import { KEYWORDS } from '../../data/datasets/fill-jobs.js';
 
+// Audit ALG-10: the scoring functions assumed nine finite numbers and positive bands. A
+// missing score made the fit NaN, and a zero band made a weight of 1/0, after which the
+// sort put that candidate anywhere. Bad input is now reported as "score unavailable" and
+// ranked last. Valid input goes through exactly the legacy arithmetic below (D1: numbers
+// must match legacy), so no real ranking moves.
+export function isScorable(scores) {
+  return Array.isArray(scores) && scores.length === 9 && scores.every((v) => typeof v === 'number' && Number.isFinite(v));
+}
+
+function hasValidBands(bands) {
+  return Array.isArray(bands) && bands.length === 9 && bands.every((b) => typeof b === 'number' && Number.isFinite(b) && b > 0);
+}
+
 // Weighted, band-penalized distance between a candidate and the ASSET target.
+// null when either side cannot be scored.
 export function calcFit(candScores, asset) {
+  if (!isScorable(candScores) || !isScorable(asset?.scores) || !hasValidBands(asset?.bands)) return null;
   let wSum = 0;
   let dSum = 0;
   asset.scores.forEach((t, i) => {
@@ -17,14 +32,16 @@ export function calcFit(candScores, asset) {
 }
 
 export function fitLabel(fit) {
+  if (fit == null || !Number.isFinite(fit)) return { t: 'Score unavailable', cls: 'na' };
   if (fit < 0.8) return { t: 'Best Fit', cls: 'best' };
   if (fit < 1.4) return { t: 'Good Fit', cls: 'good' };
   if (fit < 2.2) return { t: 'Fair Fit', cls: 'fair' };
   return { t: 'Weak Fit', cls: 'weak' };
 }
 
-// Pearson r² between candidate scores and the ASSET target profile.
+// Pearson r² between candidate scores and the ASSET target profile. null when unscorable.
 export function calcR2(candScores, target) {
+  if (!isScorable(candScores) || !isScorable(target)) return null;
   const n = candScores.length;
   const xMean = candScores.reduce((a, b) => a + b, 0) / n;
   const yMean = target.reduce((a, b) => a + b, 0) / n;
@@ -35,17 +52,24 @@ export function calcR2(candScores, target) {
   return (r * r).toFixed(2);
 }
 
+// Ascending by fit, unscorable (null) last. Two nulls compare equal rather than NaN.
+export function byFit(a, b) {
+  if (a.fit == null) return b.fit == null ? 0 : 1;
+  if (b.fit == null) return -1;
+  return a.fit - b.fit;
+}
+
 // Annotate + rank the candidate pool against the active ASSET profile.
-// Returns a new array sorted by fit ascending, isBest on the first entry.
+// Returns a new array sorted by fit ascending, isBest on the first scorable entry.
 export function rankCandidates(candidates, asset) {
   const ranked = candidates.map((c) => ({
     ...c,
     fit: calcFit(c.scores, asset),
-    mean: (c.scores.reduce((a, b) => a + b, 0) / 9).toFixed(2),
-    r2: calcR2(c.scores, asset.scores),
+    mean: isScorable(c.scores) ? (c.scores.reduce((a, b) => a + b, 0) / 9).toFixed(2) : null,
+    r2: calcR2(c.scores, asset?.scores),
   }));
-  ranked.sort((a, b) => a.fit - b.fit);
-  return ranked.map((c, i) => ({ ...c, isBest: i === 0 }));
+  ranked.sort(byFit);
+  return ranked.map((c, i) => ({ ...c, isBest: i === 0 && c.fit != null }));
 }
 
 // Per-cell proximity class: within band → high, within 1.5× band → mid.
@@ -59,11 +83,12 @@ export function cellLevel(value, i, asset) {
 // ── Job-description interpreter ─────────────────────────────────────────────
 // Keyword hits move a raw 5.0 base (+0.35 / −0.25), then scores are min-max
 // rescaled onto a 2–9 range (legacy scoreText).
+const STYLE_KEYS = ['intrinsic', 'competitive', 'power', 'personal', 'social', 'entrusting', 'collaborative', 'contributory', 'vicarious'];
+
 export function scoreText(text) {
   const lo = text.toLowerCase();
-  const keys = ['intrinsic', 'competitive', 'power', 'personal', 'social', 'entrusting', 'collaborative', 'contributory', 'vicarious'];
   const raw = {};
-  keys.forEach((s) => {
+  STYLE_KEYS.forEach((s) => {
     let sc = 5;
     KEYWORDS[s].hi.forEach((w) => { if (lo.includes(w)) sc += 0.35; });
     KEYWORDS[s].lo.forEach((w) => { if (lo.includes(w)) sc -= 0.25; });
@@ -73,7 +98,25 @@ export function scoreText(text) {
   const mn = Math.min(...vals);
   const mx = Math.max(...vals);
   const rng = mx - mn || 1;
-  return keys.map((s) => parseFloat((2 + ((raw[s] - mn) / rng) * 7).toFixed(1)));
+  return STYLE_KEYS.map((s) => parseFloat((2 + ((raw[s] - mn) / rng) * 7).toFixed(1)));
+}
+
+// Audit ALG-04: what scoreText actually matched, so a person can see the evidence behind
+// a derived profile. Same matching as scoreText (substring, no negation) on purpose: this
+// explains the legacy numbers, it does not change them. Note what that means - "own"
+// matches inside "known", "not aggressive" counts as "aggressive", and the keywords
+// written in capitals (CFA, MBA, CRM, C-level) never match at all, because the text is
+// lowercased and they are not.
+export const MIN_KEYWORD_EVIDENCE = 3;
+
+export function keywordEvidence(text) {
+  const lo = String(text || '').toLowerCase();
+  const hits = [];
+  STYLE_KEYS.forEach((style) => {
+    KEYWORDS[style].hi.forEach((word) => { if (lo.includes(word)) hits.push({ style, word, dir: '+' }); });
+    KEYWORDS[style].lo.forEach((word) => { if (lo.includes(word)) hits.push({ style, word, dir: '-' }); });
+  });
+  return hits;
 }
 
 export function extractMeta(text) {
@@ -115,7 +158,7 @@ export function buildInterpretation(title, scores, bands) {
     `From a candidate selection standpoint, the low scores in ${bot.map((s) => s.name).join(' and ')} are as informative as the highs. ` +
     `A candidate who leads with ${bot[0].name} style — deriving meaning primarily from ${bot[0].name.toLowerCase()} achievement — will likely ` +
     `experience motivational friction in this role. Interview processes should surface how candidates describe their best performance: ` +
-    `listen for language that aligns with ${top[0].name.toLowerCase()} and ${top[1].name.toLowerCase()} patterns. Style mismatches at the top two ranks ` +
-    `are the most predictive of early attrition in CLI research, particularly when organizational expectations and individual achieving style diverge within the first 90 days.`;
+    `listen for language that aligns with ${top[0].name.toLowerCase()} and ${top[1].name.toLowerCase()} patterns. In the CLI framework, a mismatch at the top two ranks ` +
+    `is where motivational friction is most likely to show, especially in the first 90 days. Treat it as a prompt for interview questions, not as a prediction of attrition.`;
   return [p1, p2];
 }

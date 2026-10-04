@@ -14,7 +14,7 @@ import RecommendationPanel from '../components/RecommendationPanel.jsx';
 import { FinancialKPICard } from '../components/financial.jsx';
 import { StatTile } from './employee-leading/parts.jsx';
 import StyleRadar, { STYLE_POINT_COLORS } from './shared/StyleRadar.jsx';
-import { calcFit, calcR2, fitLabel, bandsForScores, scoreText } from './fill-jobs/logic.js';
+import { calcFit, calcR2, fitLabel, bandsForScores, scoreText, byFit, keywordEvidence, MIN_KEYWORD_EVIDENCE } from './fill-jobs/logic.js';
 import { CANDIDATE_COLORS } from '../data/datasets/fill-jobs.js';
 import { dashFetch } from '../lib/auth.js';
 
@@ -34,6 +34,7 @@ const FIT_CLS = {
   good: 'text-sky-400',
   fair: 'text-amber-400',
   weak: 'text-red-400',
+  na: 'text-muted',
 };
 
 function fmtDate(d) {
@@ -48,7 +49,11 @@ const EMPTY_FORM = { title: '', dept: '', location: '', salary: '', positions: 1
 
 function PostJobForm({ onCreated, onCancel }) {
   const [form, setForm] = useState(EMPTY_FORM);
-  const [deriveAsset, setDeriveAsset] = useState(true);
+  // Off by default (audit ALG-04): the derivation is keyword matching, and on thin text it
+  // produced profiles that rated every real applicant Weak Fit. Opt in, and see the evidence.
+  const [deriveAsset, setDeriveAsset] = useState(false);
+  const evidence = useMemo(() => (deriveAsset ? keywordEvidence(form.description) : []), [deriveAsset, form.description]);
+  const enoughEvidence = evidence.length >= MIN_KEYWORD_EVIDENCE;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -67,7 +72,7 @@ function PostJobForm({ onCreated, onCancel }) {
     };
     // Reuse the fill-jobs interpreter so the posted role has an ASSET target
     // (fit ranking needs one); admins refine later via the fill-jobs tool.
-    if (deriveAsset && form.description.trim()) {
+    if (deriveAsset && form.description.trim() && enoughEvidence) {
       payload.asset = scoreText(form.description);
     }
     try {
@@ -106,6 +111,13 @@ function PostJobForm({ onCreated, onCancel }) {
           <input type="checkbox" checked={deriveAsset} onChange={(e) => setDeriveAsset(e.target.checked)} />
           Derive the ASSET achieving-styles target from the description (CLI fill-jobs methodology)
         </label>
+        {deriveAsset && form.description.trim() && (
+          <p className={`text-xs ${enoughEvidence ? 'text-muted' : 'text-amber-400'}`}>
+            {enoughEvidence
+              ? `Based on ${evidence.length} keyword matches: ${evidence.map((h) => `${h.word} (${h.dir}${h.style})`).join(', ')}. Keyword matching only; review the profile in Fill Jobs.`
+              : `Not enough evidence: ${evidence.length} keyword match${evidence.length === 1 ? '' : 'es'} (need ${MIN_KEYWORD_EVIDENCE}). No target will be derived; set one in Fill Jobs.`}
+          </p>
+        )}
         {error && <p className="text-xs font-semibold text-red-400">{error}</p>}
         <button
           type="submit"
@@ -135,7 +147,7 @@ function JobCard({ job, onChanged }) {
         r2: scorable ? calcR2(a.scores, job.asset) : null,
       };
     });
-    annotated.sort((x, y) => (x.fit ?? Infinity) - (y.fit ?? Infinity));
+    annotated.sort(byFit);
     return annotated;
   }, [job.applicants, job.asset, bands, hasTarget]);
 

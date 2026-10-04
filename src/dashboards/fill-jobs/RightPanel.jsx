@@ -10,6 +10,7 @@ const FIT_BADGE = {
   good: 'bg-cyan-400/15 text-cyan-300',
   fair: 'bg-blue-500/20 text-sky-300',
   weak: 'bg-red-500/15 text-red-400',
+  na: 'bg-slate-500/15 text-slate-400',   // ALG-10: profile incomplete
 };
 const CELL_COLOR = { high: '#4ade80', mid: '#3b82f6', base: '#cbd5e1' };
 
@@ -18,7 +19,7 @@ const CELL_COLOR = { high: '#4ade80', mid: '#3b82f6', base: '#cbd5e1' };
 // `get` pulls the sort key from a candidate row.
 const POOL_COLUMNS = [
   { key: 'name', label: 'Candidate', align: 'left', dir: 'asc', type: 'str', get: (c) => (c.name || '').toLowerCase() },
-  { key: 'fit', label: 'FIT', align: 'center', dir: 'asc', type: 'num', get: (c) => c.fit },
+  { key: 'fit', label: 'FIT', align: 'center', dir: 'asc', type: 'num', get: (c) => c.fit ?? Infinity },
   { key: 'r2', label: 'r²', align: 'center', dir: 'desc', type: 'num', title: 'R-squared: candidate vs job profile', get: (c) => parseFloat(c.r2) || 0 },
   ...STYLE_ABBR.map((a, i) => ({ key: `s${i}`, label: a, align: 'right', dir: 'desc', type: 'num', title: STYLES_FULL[i], get: (c) => c.scores?.[i] ?? 0 })),
   { key: 'mean', label: 'Mean', align: 'right', dir: 'desc', type: 'num', get: (c) => parseFloat(c.mean) || 0 },
@@ -48,7 +49,8 @@ export function ScoresGrid({ scores }) {
 }
 
 export default function RightPanel({ asset, pool, dashChecked, onToggle, colorMap }) {
-  const bestId = pool.reduce((acc, c) => (acc === null || c.fit < acc.fit ? c : acc), null)?.id;
+  // Unscorable candidates (fit null, ALG-10) can never be best: null < n is true in JS.
+  const bestId = pool.reduce((acc, c) => (c.fit != null && (acc === null || c.fit < acc.fit) ? c : acc), null)?.id;
 
   // Click a column header to sort by it; click again to flip direction.
   // Default (sort.key === null) keeps the incoming fit ranking.
@@ -156,7 +158,7 @@ export default function RightPanel({ asset, pool, dashChecked, onToggle, colorMa
                     className="px-2 py-2 text-center font-mono font-bold"
                     style={{ color: parseFloat(c.r2) >= 0.85 ? '#4ade80' : parseFloat(c.r2) >= 0.65 ? '#93c5fd' : '#7fb3d3' }}
                   >
-                    {c.r2}
+                    {c.r2 ?? '—'}
                   </td>
                   {c.scores.map((v, si) => (
                     <td
@@ -167,7 +169,7 @@ export default function RightPanel({ asset, pool, dashChecked, onToggle, colorMa
                       {v.toFixed(1)}
                     </td>
                   ))}
-                  <td className="px-2 py-2 text-right font-mono text-slate-300">{c.mean}</td>
+                  <td className="px-2 py-2 text-right font-mono text-slate-300">{c.mean ?? '—'}</td>
                 </tr>
               );
             })}

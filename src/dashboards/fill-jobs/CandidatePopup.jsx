@@ -9,6 +9,7 @@ const FIT_LIGHT = {
   good: { bg: '#d1fae5', tx: '#065f46' },
   fair: { bg: '#e0f2fe', tx: '#0c4a6e' },
   weak: { bg: '#fee2e2', tx: '#7f1d1d' },
+  na: { bg: '#f1f5f9', tx: '#64748b' },   // ALG-10: profile incomplete
 };
 const CELL = { high: '#4a8c2a', mid: '#e67e22', base: '#64748b' };
 const ABBR_COLORS = ['#639922', '#639922', '#639922', '#BA7517', '#BA7517', '#BA7517', '#7fb3d3', '#7fb3d3', '#7fb3d3'];
@@ -153,7 +154,7 @@ export default function CandidatePopup({ asset, candidates, checked, onChecked, 
                       </td>
                     );
                   })}
-                  <td className="px-1 py-1.5 text-right font-mono text-slate-500">{c.mean}</td>
+                  <td className="px-1 py-1.5 text-right font-mono text-slate-500">{c.mean ?? '—'}</td>
                 </tr>
               );
             })}

@@ -6,7 +6,7 @@ import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { CANDIDATES, CANDIDATE_COLORS, DEFAULT_ASSET, DEFAULT_JOB_META } from '../../data/datasets/fill-jobs.js';
 import { useFillJobsBundle } from '../../lib/liveData.js';
-import { rankCandidates, bandsForScores, scoreText, extractMeta, buildInterpretation } from './logic.js';
+import { rankCandidates, bandsForScores, scoreText, extractMeta, buildInterpretation, keywordEvidence, MIN_KEYWORD_EVIDENCE } from './logic.js';
 import ChartPanel from './ChartPanel.jsx';
 import RightPanel from './RightPanel.jsx';
 import CandidatePopup from './CandidatePopup.jsx';
@@ -87,7 +87,11 @@ export default function FillJobsDashboard() {
     setJobs((js) => [...js, { id, title, loc, text, scores }]);
     setActiveJobId(id);
     setInterpretation({ title, paras: buildInterpretation(title, scores, bandsForScores(scores)) });
-    showBanner('Interpreted: ' + title);
+    // ALG-04: the profile is the legacy keyword score either way; say when it rests on little.
+    const hits = keywordEvidence(text).length;
+    showBanner(hits < MIN_KEYWORD_EVIDENCE
+      ? `Interpreted: ${title} (low evidence: ${hits} keyword match${hits === 1 ? '' : 'es'}, review before use)`
+      : `Interpreted: ${title} (${hits} keyword matches)`);
   }, [showBanner]);
 
   const activateJob = useCallback((id) => {
