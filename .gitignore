@@ -35,3 +35,9 @@ ghpages-out/
 /WorkDay/
 
 .vercel
+
+# Archives, probe scripts and the local deploy log never belong in the repo (audit NEW-2):
+# deploy.sh used to `git add -A`, which committed a 45 MB working-tree zip with .env.local.
+*.zip
+/_*.mjs
+/deploy-log.json

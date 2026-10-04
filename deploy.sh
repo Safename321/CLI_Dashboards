@@ -54,6 +54,21 @@ VERCEL_URL="https://cli-dashboards-gamma.vercel.app"
 VERCEL_URL2="https://cli-dashboards-v200n.vercel.app"
 GHPAGES_URL="https://safename321.github.io/CLI_Dashboards"
 
+# 0. Preflight (audit NEW-2 / DEPLOY-06). Step 6 commits what is in the working tree, and
+# when it used `git add -A` that swept in a 45 MB working-tree archive (scripts.zip,
+# carrying .env.local), eight probe scripts and the deploy log - all now untracked. So:
+# anything untracked and not ignored stops the deploy before it starts. A new source file
+# you mean to ship: `git add` it first. Anything else: delete it or add it to .gitignore.
+STEP="preflight"
+UNTRACKED=$(git ls-files --others --exclude-standard)
+if [ -n "$UNTRACKED" ]; then
+  echo "Refusing to deploy - untracked files would not be committed:"
+  printf '  %s
+' $UNTRACKED
+  echo "git add the ones that belong in the repo, gitignore or delete the rest, then re-run."
+  exit 1
+fi
+
 # 1. Run tests
 STEP="tests"
 echo "Running tests..."
@@ -85,7 +100,8 @@ DEPLOYER=$(git config user.name 2>/dev/null || echo "unknown")
 IP=$(curl -s ifconfig.me 2>/dev/null || curl -s api.ipify.org 2>/dev/null || echo "unavailable")
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S %Z')
 
-# 5. Append to deploy log — kept OUT of public/ (audit WEB-06).
+# 5. Append to the LOCAL deploy log — kept out of public/ (audit WEB-06) and, since
+# NEW-2, out of the repo too: it is gitignored, so deployer IPs never reach GitHub.
 # Everything in public/ is copied verbatim into dist/ and published, so this file
 # served every deployer's username and public IP to anyone who fetched it. The
 # history is still recorded, just not on the internet. public/status.html is gone
@@ -95,14 +111,15 @@ TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S %Z')
 STEP="deploy-log"
 node -e "
 const fs = require('fs');
-const log = JSON.parse(fs.readFileSync('deploy-log.json','utf8'));
+const log = fs.existsSync('deploy-log.json') ? JSON.parse(fs.readFileSync('deploy-log.json','utf8')) : [];
 log.push({ version:'$VERSION', message:\`$MSG\`, deployer:'$DEPLOYER', ip:'$IP', time:'$TIMESTAMP' });
 fs.writeFileSync('deploy-log.json', JSON.stringify(log, null, 2));
 "
 
-# 6. Commit & push
+# 6. Commit & push. Tracked files only (`-u`): the preflight has already refused any
+# untracked file, and deploy-log.json is local-only now (gitignored, never pushed).
 STEP="commit-push"
-git add -A
+git add -u
 git commit -m "$MSG ($VERSION)"
 git push origin AllRepo
 
