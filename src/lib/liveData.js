@@ -135,7 +135,18 @@ export const useCustomerHealth = (enabled = true) => useLiveBundle('customerHeal
 // (hiring intentionally has no cached hook — HiringDashboard fetches directly so
 // posting/closing/deleting a job can refresh the pipeline immediately)
 
+// newIdempotencyKey — one per Assign click, reused when that same request is retried
+// (audit REL-08). Built from crypto.getRandomValues because crypto.randomUUID only exists on
+// HTTPS pages, and the droplet dashboard is served over plain HTTP.
+export function newIdempotencyKey() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return 'dash-' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 // assignInstruments — POST /assignments (Individual-ASI "assign"). Returns the created batch.
+// Pass idempotencyKey: without it the server makes a new key per attempt, and a retry after
+// a lost answer creates a second, billable set of assessment links.
 export async function assignInstruments(payload) {
   const res = await dashFetch('/assignments', { method: 'POST', body: JSON.stringify(payload) });
   const body = await res.json().catch(() => ({}));

@@ -1,9 +1,9 @@
 // Assign CLI Instruments — pick employees and dispatch CLI assessment instruments.
 // Ported from legacy IndividualASIDashboard (App.jsx ~5576-5826). View id: individual-asi.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { ASI_ROSTER } from '../../data/datasets/asi-roster.js';
-import { useRoster, assignInstruments } from '../../lib/liveData.js';
+import { useRoster, assignInstruments, newIdempotencyKey } from '../../lib/liveData.js';
 import { INSTRUMENTS, CLI_TRICOLOR_GRADIENT } from './instruments.js';
 import InstrumentCheckbox from './InstrumentCheckbox.jsx';
 import ConfirmationModal from './ConfirmationModal.jsx';
@@ -69,6 +69,7 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   const [instrumentState, setInstrumentState] = useState({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const pendingSubmit = useRef(null);   // { body, key } of the request being sent (REL-08)
   const [sendError, setSendError] = useState('');
   const [sendOk, setSendOk] = useState('');
   // Per-focal 360 config, keyed by the same instrumentState key (empId or `search-<idx>`):
@@ -177,8 +178,17 @@ export default function IndividualASIDashboard({ preSelection = null }) {
       return;
     }
     setSending(true); setSendError(''); setSendOk('');
+    // REL-08: the same request keeps its key until it succeeds, so pressing Assign again
+    // after an error or a timeout can never create a second set of links. A changed
+    // selection is a new request and gets a new key.
+    const payload = { assignments: rows, sendEmails: true, groupLabel: 'Dashboard assignment' };
+    const body = JSON.stringify(payload);
+    if (!pendingSubmit.current || pendingSubmit.current.body !== body) {
+      pendingSubmit.current = { body, key: newIdempotencyKey() };
+    }
     try {
-      const res = await assignInstruments({ assignments: rows, sendEmails: true, groupLabel: 'Dashboard assignment' });
+      const res = await assignInstruments({ ...payload, idempotencyKey: pendingSubmit.current.key });
+      pendingSubmit.current = null;
       setShowConfirmModal(false);
       setInstrumentState({});
       setFocalConfig({});
