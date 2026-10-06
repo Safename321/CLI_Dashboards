@@ -160,4 +160,35 @@ export async function assignmentStatus(batchId) {
   return res.ok ? res.json() : null;
 }
 
+// Cohorts (cli-backend R3.3) — a rollout too big for one batch goes in ONE request; the
+// server answers 202 with a cohortId and sends it to legacy as queued child batches.
+async function cohortCall(path, options) {
+  const res = await dashFetch(path, options);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(body.error || body.message || `Request failed (${res.status})`);
+    err.status = res.status;
+    throw err;
+  }
+  return body;
+}
+
+// createAssignmentCohort — POST /assignment-cohorts. Same payload (and idempotencyKey rule)
+// as assignInstruments; a replay of the same key answers { status: 'idempotent', cohortId }.
+export const createAssignmentCohort = (payload) =>
+  cohortCall('/assignment-cohorts', { method: 'POST', body: JSON.stringify(payload) });
+
+// assignmentCohortStatus — GET /assignment-cohorts/{id} → { cohort, children }.
+export const assignmentCohortStatus = (id) =>
+  cohortCall(`/assignment-cohorts/${encodeURIComponent(id)}`);
+
+// resumeAssignmentCohort — re-sends only the failed / unknown / stuck children (no duplicates:
+// each goes again under its own key and legacy replays what it already made).
+export const resumeAssignmentCohort = (id) =>
+  cohortCall(`/assignment-cohorts/${encodeURIComponent(id)}/resume`, { method: 'POST' });
+
+// cancelAssignmentCohort — stops the children not yet sent; sent ones stay sent.
+export const cancelAssignmentCohort = (id) =>
+  cohortCall(`/assignment-cohorts/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
+
 export function clearDatasetCache() { _cache.clear(); }

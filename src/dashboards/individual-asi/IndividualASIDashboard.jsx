@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DashboardShell from '../../components/DashboardShell.jsx';
 import { ASI_ROSTER } from '../../data/datasets/asi-roster.js';
-import { useRoster, assignInstruments, newIdempotencyKey } from '../../lib/liveData.js';
+import { useRoster, assignInstruments, createAssignmentCohort, newIdempotencyKey } from '../../lib/liveData.js';
+import { getEffectiveTenantKey } from '../../lib/auth.js';
 import { INSTRUMENTS, CLI_TRICOLOR_GRADIENT } from './instruments.js';
 import InstrumentCheckbox from './InstrumentCheckbox.jsx';
 import ConfirmationModal from './ConfirmationModal.jsx';
@@ -11,6 +12,8 @@ import { ExpandableSection } from './RosterSections.jsx';
 import EmployeeCard from './EmployeeCard.jsx';
 import FocalSetupPanel from './FocalSetupPanel.jsx';
 import AssignRosterTable from './AssignRosterTable.jsx';
+import CohortProgressPanel from './CohortProgressPanel.jsx';
+import { needsCohort, COHORT_THRESHOLD, rememberCohort, recallCohort, forgetCohort } from './cohortProgress.js';
 
 // Instrument keys that make an employee a 360 FOCAL (needs gender + evaluators).
 const FOCAL_KEYS = ['360', 'a360'];
@@ -75,6 +78,13 @@ export default function IndividualASIDashboard({ preSelection = null }) {
   // Per-focal 360 config, keyed by the same instrumentState key (empId or `search-<idx>`):
   //   { [key]: { gender: 'M'|'F', evaluatorIds: string[] } }
   const [focalConfig, setFocalConfig] = useState({});
+  // A rollout over COHORT_THRESHOLD people is sent as one cohort (cli-backend R3.3); its
+  // progress panel stays up, across a reload too, until dismissed.
+  const tenant = getEffectiveTenantKey();
+  const [cohortId, setCohortId] = useState(() => recallCohort(tenant));
+  const [cohortJustSent, setCohortJustSent] = useState(false);
+  useEffect(() => { setCohortId(recallCohort(tenant)); setCohortJustSent(false); }, [tenant]);
+  const closeCohort = () => { forgetCohort(tenant); setCohortId(null); };
 
   // Source the roster from the live /dashboard/roster endpoint, falling back to the
   // static demo roster when it's empty (unseeded tenant / fetch unavailable).
@@ -186,12 +196,21 @@ export default function IndividualASIDashboard({ preSelection = null }) {
     if (!pendingSubmit.current || pendingSubmit.current.body !== body) {
       pendingSubmit.current = { body, key: newIdempotencyKey() };
     }
+    const asCohort = needsCohort(rows.length);
     try {
-      const res = await assignInstruments({ ...payload, idempotencyKey: pendingSubmit.current.key });
+      const send = asCohort ? createAssignmentCohort : assignInstruments;
+      const res = await send({ ...payload, idempotencyKey: pendingSubmit.current.key });
       pendingSubmit.current = null;
       setShowConfirmModal(false);
       setInstrumentState({});
       setFocalConfig({});
+      if (asCohort) {
+        rememberCohort(tenant, res.cohortId);
+        setCohortId(res.cohortId);
+        setCohortJustSent(true);
+        setSendOk(`Rollout queued: ${res.people ?? rows.length} employees in ${res.chunks ?? Math.ceil(rows.length / COHORT_THRESHOLD)} batches of up to ${COHORT_THRESHOLD}. Progress is shown below.`);
+        return;
+      }
       setSendOk(`Assigned to ${res.stubsCreated ?? rows.length} employee${rows.length === 1 ? '' : 's'}${res.emailsQueued ? ` · ${res.emailsQueued} invite email(s) sending in the background` : ''}${evaluatorTotal ? ` · incl. ${evaluatorTotal} 360 evaluator invite(s)` : ''}.`);
     } catch (e) {
       setSendError(e.message || 'Assignment failed. Check your connection and try again.');
@@ -416,6 +435,11 @@ export default function IndividualASIDashboard({ preSelection = null }) {
           {sendError && <div className="max-w-lg rounded-lg border border-red-500/40 bg-red-900/20 px-4 py-2 text-center text-sm text-red-300">{sendError}</div>}
           {sendOk && <div className="max-w-lg rounded-lg border border-emerald-500/40 bg-emerald-900/20 px-4 py-2 text-center text-sm text-emerald-300">{sendOk}</div>}
         </div>
+
+        {cohortId && (
+          <CohortProgressPanel key={cohortId} cohortId={cohortId} autoScroll={cohortJustSent}
+            onDismiss={closeCohort} onGone={closeCohort} />
+        )}
 
         <ConfirmationModal
           isOpen={showConfirmModal}
